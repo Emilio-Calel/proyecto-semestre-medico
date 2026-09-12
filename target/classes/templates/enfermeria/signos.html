@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Signos vitales</title>
+</head>
+
+<body>
+
+<h1>Registro de Signos Vitales</h1>
+
+<div th:if="${error}">
+    <strong th:text="${error}"></strong>
+</div>
+
+<hr>
+
+<h2>Paciente</h2>
+
+<p>
+    Cita:
+    <strong th:text="${cita.numeroCita}">
+    </strong>
+</p>
+
+<p>
+    Paciente:
+    <strong th:text="${cita.paciente.nombreCompleto}">
+    </strong>
+</p>
+
+<p>
+    Especialidad:
+    <strong th:text="${cita.especialidad.nombre}">
+    </strong>
+</p>
+
+<p>
+    Médico:
+    <strong th:text="${cita.medico.personal.nombreCompleto}">
+    </strong>
+</p>
+
+<p>
+    Estado:
+    <strong th:text="${cita.estadoCita.codigo}">
+    </strong>
+</p>
+
+<hr>
+
+<form
+        th:action="@{/enfermeria/signos/guardar}"
+        th:object="${signosForm}"
+        method="post">
+
+    <input
+            type="hidden"
+            th:field="*{citaId}">
+
+    <div>
+
+        <label for="presionSistolica">
+            Presión sistólica *
+        </label>
+
+        <input
+                type="number"
+                id="presionSistolica"
+                th:field="*{presionSistolica}"
+                min="40"
+                max="300"
+                required>
+
+        <span>
+            mmHg
+        </span>
+
+    </div>
+
+    <br>
+
+    <div>
+
+        <label for="presionDiastolica">
+            Presión diastólica *
+        </label>
+
+        <input
+                type="number"
+                id="presionDiastolica"
+                th:field="*{presionDiastolica}"
+                min="20"
+                max="200"
+                required>
+
+        <span>
+            mmHg
+        </span>
+
+    </div>
+
+    <br>
+
+    <div>
+
+        <label for="pulso">
+            Pulso *
+        </label>
+
+        <input
+                type="number"
+                id="pulso"
+                th:field="*{pulso}"
+                min="20"
+                max="250"
+                required>
+
+        <span>
+            lpm
+        </span>
+
+    </div>
+
+    <br>
+
+    <div>
+
+        <label for="temperatura">
+            Temperatura *
+        </label>
+
+        <input
+                type="number"
+                id="temperatura"
+                th:field="*{temperatura}"
+                min="30.0"
+                max="45.0"
+                step="0.1"
+                required>
+
+        <span>
+            °C
+        </span>
+
+    </div>
+
+    <br>
+
+    <div>
+
+        <label for="peso">
+            Peso *
+        </label>
+
+        <input
+                type="number"
+                id="peso"
+                th:field="*{peso}"
+                min="0.01"
+                max="500"
+                step="0.01"
+                required>
+
+        <span>
+            kg
+        </span>
+
+    </div>
+
+    <br>
+
+    <div>
+
+        <label for="talla">
+            Talla *
+        </label>
+
+        <input
+                type="number"
+                id="talla"
+                th:field="*{talla}"
+                min="1"
+                max="300"
+                step="0.01"
+                required>
+
+        <span>
+            cm
+        </span>
+
+    </div>
+
+    <br>
+
+    <div>
+
+        <label for="observaciones">
+            Observaciones
+        </label>
+
+        <br>
+
+        <textarea
+                id="observaciones"
+                th:field="*{observaciones}"
+                rows="5"
+                cols="50"
+                maxlength="1000">
+        </textarea>
+
+        <p>
+            <span id="contadorObservaciones">
+                0
+            </span>
+            /1000
+        </p>
+
+    </div>
+
+    <br>
+
+    <button type="submit">
+        Guardar signos vitales
+    </button>
+
+</form>
+
+<p>
+    <a th:href="@{/enfermeria}">
+        Volver
+    </a>
+</p>
+
+<script>
+
+    const observaciones =
+        document.getElementById(
+            "observaciones"
+        );
+
+    const contador =
+        document.getElementById(
+            "contadorObservaciones"
+        );
+
+    function actualizarContador() {
+
+        contador.textContent =
+            observaciones.value.length;
+    }
+
+    observaciones.addEventListener(
+        "input",
+        actualizarContador
+    );
+
+    actualizarContador();
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Inicio</title>
+</head>
+
+<body>
+
+<h1>Panel principal</h1>
+
+<p>
+    Usuario:
+    <strong sec:authentication="name"></strong>
+</p>
+
+<hr>
+
+<div sec:authorize="hasRole('PACIENTE')">
+
+    <h2>Paciente</h2>
+
+    <p>
+        <a th:href="@{/citas/nueva}">
+            Agendar cita
+        </a>
+    </p>
+
+</div>
+
+<div sec:authorize="hasAuthority('USER_VIEW')">
+
+    <h2>Administración</h2>
+
+    <p>
+        <a th:href="@{/admin/usuarios}">
+            Administrar usuarios
+        </a>
+    </p>
+
+</div>
+
+<div sec:authorize="hasAuthority('APPOINTMENT_VIEW')">
+
+    <h2>Recepción</h2>
+
+    <p>
+        <a th:href="@{/recepcion}">
+            Ir a Recepción
+        </a>
+    </p>
+
+</div>
+<div sec:authorize="hasAuthority('VITAL_SIGNS_VIEW')">
+
+    <h2>Enfermería</h2>
+
+    <p>
+        <a th:href="@{/enfermeria}">
+            Ir a Enfermería
+        </a>
+    </p>
+
+</div>
+
+<div sec:authorize="hasAuthority('PAYMENT_VIEW')">
+
+    <h2>Caja</h2>
+
+    <p>
+        <a th:href="@{/caja}">
+            Ir a Caja
+        </a>
+    </p>
+
+</div>
+
+<hr>
+
+<form th:action="@{/logout}"
+      method="post">
+
+    <button type="submit">
+        Cerrar sesión
+    </button>
+
+</form>
+
+</body>
+</html>

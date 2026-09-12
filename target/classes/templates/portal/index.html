@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Portal Hospitalario</title>
+</head>
+
+<body>
+
+<h1>Portal Hospitalario</h1>
+
+<p>
+    Consulte nuestros servicios,
+    especialidades, ubicaciones y horarios.
+</p>
+
+<hr>
+
+<h2>Agendar una cita</h2>
+
+<p>
+    Para continuar, ingrese su DPI.
+</p>
+
+<div th:if="${error}">
+    <strong th:text="${error}"></strong>
+</div>
+
+<form
+        th:action="@{/portal/verificar-dpi}"
+        th:object="${verificacionDpi}"
+        method="post">
+
+    <div>
+
+        <label for="dpi">
+            DPI
+        </label>
+
+        <input
+                type="text"
+                id="dpi"
+                th:field="*{dpi}"
+                minlength="13"
+                maxlength="13"
+                pattern="[0-9]{13}"
+                inputmode="numeric"
+                required>
+
+        <span id="contador">
+            0/13
+        </span>
+
+    </div>
+
+    <br>
+
+    <button type="submit">
+        Verificar registro
+    </button>
+
+</form>
+
+<p>
+    ¿Ya tiene cuenta?
+
+    <a th:href="@{/login}">
+        Iniciar sesión
+    </a>
+</p>
+
+<script>
+
+    const dpiInput =
+        document.getElementById("dpi");
+
+    const contador =
+        document.getElementById("contador");
+
+    function actualizarContador() {
+
+        /*
+         * Permitimos solamente dígitos.
+         */
+        dpiInput.value =
+            dpiInput.value
+                .replace(/\D/g, "")
+                .slice(0, 13);
+
+        contador.textContent =
+            dpiInput.value.length
+            + "/13";
+    }
+
+    dpiInput.addEventListener(
+        "input",
+        actualizarContador
+    );
+
+    actualizarContador();
+
+</script>
+
+</body>
+</html>

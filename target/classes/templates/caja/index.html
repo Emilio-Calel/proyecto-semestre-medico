@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Caja</title>
+</head>
+
+<body>
+
+<h1>Caja - Cobro Presencial</h1>
+
+<div th:if="${error}">
+    <strong th:text="${error}"></strong>
+</div>
+
+<form
+        th:action="@{/caja/buscar}"
+        method="get">
+
+    <label for="numeroCita">
+        Número de cita
+    </label>
+
+    <input
+            type="text"
+            id="numeroCita"
+            name="numeroCita"
+            required>
+
+    <button type="submit">
+        Buscar
+    </button>
+
+</form>
+
+<hr>
+
+<div th:if="${cita != null}">
+
+    <p>
+        Cita:
+        <strong th:text="${cita.numeroCita}"></strong>
+    </p>
+
+    <p>
+        Paciente:
+        <strong th:text="${cita.paciente.nombreCompleto}"></strong>
+    </p>
+
+    <p>
+        Especialidad:
+        <strong th:text="${cita.especialidad.nombre}"></strong>
+    </p>
+
+    <p>
+        Estado:
+        <strong th:text="${cita.estadoCita.codigo}"></strong>
+    </p>
+
+    <div th:if="${cita.estadoCita.codigo == 'PENDIENTE_PAGO'}">
+
+        <a th:href="@{/caja/pagar/{id}(id=${cita.id})}">
+            Registrar pago
+        </a>
+
+    </div>
+
+    <div th:unless="${cita.estadoCita.codigo == 'PENDIENTE_PAGO'}">
+
+        <p>
+            Esta cita no está pendiente de pago.
+        </p>
+
+    </div>
+
+</div>
+
+<p>
+    <a th:href="@{/}">
+        Volver
+    </a>
+</p>
+
+</body>
+</html>

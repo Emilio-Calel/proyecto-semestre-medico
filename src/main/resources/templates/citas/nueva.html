@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Agendar cita</title>
+</head>
+
+<body>
+
+<h1>Agendar Cita</h1>
+
+<div th:if="${error}">
+    <strong th:text="${error}"></strong>
+</div>
+
+<form
+        th:action="@{/citas/guardar}"
+        th:object="${citaForm}"
+        method="post"
+        enctype="multipart/form-data"
+        id="formCita">
+
+    <!-- ====================== -->
+    <!-- PASO 1 -->
+    <!-- ====================== -->
+
+    <section id="paso1">
+
+        <h2>Paso 1 de 5 - Sucursal</h2>
+
+        <select
+                id="sucursalId"
+                th:field="*{sucursalId}"
+                required>
+
+            <option value="">
+                Seleccione una sucursal
+            </option>
+
+            <option
+                    th:each="sucursal : ${sucursales}"
+                    th:value="${sucursal.id}"
+                    th:text="${sucursal.nombre}">
+            </option>
+
+        </select>
+
+        <br><br>
+
+        <button
+                type="button"
+                onclick="irPaso2()">
+            Siguiente
+        </button>
+
+    </section>
+
+    <!-- ====================== -->
+    <!-- PASO 2 -->
+    <!-- ====================== -->
+
+    <section
+            id="paso2"
+            style="display:none;">
+
+        <h2>Paso 2 de 5 - Especialidad</h2>
+
+        <select
+                id="especialidadId"
+                th:field="*{especialidadId}"
+                required>
+
+            <option value="">
+                Seleccione una especialidad
+            </option>
+
+        </select>
+
+        <br><br>
+
+        <button
+                type="button"
+                onclick="mostrarPaso(1)">
+            Anterior
+        </button>
+
+        <button
+                type="button"
+                onclick="irPaso3()">
+            Siguiente
+        </button>
+
+    </section>
+
+    <!-- ====================== -->
+    <!-- PASO 3 -->
+    <!-- ====================== -->
+
+    <section
+            id="paso3"
+            style="display:none;">
+
+        <h2>Paso 3 de 5 - Médico</h2>
+
+        <select
+                id="medicoId"
+                th:field="*{medicoId}"
+                required>
+
+            <option value="">
+                Seleccione un médico
+            </option>
+
+        </select>
+
+        <br><br>
+
+        <button
+                type="button"
+                onclick="mostrarPaso(2)">
+            Anterior
+        </button>
+
+        <button
+                type="button"
+                onclick="irPaso4()">
+            Siguiente
+        </button>
+
+    </section>
+
+    <!-- ====================== -->
+    <!-- PASO 4 -->
+    <!-- ====================== -->
+
+    <section
+            id="paso4"
+            style="display:none;">
+
+        <h2>Paso 4 de 5 - Fecha y hora</h2>
+
+        <label for="fecha">
+            Fecha
+        </label>
+
+        <input
+                type="date"
+                id="fecha"
+                required>
+
+        <br><br>
+
+        <label for="horario">
+            Horario
+        </label>
+
+        <select
+                id="horario"
+                required>
+
+            <option value="">
+                Seleccione primero una fecha
+            </option>
+
+        </select>
+
+        <!--
+            Este es el campo REAL que viaja
+            al backend.
+        -->
+        <input
+                type="hidden"
+                id="fechaHoraInicio"
+                th:field="*{fechaHoraInicio}">
+
+        <br><br>
+
+        <button
+                type="button"
+                onclick="mostrarPaso(3)">
+            Anterior
+        </button>
+
+        <button
+                type="button"
+                onclick="irPaso5()">
+            Siguiente
+        </button>
+
+    </section>
+
+    <!-- ====================== -->
+    <!-- PASO 5 -->
+    <!-- ====================== -->
+
+    <section
+            id="paso5"
+            style="display:none;">
+
+        <h2>Paso 5 de 5 - Confirmación</h2>
+
+        <label for="motivoConsulta">
+            Motivo de consulta
+        </label>
+
+        <br>
+
+        <textarea
+                id="motivoConsulta"
+                th:field="*{motivoConsulta}"
+                minlength="10"
+                maxlength="2000"
+                rows="6"
+                cols="50"
+                required>
+        </textarea>
+
+        <p>
+            Caracteres:
+            <span id="contadorMotivo">
+                0
+            </span>
+            /2000
+        </p>
+
+        <hr>
+
+        <div>
+            <label for="documento">
+                Documento médico PDF
+            </label>
+
+            <input
+                    type="file"
+                    id="documento"
+                    th:field="*{documento}"
+                    accept="application/pdf">
+
+            <small>
+                Opcional. Solo PDF, máximo 2 MB.
+            </small>
+        </div>
+
+        <br>
+
+        <h3>Resumen</h3>
+
+        <p>
+            Sucursal:
+            <strong id="resumenSucursal"></strong>
+        </p>
+
+        <p>
+            Especialidad:
+            <strong id="resumenEspecialidad"></strong>
+        </p>
+
+        <p>
+            Médico:
+            <strong id="resumenMedico"></strong>
+        </p>
+
+        <p>
+            Fecha y hora:
+            <strong id="resumenHorario"></strong>
+        </p>
+
+        <button
+                type="button"
+                onclick="mostrarPaso(4)">
+            Anterior
+        </button>
+
+        <button type="submit">
+            Confirmar cita
+        </button>
+
+    </section>
+
+</form>
+
+<script>
+
+    function mostrarPaso(numero) {
+
+        for (let i = 1; i <= 5; i++) {
+
+            document.getElementById(
+                "paso" + i
+            ).style.display =
+                i === numero
+                    ? "block"
+                    : "none";
+        }
+    }
+
+    async function irPaso2() {
+
+        const sucursal =
+            document.getElementById(
+                "sucursalId"
+            );
+
+        if (!sucursal.value) {
+            alert("Seleccione una sucursal");
+            return;
+        }
+
+        const response =
+            await fetch(
+                "/api/citas/especialidades?sucursalId="
+                + sucursal.value
+            );
+
+        const datos =
+            await response.json();
+
+        const select =
+            document.getElementById(
+                "especialidadId"
+            );
+
+        select.innerHTML =
+            '<option value="">Seleccione una especialidad</option>';
+
+        datos.forEach(item => {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+            option.value = item.id;
+            option.textContent =
+                item.nombre;
+
+            select.appendChild(
+                option
+            );
+        });
+
+        mostrarPaso(2);
+    }
+
+    async function irPaso3() {
+
+        const sucursalId =
+            document.getElementById(
+                "sucursalId"
+            ).value;
+
+        const especialidad =
+            document.getElementById(
+                "especialidadId"
+            );
+
+        if (!especialidad.value) {
+            alert(
+                "Seleccione una especialidad"
+            );
+            return;
+        }
+
+        const response =
+            await fetch(
+                "/api/citas/medicos?sucursalId="
+                + sucursalId
+                + "&especialidadId="
+                + especialidad.value
+            );
+
+        const datos =
+            await response.json();
+
+        const select =
+            document.getElementById(
+                "medicoId"
+            );
+
+        select.innerHTML =
+            '<option value="">Seleccione un médico</option>';
+
+        datos.forEach(item => {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+            option.value = item.id;
+            option.textContent =
+                item.nombre;
+
+            select.appendChild(
+                option
+            );
+        });
+
+        mostrarPaso(3);
+    }
+
+    function irPaso4() {
+
+        const medico =
+            document.getElementById(
+                "medicoId"
+            );
+
+        if (!medico.value) {
+            alert("Seleccione un médico");
+            return;
+        }
+
+        mostrarPaso(4);
+    }
+
+    document.getElementById(
+        "fecha"
+    ).addEventListener(
+        "change",
+        cargarHorarios
+    );
+
+    async function cargarHorarios() {
+
+        const medicoId =
+            document.getElementById(
+                "medicoId"
+            ).value;
+
+        const fecha =
+            document.getElementById(
+                "fecha"
+            ).value;
+
+        const horario =
+            document.getElementById(
+                "horario"
+            );
+
+        horario.innerHTML =
+            '<option value="">Cargando...</option>';
+
+        if (!medicoId || !fecha) {
+            return;
+        }
+
+        const response =
+            await fetch(
+                "/api/citas/horarios?medicoId="
+                + medicoId
+                + "&fecha="
+                + fecha
+            );
+
+        const datos =
+            await response.json();
+
+        horario.innerHTML =
+            '<option value="">Seleccione un horario</option>';
+
+        if (datos.length === 0) {
+
+            horario.innerHTML =
+                '<option value="">No hay horarios disponibles</option>';
+
+            return;
+        }
+
+        datos.forEach(item => {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+            option.value =
+                item.inicio;
+
+            option.textContent =
+                item.etiqueta;
+
+            horario.appendChild(
+                option
+            );
+        });
+    }
+
+    function irPaso5() {
+
+        const horario =
+            document.getElementById(
+                "horario"
+            );
+
+        if (!document.getElementById(
+            "fecha"
+        ).value) {
+
+            alert("Seleccione una fecha");
+            return;
+        }
+
+        if (!horario.value) {
+
+            alert(
+                "Seleccione un horario"
+            );
+
+            return;
+        }
+
+        document.getElementById(
+            "fechaHoraInicio"
+        ).value =
+            horario.value;
+
+        actualizarResumen();
+
+        mostrarPaso(5);
+    }
+
+    function textoSeleccionado(id) {
+
+        const select =
+            document.getElementById(id);
+
+        return select.options[
+            select.selectedIndex
+            ].text;
+    }
+
+    function actualizarResumen() {
+
+        document.getElementById(
+            "resumenSucursal"
+        ).textContent =
+            textoSeleccionado(
+                "sucursalId"
+            );
+
+        document.getElementById(
+            "resumenEspecialidad"
+        ).textContent =
+            textoSeleccionado(
+                "especialidadId"
+            );
+
+        document.getElementById(
+            "resumenMedico"
+        ).textContent =
+            textoSeleccionado(
+                "medicoId"
+            );
+
+        document.getElementById(
+            "resumenHorario"
+        ).textContent =
+            document.getElementById(
+                "fecha"
+            ).value
+            + " "
+            + textoSeleccionado(
+                "horario"
+            );
+    }
+
+    const motivo =
+        document.getElementById(
+            "motivoConsulta"
+        );
+
+    const contador =
+        document.getElementById(
+            "contadorMotivo"
+        );
+
+    motivo.addEventListener(
+        "input",
+        function () {
+
+            contador.textContent =
+                motivo.value.length;
+        }
+    );
+
+    /*
+     * No permitir fechas pasadas
+     * desde el navegador.
+     */
+    const hoy =
+        new Date()
+            .toISOString()
+            .split("T")[0];
+
+    document.getElementById(
+        "fecha"
+    ).min = hoy;
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Crear usuario interno</title>
+</head>
+
+<body>
+
+<h1>Crear Usuario Interno</h1>
+
+<p>
+    <a th:href="@{/admin/usuarios}">
+        Volver al listado
+    </a>
+</p>
+
+<div th:if="${error}">
+    <strong th:text="${error}"></strong>
+</div>
+
+<form
+        th:action="@{/admin/usuarios/guardar}"
+        th:object="${usuarioForm}"
+        method="post">
+
+    <div>
+        <label for="nombreCompleto">
+            Nombre completo *
+        </label>
+
+        <input
+                type="text"
+                id="nombreCompleto"
+                th:field="*{nombreCompleto}"
+                minlength="10"
+                maxlength="100"
+                required>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="nombreUsuario">
+            Usuario *
+        </label>
+
+        <input
+                type="text"
+                id="nombreUsuario"
+                th:field="*{nombreUsuario}"
+                minlength="8"
+                maxlength="9"
+                pattern="[A-Za-z0-9]{8,9}"
+                required>
+
+        <small>
+            8 a 9 caracteres alfanuméricos.
+        </small>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="passwordTemporal">
+            Contraseña temporal *
+        </label>
+
+        <input
+                type="password"
+                id="passwordTemporal"
+                th:field="*{passwordTemporal}"
+                minlength="12"
+                required>
+
+        <small>
+            Mínimo 12 caracteres.
+        </small>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="rolId">
+            Rol *
+        </label>
+
+        <select
+                id="rolId"
+                th:field="*{rolId}"
+                required
+                onchange="actualizarEspecialidad()">
+
+            <option value="">
+                Seleccione...
+            </option>
+
+            <option
+                    th:each="rol : ${roles}"
+                    th:value="${rol.id}"
+                    th:text="${rol.nombre}"
+                    th:attr="data-codigo=${rol.codigo}">
+            </option>
+
+        </select>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="sucursalId">
+            Sucursal *
+        </label>
+
+        <select
+                id="sucursalId"
+                th:field="*{sucursalId}"
+                required>
+
+            <option value="">
+                Seleccione...
+            </option>
+
+            <option
+                    th:each="sucursal : ${sucursales}"
+                    th:value="${sucursal.id}"
+                    th:text="${sucursal.nombre}">
+            </option>
+
+        </select>
+    </div>
+
+    <br>
+
+    <div id="contenedorEspecialidad"
+         style="display:none;">
+
+        <label for="especialidadId">
+            Especialidad *
+        </label>
+
+        <select
+                id="especialidadId"
+                th:field="*{especialidadId}">
+
+            <option value="">
+                Seleccione...
+            </option>
+
+            <option
+                    th:each="especialidad : ${especialidades}"
+                    th:value="${especialidad.id}"
+                    th:text="${especialidad.nombre}">
+            </option>
+
+        </select>
+
+    </div>
+
+    <br>
+
+    <div>
+        <label for="dpi">
+            DPI
+        </label>
+
+        <input
+                type="text"
+                id="dpi"
+                th:field="*{dpi}"
+                maxlength="13"
+                pattern="[0-9]{13}">
+
+        <small>
+            Opcional. Exactamente 13 dígitos.
+        </small>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="nit">
+            NIT
+        </label>
+
+        <input
+                type="text"
+                id="nit"
+                th:field="*{nit}"
+                minlength="8"
+                maxlength="9"
+                pattern="[A-Za-z0-9]{8,9}">
+
+        <small>
+            Opcional. 8 a 9 caracteres alfanuméricos.
+        </small>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="telefono">
+            Teléfono
+        </label>
+
+        <input
+                type="text"
+                id="telefono"
+                th:field="*{telefono}"
+                maxlength="8"
+                pattern="[0-9]{8}">
+
+        <small>
+            Opcional. 8 dígitos.
+        </small>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="numeroSeguro">
+            Número de seguro
+        </label>
+
+        <input
+                type="text"
+                id="numeroSeguro"
+                th:field="*{numeroSeguro}"
+                minlength="5"
+                maxlength="50">
+
+        <small>
+            Opcional. Entre 5 y 50 caracteres.
+        </small>
+    </div>
+
+    <br>
+
+    <button type="submit">
+        Crear usuario
+    </button>
+
+</form>
+
+<script>
+    function actualizarEspecialidad() {
+
+        const rolSelect =
+            document.getElementById("rolId");
+
+        const contenedor =
+            document.getElementById(
+                "contenedorEspecialidad"
+            );
+
+        const especialidad =
+            document.getElementById(
+                "especialidadId"
+            );
+
+        const opcion =
+            rolSelect.options[
+                rolSelect.selectedIndex
+                ];
+
+        const codigo =
+            opcion.getAttribute("data-codigo");
+
+        if (codigo === "MEDICO") {
+
+            contenedor.style.display = "block";
+
+            especialidad.required = true;
+
+        } else {
+
+            contenedor.style.display = "none";
+
+            especialidad.required = false;
+            especialidad.value = "";
+        }
+    }
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        actualizarEspecialidad
+    );
+</script>
+
+</body>
+</html>

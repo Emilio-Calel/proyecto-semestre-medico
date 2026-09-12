@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Pago en línea</title>
+</head>
+
+<body>
+
+<h1>Pago en Línea</h1>
+
+<div th:if="${error}">
+    <strong th:text="${error}"></strong>
+</div>
+
+<hr>
+
+<h2>Resumen de la cita</h2>
+
+<p>
+    Número de cita:
+    <strong th:text="${cita.numeroCita}">
+    </strong>
+</p>
+
+<p>
+    Paciente:
+    <strong th:text="${cita.paciente.nombreCompleto}">
+    </strong>
+</p>
+
+<p>
+    Sucursal:
+    <strong th:text="${cita.sucursal.nombre}">
+    </strong>
+</p>
+
+<p>
+    Especialidad:
+    <strong th:text="${cita.especialidad.nombre}">
+    </strong>
+</p>
+
+<p>
+    Médico:
+    <strong th:text="${cita.medico.personal.nombreCompleto}">
+    </strong>
+</p>
+
+<p>
+    Fecha:
+    <strong th:text="${cita.fechaHoraInicio}">
+    </strong>
+</p>
+
+<p>
+    Total:
+    Q
+    <strong th:text="${monto}">
+    </strong>
+</p>
+
+<hr>
+
+<h2>Datos de tarjeta</h2>
+
+<form
+        th:action="@{/pagos/online/procesar}"
+        th:object="${pagoForm}"
+        method="post">
+
+    <input
+            type="hidden"
+            th:field="*{citaId}">
+
+    <input
+            type="hidden"
+            th:field="*{claveIdempotencia}">
+
+    <div>
+        <label for="numeroTarjeta">
+            Número de tarjeta *
+        </label>
+
+        <input
+                type="text"
+                id="numeroTarjeta"
+                th:field="*{numeroTarjeta}"
+                minlength="13"
+                maxlength="19"
+                inputmode="numeric"
+                autocomplete="off"
+                required>
+
+        <small>
+            Entre 13 y 19 dígitos.
+        </small>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="nombreTitular">
+            Nombre del titular *
+        </label>
+
+        <input
+                type="text"
+                id="nombreTitular"
+                th:field="*{nombreTitular}"
+                minlength="5"
+                maxlength="100"
+                required>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="expiracion">
+            Expiración *
+        </label>
+
+        <input
+                type="text"
+                id="expiracion"
+                th:field="*{expiracion}"
+                placeholder="MM/YY"
+                maxlength="5"
+                required>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="cvv">
+            CVV *
+        </label>
+
+        <input
+                type="password"
+                id="cvv"
+                th:field="*{cvv}"
+                minlength="3"
+                maxlength="4"
+                inputmode="numeric"
+                autocomplete="off"
+                required>
+    </div>
+
+    <br>
+
+    <button type="submit">
+        Pagar Q<span th:text="${monto}"></span>
+    </button>
+
+</form>
+
+<p>
+    <a th:href="@{/}">
+        Cancelar
+    </a>
+</p>
+
+<script>
+
+    const tarjeta =
+        document.getElementById(
+            "numeroTarjeta"
+        );
+
+    tarjeta.addEventListener(
+        "input",
+        function () {
+
+            tarjeta.value =
+                tarjeta.value
+                    .replace(/\D/g, "")
+                    .slice(0, 19);
+        }
+    );
+
+    const expiracion =
+        document.getElementById(
+            "expiracion"
+        );
+
+    expiracion.addEventListener(
+        "input",
+        function () {
+
+            let valor =
+                expiracion.value
+                    .replace(/\D/g, "")
+                    .slice(0, 4);
+
+            if (valor.length >= 3) {
+
+                valor =
+                    valor.substring(0, 2)
+                    + "/"
+                    + valor.substring(2);
+            }
+
+            expiracion.value =
+                valor;
+        }
+    );
+
+    const cvv =
+        document.getElementById(
+            "cvv"
+        );
+
+    cvv.addEventListener(
+        "input",
+        function () {
+
+            cvv.value =
+                cvv.value
+                    .replace(/\D/g, "")
+                    .slice(0, 4);
+        }
+    );
+
+</script>
+
+</body>
+</html>

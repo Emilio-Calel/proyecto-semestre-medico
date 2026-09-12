@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Recepción</title>
+</head>
+
+<body>
+
+<h1>Recepción - Verificación de Citas</h1>
+
+<div th:if="${mensaje}">
+    <strong th:text="${mensaje}"></strong>
+</div>
+
+<div th:if="${error}">
+    <strong th:text="${error}"></strong>
+</div>
+
+<hr>
+
+<form
+        th:action="@{/recepcion}"
+        method="get">
+
+    <label for="criterio">
+        Número de cita o DPI
+    </label>
+
+    <input
+            type="text"
+            id="criterio"
+            name="criterio"
+            th:value="${criterio}"
+            maxlength="30"
+            required>
+
+    <button type="submit">
+        Buscar
+    </button>
+
+</form>
+
+<hr>
+
+<div th:if="${resultados != null}">
+
+    <p th:if="${#lists.isEmpty(resultados)}">
+        No se encontraron citas.
+    </p>
+
+    <table
+            th:if="${!#lists.isEmpty(resultados)}"
+            border="1"
+            cellpadding="7">
+
+        <thead>
+
+        <tr>
+            <th>Cita</th>
+            <th>Paciente</th>
+            <th>Sucursal</th>
+            <th>Especialidad</th>
+            <th>Médico</th>
+            <th>Fecha/Hora</th>
+            <th>Estado</th>
+            <th>Acción</th>
+            <th>Teléfono</th>
+            <th>Correo</th>
+            <th>Pago</th>
+            <th>Método</th>
+        </tr>
+
+        </thead>
+
+        <tbody>
+
+        <tr th:each="cita : ${resultados}">
+
+            <td th:text="${cita.numeroCita}">
+            </td>
+
+            <td th:text="${cita.paciente}">
+            </td>
+
+            <td th:text="${cita.sucursal}">
+            </td>
+
+            <td th:text="${cita.especialidad}">
+            </td>
+
+            <td th:text="${cita.medico}">
+            </td>
+
+            <td th:text="${cita.fechaHora}">
+            </td>
+
+            <td th:text="${cita.estado}">
+            </td>
+
+            <td th:text="${cita.telefono}">
+            </td>
+
+            <td th:text="${cita.correo}">
+            </td>
+            <td th:text="${cita.estadoPago}">
+            </td>
+
+            <td th:text="${cita.metodoPago}">
+            </td>
+
+            <td>
+
+                <form
+                        th:if="${cita.estado == 'CONFIRMADA'}"
+                        th:action="@{/recepcion/citas/{id}/llegada(id=${cita.citaId})}"
+                        method="post">
+
+
+                    <button type="submit">
+                        Registrar llegada
+                    </button>
+
+                </form>
+
+                <span
+                        th:unless="${cita.estado == 'CONFIRMADA'}">
+
+                    No disponible
+
+                </span>
+
+            </td>
+
+        </tr>
+
+        </tbody>
+
+    </table>
+
+</div>
+
+<p>
+    <a th:href="@{/}">
+        Volver
+    </a>
+</p>
+
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Enfermería</title>
+</head>
+
+<body>
+
+<h1>Enfermería - Pacientes Presentes</h1>
+
+<div th:if="${mensaje}">
+    <strong th:text="${mensaje}"></strong>
+</div>
+
+<div th:if="${error}">
+    <strong th:text="${error}"></strong>
+</div>
+
+<hr>
+
+<div th:if="${#lists.isEmpty(pacientes)}">
+
+    <p>
+        No hay pacientes pendientes de toma de signos vitales.
+    </p>
+
+</div>
+
+<table
+        th:if="${!#lists.isEmpty(pacientes)}"
+        border="1"
+        cellpadding="7">
+
+    <thead>
+
+    <tr>
+        <th>Cita</th>
+        <th>Paciente</th>
+        <th>Sucursal</th>
+        <th>Especialidad</th>
+        <th>Médico</th>
+        <th>Fecha/Hora</th>
+        <th>Estado</th>
+        <th>Acción</th>
+    </tr>
+
+    </thead>
+
+    <tbody>
+
+    <tr th:each="cita : ${pacientes}">
+
+        <td th:text="${cita.numeroCita}">
+        </td>
+
+        <td th:text="${cita.paciente.nombreCompleto}">
+        </td>
+
+        <td th:text="${cita.sucursal.nombre}">
+        </td>
+
+        <td th:text="${cita.especialidad.nombre}">
+        </td>
+
+        <td th:text="${cita.medico.personal.nombreCompleto}">
+        </td>
+
+        <td th:text="${cita.fechaHoraInicio}">
+        </td>
+
+        <td th:text="${cita.estadoCita.codigo}">
+        </td>
+
+        <td>
+
+            <form
+                    th:if="${cita.estadoCita.codigo == 'PACIENTE_PRESENTE'}"
+                    th:action="@{/enfermeria/citas/{id}/iniciar(id=${cita.id})}"
+                    method="post">
+
+                <button type="submit">
+                    Iniciar toma de signos
+                </button>
+
+            </form>
+
+            <a
+                    th:if="${cita.estadoCita.codigo == 'SIGNOS_VITALES'}"
+                    th:href="@{/enfermeria/citas/{id}/signos(id=${cita.id})}">
+
+                Continuar toma de signos
+
+            </a>
+
+        </td>
+
+    </tr>
+
+    </tbody>
+
+</table>
+
+<p>
+    <a th:href="@{/}">
+        Volver
+    </a>
+</p>
+
+</body>
+</html>

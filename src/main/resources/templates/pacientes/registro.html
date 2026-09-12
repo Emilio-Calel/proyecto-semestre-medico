@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Registro de paciente</title>
+</head>
+
+<body>
+
+<h1>Registro de Paciente</h1>
+
+<p>
+    ¿Ya tiene una cuenta?
+
+    <a th:href="@{/login}">
+        Iniciar sesión
+    </a>
+</p>
+
+<div th:if="${error}">
+    <strong th:text="${error}"></strong>
+</div>
+
+<form
+        th:action="@{/registro}"
+        th:object="${pacienteForm}"
+        method="post">
+
+    <div>
+        <label for="nombreCompleto">
+            Nombre completo *
+        </label>
+
+        <input
+                type="text"
+                id="nombreCompleto"
+                th:field="*{nombreCompleto}"
+                minlength="10"
+                maxlength="100"
+                required>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="dpi">
+            DPI *
+        </label>
+
+        <input
+                type="text"
+                id="dpi"
+                th:field="*{dpi}"
+                minlength="13"
+                maxlength="13"
+                pattern="[0-9]{13}"
+                required>
+
+        <small>
+            Exactamente 13 dígitos.
+        </small>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="nit">
+            NIT *
+        </label>
+
+        <input
+                type="text"
+                id="nit"
+                th:field="*{nit}"
+                minlength="8"
+                maxlength="9"
+                pattern="[A-Za-z0-9]{8,9}"
+                required>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="telefono">
+            Teléfono *
+        </label>
+
+        <input
+                type="text"
+                id="telefono"
+                th:field="*{telefono}"
+                minlength="8"
+                maxlength="8"
+                pattern="[0-9]{8}"
+                required>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="numeroSeguro">
+            Número de seguro
+        </label>
+
+        <input
+                type="text"
+                id="numeroSeguro"
+                th:field="*{numeroSeguro}"
+                minlength="5"
+                maxlength="50">
+
+        <small>
+            Opcional. Entre 5 y 50 caracteres.
+        </small>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="correo">
+            Correo electrónico *
+        </label>
+
+        <input
+                type="email"
+                id="correo"
+                th:field="*{correo}"
+                maxlength="254"
+                required>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="nombreUsuario">
+            Usuario *
+        </label>
+
+        <input
+                type="text"
+                id="nombreUsuario"
+                th:field="*{nombreUsuario}"
+                minlength="8"
+                maxlength="9"
+                pattern="[A-Za-z0-9]{8,9}"
+                required>
+
+        <small>
+            Entre 8 y 9 caracteres alfanuméricos.
+        </small>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="password">
+            Contraseña *
+        </label>
+
+        <input
+                type="password"
+                id="password"
+                th:field="*{password}"
+                minlength="12"
+                required>
+
+        <small>
+            Mínimo 12 caracteres.
+        </small>
+    </div>
+
+    <br>
+
+    <button type="submit">
+        Registrarme
+    </button>
+
+</form>
+
+</body>
+</html>
