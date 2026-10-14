@@ -74,6 +74,13 @@ public class Cita {
     )
     private LocalDateTime fechaCreacion;
 
+    @Column(
+            name = "prioridad_emergencia",
+            nullable = false
+    )
+    private Boolean prioridadEmergencia = false;
+
+
     @Version
     @Column(nullable = false)
     private Long version;
@@ -92,6 +99,10 @@ public class Cita {
         if (origen == null
                 || origen.isBlank()) {
             origen = "PORTAL";
+        }
+
+        if (prioridadEmergencia == null) {
+            prioridadEmergencia = false;
         }
     }
 
@@ -209,5 +220,16 @@ public class Cita {
 
     public Long getVersion() {
         return version;
+    }
+
+    public Boolean getPrioridadEmergencia() {
+        return prioridadEmergencia;
+    }
+
+    public void setPrioridadEmergencia(
+            Boolean prioridadEmergencia
+    ) {
+        this.prioridadEmergencia =
+                prioridadEmergencia;
     }
 }

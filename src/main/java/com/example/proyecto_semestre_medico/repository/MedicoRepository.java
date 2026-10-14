@@ -13,6 +13,9 @@ import java.util.Optional;
 public interface MedicoRepository extends JpaRepository<Medico, Long> {
 
     Optional<Medico> findByPersonalId(Long personalId);
+    Optional<Medico> findByPersonalUsuarioNombreUsuario(
+            String nombreUsuario
+    );
 
     @Query("""
     SELECT new com.example.proyecto_semestre_medico.dto.MedicoOpcionDTO(

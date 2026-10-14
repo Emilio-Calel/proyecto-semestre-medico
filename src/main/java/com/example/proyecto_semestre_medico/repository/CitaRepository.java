@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import com.example.proyecto_semestre_medico.model.Cita;
 
 public interface CitaRepository
         extends JpaRepository<Cita, Long> {
@@ -116,6 +117,14 @@ public interface CitaRepository
 """)
     Optional<Cita> buscarCitaCompletaPorId(
             @Param("citaId") Long citaId
+    );
+    List<Cita> findByEstadoCitaCodigoOrderByFechaHoraInicioAsc(
+            String codigo
+    );
+    List<Cita>
+    findByMedicoIdAndEstadoCitaCodigoOrderByFechaHoraInicioAsc(
+            Long medicoId,
+            String codigo
     );
 }
 

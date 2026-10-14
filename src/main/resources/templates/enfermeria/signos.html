@@ -4,235 +4,773 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
     <title>Signos vitales</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f8f9;
+            color: #1f2933;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            min-height: 74px;
+            padding: 0 34px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background:
+                    linear-gradient(
+                            135deg,
+                            #0f6f7a,
+                            #1596a3
+                    );
+            color: #ffffff;
+            box-shadow:
+                    0 3px 12px
+                    rgba(15, 80, 90, 0.15);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background:
+                    rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 23px;
+        }
+
+        .brand-text h1 {
+            font-size: 20px;
+            margin-bottom: 3px;
+        }
+
+        .brand-text span {
+            font-size: 12px;
+            color:
+                    rgba(255, 255, 255, 0.8);
+        }
+
+        .back-link {
+            text-decoration: none;
+            color: #ffffff;
+            border: 1px solid
+            rgba(255, 255, 255, 0.3);
+            background:
+                    rgba(255, 255, 255, 0.12);
+            padding: 10px 15px;
+            border-radius: 9px;
+            font-size: 13px;
+            font-weight: bold;
+            transition:
+                    background 0.2s ease,
+                    transform 0.2s ease;
+        }
+
+        .back-link:hover {
+            background:
+                    rgba(255, 255, 255, 0.22);
+            transform: translateY(-1px);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 44px 24px;
+        }
+
+        .page-header {
+            margin-bottom: 28px;
+        }
+
+        .page-label {
+            display: inline-block;
+            background: #e7f5f6;
+            color: #0f6f7a;
+            padding: 7px 11px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 12px;
+        }
+
+        .page-header h2 {
+            font-size: 30px;
+            margin-bottom: 8px;
+        }
+
+        .page-header p {
+            color: #6f7f85;
+            line-height: 1.6;
+        }
+
+        .alert-error {
+            background: #fff1f1;
+            border: 1px solid #efb6b6;
+            color: #9b1c1c;
+            padding: 14px 16px;
+            border-radius: 10px;
+            margin-bottom: 22px;
+            font-size: 14px;
+        }
+
+        .patient-card,
+        .form-card {
+            background: #ffffff;
+            border: 1px solid #e2ebed;
+            border-radius: 18px;
+            box-shadow:
+                    0 8px 24px
+                    rgba(30, 70, 80, 0.07);
+        }
+
+        .patient-card {
+            margin-bottom: 26px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 22px 24px;
+            border-bottom: 1px solid #e5edef;
+        }
+
+        .card-header h3 {
+            font-size: 19px;
+            margin-bottom: 4px;
+        }
+
+        .card-header p {
+            color: #7a898f;
+            font-size: 13px;
+        }
+
+        .patient-grid {
+            display: grid;
+            grid-template-columns:
+                    repeat(2, 1fr);
+            gap: 0 28px;
+            padding: 22px 24px;
+        }
+
+        .patient-item {
+            padding: 13px 0;
+            border-bottom: 1px solid #edf1f2;
+        }
+
+        .patient-label {
+            display: block;
+            font-size: 12px;
+            color: #7b898f;
+            margin-bottom: 5px;
+        }
+
+        .patient-value {
+            display: block;
+            font-size: 14px;
+            font-weight: bold;
+            color: #2f3e44;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 10px;
+            border-radius: 20px;
+            background: #e7f5f6;
+            color: #0f6f7a;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .form-card {
+            padding: 26px;
+        }
+
+        .form-card h3 {
+            font-size: 20px;
+            margin-bottom: 6px;
+        }
+
+        .form-card > p {
+            color: #79888e;
+            font-size: 13px;
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns:
+                    repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .form-group {
+            display: grid;
+            gap: 8px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: bold;
+            color: #374151;
+        }
+
+        .required {
+            color: #c83a3a;
+        }
+
+        .input-with-unit {
+            position: relative;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            border: 1px solid #ccd8db;
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+            background: #ffffff;
+            transition:
+                    border-color 0.2s ease,
+                    box-shadow 0.2s ease;
+        }
+
+        input {
+            padding: 13px 58px 13px 14px;
+        }
+
+        textarea {
+            padding: 13px 14px;
+            resize: vertical;
+            min-height: 130px;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        input:focus,
+        textarea:focus {
+            border-color: #1596a3;
+            box-shadow:
+                    0 0 0 3px
+                    rgba(21, 150, 163, 0.12);
+        }
+
+        .unit {
+            position: absolute;
+            right: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7d8b91;
+            font-size: 12px;
+            font-weight: bold;
+            pointer-events: none;
+        }
+
+        .helper-text {
+            color: #8a979c;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .textarea-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: -2px;
+            color: #8a979c;
+            font-size: 12px;
+        }
+
+        .info-box {
+            grid-column: 1 / -1;
+            background: #f1f8f9;
+            border: 1px solid #dbe9eb;
+            border-radius: 10px;
+            padding: 14px 16px;
+            color: #64747a;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .actions {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 4px;
+        }
+
+        .save-button {
+            border: none;
+            background:
+                    linear-gradient(
+                            135deg,
+                            #0f6f7a,
+                            #1596a3
+                    );
+            color: #ffffff;
+            padding: 13px 22px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            min-width: 220px;
+            transition:
+                    transform 0.2s ease,
+                    box-shadow 0.2s ease;
+        }
+
+        .save-button:hover {
+            transform: translateY(-1px);
+            box-shadow:
+                    0 8px 18px
+                    rgba(15, 111, 122, 0.23);
+        }
+
+        .footer {
+            text-align: center;
+            color: #99a4a8;
+            font-size: 12px;
+            padding: 28px 20px 36px;
+        }
+
+        @media (max-width: 700px) {
+            .topbar {
+                min-height: auto;
+                padding: 14px 18px;
+            }
+
+            .brand-text span {
+                display: none;
+            }
+
+            .container {
+                padding: 30px 14px;
+            }
+
+            .page-header h2 {
+                font-size: 25px;
+            }
+
+            .patient-grid,
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-group.full-width,
+            .info-box,
+            .actions {
+                grid-column: auto;
+            }
+
+            .form-card {
+                padding: 22px 18px;
+            }
+
+            .patient-grid {
+                padding: 18px;
+            }
+
+            .actions {
+                justify-content: stretch;
+            }
+
+            .save-button {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
-<h1>Registro de Signos Vitales</h1>
+<header class="topbar">
 
-<div th:if="${error}">
-    <strong th:text="${error}"></strong>
-</div>
+    <div class="brand">
 
-<hr>
+        <div class="brand-icon">
+            ❤
+        </div>
 
-<h2>Paciente</h2>
-
-<p>
-    Cita:
-    <strong th:text="${cita.numeroCita}">
-    </strong>
-</p>
-
-<p>
-    Paciente:
-    <strong th:text="${cita.paciente.nombreCompleto}">
-    </strong>
-</p>
-
-<p>
-    Especialidad:
-    <strong th:text="${cita.especialidad.nombre}">
-    </strong>
-</p>
-
-<p>
-    Médico:
-    <strong th:text="${cita.medico.personal.nombreCompleto}">
-    </strong>
-</p>
-
-<p>
-    Estado:
-    <strong th:text="${cita.estadoCita.codigo}">
-    </strong>
-</p>
-
-<hr>
-
-<form
-        th:action="@{/enfermeria/signos/guardar}"
-        th:object="${signosForm}"
-        method="post">
-
-    <input
-            type="hidden"
-            th:field="*{citaId}">
-
-    <div>
-
-        <label for="presionSistolica">
-            Presión sistólica *
-        </label>
-
-        <input
-                type="number"
-                id="presionSistolica"
-                th:field="*{presionSistolica}"
-                min="40"
-                max="300"
-                required>
-
-        <span>
-            mmHg
-        </span>
+        <div class="brand-text">
+            <h1>Enfermería</h1>
+            <span>Registro de signos vitales</span>
+        </div>
 
     </div>
 
-    <br>
-
-    <div>
-
-        <label for="presionDiastolica">
-            Presión diastólica *
-        </label>
-
-        <input
-                type="number"
-                id="presionDiastolica"
-                th:field="*{presionDiastolica}"
-                min="20"
-                max="200"
-                required>
-
-        <span>
-            mmHg
-        </span>
-
-    </div>
-
-    <br>
-
-    <div>
-
-        <label for="pulso">
-            Pulso *
-        </label>
-
-        <input
-                type="number"
-                id="pulso"
-                th:field="*{pulso}"
-                min="20"
-                max="250"
-                required>
-
-        <span>
-            lpm
-        </span>
-
-    </div>
-
-    <br>
-
-    <div>
-
-        <label for="temperatura">
-            Temperatura *
-        </label>
-
-        <input
-                type="number"
-                id="temperatura"
-                th:field="*{temperatura}"
-                min="30.0"
-                max="45.0"
-                step="0.1"
-                required>
-
-        <span>
-            °C
-        </span>
-
-    </div>
-
-    <br>
-
-    <div>
-
-        <label for="peso">
-            Peso *
-        </label>
-
-        <input
-                type="number"
-                id="peso"
-                th:field="*{peso}"
-                min="0.01"
-                max="500"
-                step="0.01"
-                required>
-
-        <span>
-            kg
-        </span>
-
-    </div>
-
-    <br>
-
-    <div>
-
-        <label for="talla">
-            Talla *
-        </label>
-
-        <input
-                type="number"
-                id="talla"
-                th:field="*{talla}"
-                min="1"
-                max="300"
-                step="0.01"
-                required>
-
-        <span>
-            cm
-        </span>
-
-    </div>
-
-    <br>
-
-    <div>
-
-        <label for="observaciones">
-            Observaciones
-        </label>
-
-        <br>
-
-        <textarea
-                id="observaciones"
-                th:field="*{observaciones}"
-                rows="5"
-                cols="50"
-                maxlength="1000">
-        </textarea>
-
-        <p>
-            <span id="contadorObservaciones">
-                0
-            </span>
-            /1000
-        </p>
-
-    </div>
-
-    <br>
-
-    <button type="submit">
-        Guardar signos vitales
-    </button>
-
-</form>
-
-<p>
-    <a th:href="@{/enfermeria}">
+    <a
+            class="back-link"
+            th:href="@{/enfermeria}">
         Volver
     </a>
-</p>
+
+</header>
+
+<main class="container">
+
+    <section class="page-header">
+
+        <span class="page-label">
+            Signos vitales
+        </span>
+
+        <h2>Registro de Signos Vitales</h2>
+
+        <p>
+            Ingrese las mediciones tomadas al paciente
+            antes de continuar con su atención médica.
+        </p>
+
+    </section>
+
+    <div
+            class="alert-error"
+            th:if="${error}">
+
+        <strong th:text="${error}"></strong>
+
+    </div>
+
+    <section class="patient-card">
+
+        <div class="card-header">
+
+            <h3>Información del paciente</h3>
+
+            <p>
+                Datos relacionados con la cita actual.
+            </p>
+
+        </div>
+
+        <div class="patient-grid">
+
+            <div class="patient-item">
+
+                <span class="patient-label">
+                    Número de cita
+                </span>
+
+                <span
+                        class="patient-value"
+                        th:text="${cita.numeroCita}">
+                </span>
+
+            </div>
+
+            <div class="patient-item">
+
+                <span class="patient-label">
+                    Paciente
+                </span>
+
+                <span
+                        class="patient-value"
+                        th:text="${cita.paciente.nombreCompleto}">
+                </span>
+
+            </div>
+
+            <div class="patient-item">
+
+                <span class="patient-label">
+                    Especialidad
+                </span>
+
+                <span
+                        class="patient-value"
+                        th:text="${cita.especialidad.nombre}">
+                </span>
+
+            </div>
+
+            <div class="patient-item">
+
+                <span class="patient-label">
+                    Médico
+                </span>
+
+                <span
+                        class="patient-value"
+                        th:text="${cita.medico.personal.nombreCompleto}">
+                </span>
+
+            </div>
+
+            <div class="patient-item">
+
+                <span class="patient-label">
+                    Estado
+                </span>
+
+                <span
+                        class="status-badge"
+                        th:text="${cita.estadoCita.codigo}">
+                </span>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <section class="form-card">
+
+        <h3>Mediciones</h3>
+
+        <p>
+            Complete todos los campos obligatorios.
+            Las unidades de medida se muestran junto a cada valor.
+        </p>
+
+        <form
+                th:action="@{/enfermeria/signos/guardar}"
+                th:object="${signosForm}"
+                method="post">
+
+            <input
+                    type="hidden"
+                    th:field="*{citaId}">
+
+            <div class="form-grid">
+
+                <div class="form-group">
+
+                    <label for="presionSistolica">
+                        Presión sistólica
+                        <span class="required">*</span>
+                    </label>
+
+                    <div class="input-with-unit">
+
+                        <input
+                                type="number"
+                                id="presionSistolica"
+                                th:field="*{presionSistolica}"
+                                min="40"
+                                max="300"
+                                placeholder="Ej. 120"
+                                required>
+
+                        <span class="unit">
+                            mmHg
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="presionDiastolica">
+                        Presión diastólica
+                        <span class="required">*</span>
+                    </label>
+
+                    <div class="input-with-unit">
+
+                        <input
+                                type="number"
+                                id="presionDiastolica"
+                                th:field="*{presionDiastolica}"
+                                min="20"
+                                max="200"
+                                placeholder="Ej. 80"
+                                required>
+
+                        <span class="unit">
+                            mmHg
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="pulso">
+                        Pulso
+                        <span class="required">*</span>
+                    </label>
+
+                    <div class="input-with-unit">
+
+                        <input
+                                type="number"
+                                id="pulso"
+                                th:field="*{pulso}"
+                                min="20"
+                                max="250"
+                                placeholder="Ej. 72"
+                                required>
+
+                        <span class="unit">
+                            lpm
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="temperatura">
+                        Temperatura
+                        <span class="required">*</span>
+                    </label>
+
+                    <div class="input-with-unit">
+
+                        <input
+                                type="number"
+                                id="temperatura"
+                                th:field="*{temperatura}"
+                                min="30.0"
+                                max="45.0"
+                                step="0.1"
+                                placeholder="Ej. 36.5"
+                                required>
+
+                        <span class="unit">
+                            °C
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="peso">
+                        Peso
+                        <span class="required">*</span>
+                    </label>
+
+                    <div class="input-with-unit">
+
+                        <input
+                                type="number"
+                                id="peso"
+                                th:field="*{peso}"
+                                min="0.01"
+                                max="500"
+                                step="0.01"
+                                placeholder="Ej. 70.50"
+                                required>
+
+                        <span class="unit">
+                            kg
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="talla">
+                        Talla
+                        <span class="required">*</span>
+                    </label>
+
+                    <div class="input-with-unit">
+
+                        <input
+                                type="number"
+                                id="talla"
+                                th:field="*{talla}"
+                                min="1"
+                                max="300"
+                                step="0.01"
+                                placeholder="Ej. 170"
+                                required>
+
+                        <span class="unit">
+                            cm
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div class="form-group full-width">
+
+                    <label for="observaciones">
+                        Observaciones
+                    </label>
+
+                    <textarea
+                            id="observaciones"
+                            th:field="*{observaciones}"
+                            rows="5"
+                            maxlength="1000"
+                            placeholder="Ingrese observaciones adicionales si es necesario.">
+                    </textarea>
+
+                    <div class="textarea-footer">
+
+                        <span id="contadorObservaciones">
+                            0
+                        </span>
+                        /1000
+
+                    </div>
+
+                </div>
+
+                <div class="info-box">
+                    Verifique las mediciones antes de guardar.
+                    Una vez registrados los signos vitales,
+                    el paciente continuará al estado de espera médica.
+                </div>
+
+                <div class="actions">
+
+                    <button
+                            class="save-button"
+                            type="submit">
+                        Guardar signos vitales
+                    </button>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </section>
+
+</main>
+
+<footer class="footer">
+    Sistema Informático Hospitalario
+</footer>
 
 <script>
 

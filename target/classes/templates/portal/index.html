@@ -4,72 +4,668 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
     <title>Portal Hospitalario</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background:
+                    linear-gradient(
+                            180deg,
+                            #f5fbfc 0%,
+                            #eef6f7 100%
+                    );
+            color: #1f2933;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            min-height: 74px;
+            padding: 0 34px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background:
+                    linear-gradient(
+                            135deg,
+                            #0f6f7a,
+                            #1596a3
+                    );
+            color: #ffffff;
+            box-shadow:
+                    0 3px 12px
+                    rgba(15, 80, 90, 0.15);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background:
+                    rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .brand-text h1 {
+            font-size: 21px;
+            margin-bottom: 3px;
+        }
+
+        .brand-text span {
+            font-size: 12px;
+            color:
+                    rgba(255, 255, 255, 0.8);
+        }
+
+        .login-link {
+            color: #ffffff;
+            text-decoration: none;
+            border: 1px solid
+            rgba(255, 255, 255, 0.3);
+            background:
+                    rgba(255, 255, 255, 0.12);
+            padding: 10px 15px;
+            border-radius: 9px;
+            font-size: 13px;
+            font-weight: bold;
+            transition:
+                    background 0.2s ease,
+                    transform 0.2s ease;
+        }
+
+        .login-link:hover {
+            background:
+                    rgba(255, 255, 255, 0.22);
+            transform: translateY(-1px);
+        }
+
+        .hero {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 70px 28px 44px;
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 46px;
+            align-items: center;
+        }
+
+        .hero-content {
+            max-width: 650px;
+        }
+
+        .hero-label {
+            display: inline-block;
+            background: #e2f4f5;
+            color: #0f6f7a;
+            padding: 7px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            margin-bottom: 18px;
+        }
+
+        .hero h2 {
+            font-size: 44px;
+            line-height: 1.12;
+            margin-bottom: 18px;
+            color: #17343a;
+        }
+
+        .hero p {
+            color: #68787e;
+            line-height: 1.7;
+            font-size: 17px;
+            margin-bottom: 28px;
+        }
+
+        .highlights {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+        }
+
+        .highlight {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #ffffff;
+            border: 1px solid #e3edef;
+            border-radius: 12px;
+            padding: 13px 14px;
+            font-size: 14px;
+            color: #415158;
+            box-shadow:
+                    0 4px 12px
+                    rgba(30, 70, 80, 0.04);
+        }
+
+        .highlight-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            background: #e8f6f7;
+            color: #0f6f7a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .appointment-card {
+            background: #ffffff;
+            border-radius: 20px;
+            border: 1px solid #dfebed;
+            box-shadow:
+                    0 16px 38px
+                    rgba(30, 70, 80, 0.12);
+            padding: 32px;
+        }
+
+        .appointment-card h3 {
+            font-size: 25px;
+            margin-bottom: 8px;
+            color: #17343a;
+        }
+
+        .appointment-card > p {
+            color: #75858b;
+            line-height: 1.6;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+
+        .alert-error {
+            background: #fff1f1;
+            border: 1px solid #efb6b6;
+            color: #9b1c1c;
+            padding: 13px 15px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            display: grid;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: bold;
+            color: #374151;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px 68px 13px 14px;
+            border: 1px solid #ccd8db;
+            border-radius: 10px;
+            font-size: 15px;
+            outline: none;
+            background: #ffffff;
+            transition:
+                    border-color 0.2s ease,
+                    box-shadow 0.2s ease;
+        }
+
+        input:focus {
+            border-color: #1596a3;
+            box-shadow:
+                    0 0 0 3px
+                    rgba(21, 150, 163, 0.12);
+        }
+
+        #contador {
+            position: absolute;
+            right: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #819096;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .helper-text {
+            margin-top: 7px;
+            color: #8a979c;
+            font-size: 12px;
+        }
+
+        .submit-button {
+            width: 100%;
+            margin-top: 20px;
+            border: none;
+            border-radius: 10px;
+            background:
+                    linear-gradient(
+                            135deg,
+                            #0f6f7a,
+                            #1596a3
+                    );
+            color: #ffffff;
+            padding: 14px 18px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition:
+                    transform 0.2s ease,
+                    box-shadow 0.2s ease;
+        }
+
+        .submit-button:hover {
+            transform: translateY(-1px);
+            box-shadow:
+                    0 8px 18px
+                    rgba(15, 111, 122, 0.23);
+        }
+
+        .login-question {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #e7edef;
+            text-align: center;
+            color: #738188;
+            font-size: 14px;
+        }
+
+        .login-question a {
+            color: #0f6f7a;
+            font-weight: bold;
+            text-decoration: none;
+            margin-left: 4px;
+        }
+
+        .login-question a:hover {
+            text-decoration: underline;
+        }
+
+        .info-section {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 16px 28px 60px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns:
+                    repeat(4, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .info-card {
+            background: #ffffff;
+            border: 1px solid #e2ebed;
+            border-radius: 15px;
+            padding: 22px;
+            box-shadow:
+                    0 6px 16px
+                    rgba(30, 70, 80, 0.05);
+        }
+
+        .info-card-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            background: #e8f6f7;
+            color: #0f6f7a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-bottom: 15px;
+        }
+
+        .info-card h4 {
+            font-size: 17px;
+            margin-bottom: 8px;
+        }
+
+        .info-card p {
+            color: #738188;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .footer {
+            border-top: 1px solid #e0e9eb;
+            background: #ffffff;
+            text-align: center;
+            color: #96a2a7;
+            font-size: 12px;
+            padding: 24px 18px;
+        }
+
+        @media (max-width: 900px) {
+            .hero {
+                grid-template-columns: 1fr;
+                padding-top: 45px;
+            }
+
+            .hero-content {
+                max-width: 100%;
+            }
+
+            .info-grid {
+                grid-template-columns:
+                        repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .topbar {
+                padding: 14px 18px;
+                min-height: auto;
+            }
+
+            .brand-text span {
+                display: none;
+            }
+
+            .hero {
+                padding:
+                        34px 16px
+                        30px;
+                gap: 30px;
+            }
+
+            .hero h2 {
+                font-size: 34px;
+            }
+
+            .highlights {
+                grid-template-columns: 1fr;
+            }
+
+            .appointment-card {
+                padding: 24px 20px;
+            }
+
+            .info-section {
+                padding:
+                        10px 16px
+                        40px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
-<h1>Portal Hospitalario</h1>
+<header class="topbar">
 
-<p>
-    Consulte nuestros servicios,
-    especialidades, ubicaciones y horarios.
-</p>
+    <div class="brand">
 
-<hr>
+        <div class="brand-icon">
+            ✚
+        </div>
 
-<h2>Agendar una cita</h2>
-
-<p>
-    Para continuar, ingrese su DPI.
-</p>
-
-<div th:if="${error}">
-    <strong th:text="${error}"></strong>
-</div>
-
-<form
-        th:action="@{/portal/verificar-dpi}"
-        th:object="${verificacionDpi}"
-        method="post">
-
-    <div>
-
-        <label for="dpi">
-            DPI
-        </label>
-
-        <input
-                type="text"
-                id="dpi"
-                th:field="*{dpi}"
-                minlength="13"
-                maxlength="13"
-                pattern="[0-9]{13}"
-                inputmode="numeric"
-                required>
-
-        <span id="contador">
-            0/13
-        </span>
+        <div class="brand-text">
+            <h1>Portal Hospitalario</h1>
+            <span>Atención y servicios médicos</span>
+        </div>
 
     </div>
 
-    <br>
-
-    <button type="submit">
-        Verificar registro
-    </button>
-
-</form>
-
-<p>
-    ¿Ya tiene cuenta?
-
-    <a th:href="@{/login}">
+    <a
+            class="login-link"
+            th:href="@{/login}">
         Iniciar sesión
     </a>
-</p>
+
+</header>
+
+<main>
+
+    <section class="hero">
+
+        <div class="hero-content">
+
+            <span class="hero-label">
+                Atención para nuestros pacientes
+            </span>
+
+            <h2>
+                Su salud, más cerca y mejor organizada
+            </h2>
+
+            <p>
+                Consulte nuestros servicios, especialidades,
+                ubicaciones y horarios. También puede iniciar
+                el proceso para agendar una cita médica.
+            </p>
+
+            <div class="highlights">
+
+                <div class="highlight">
+
+                    <div class="highlight-icon">
+                        🩺
+                    </div>
+
+                    <span>
+                        Especialidades médicas
+                    </span>
+
+                </div>
+
+                <div class="highlight">
+
+                    <div class="highlight-icon">
+                        📍
+                    </div>
+
+                    <span>
+                        Diferentes sucursales
+                    </span>
+
+                </div>
+
+                <div class="highlight">
+
+                    <div class="highlight-icon">
+                        🕒
+                    </div>
+
+                    <span>
+                        Horarios disponibles
+                    </span>
+
+                </div>
+
+                <div class="highlight">
+
+                    <div class="highlight-icon">
+                        📅
+                    </div>
+
+                    <span>
+                        Agenda de citas
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="appointment-card">
+
+            <h3>Agendar una cita</h3>
+
+            <p>
+                Para continuar, ingrese su DPI.
+                Verificaremos si ya posee un registro
+                como paciente.
+            </p>
+
+            <div
+                    class="alert-error"
+                    th:if="${error}">
+
+                <strong th:text="${error}"></strong>
+
+            </div>
+
+            <form
+                    th:action="@{/portal/verificar-dpi}"
+                    th:object="${verificacionDpi}"
+                    method="post">
+
+                <div class="form-group">
+
+                    <label for="dpi">
+                        DPI
+                    </label>
+
+                    <div class="input-wrapper">
+
+                        <input
+                                type="text"
+                                id="dpi"
+                                th:field="*{dpi}"
+                                minlength="13"
+                                maxlength="13"
+                                pattern="[0-9]{13}"
+                                inputmode="numeric"
+                                placeholder="Ingrese los 13 dígitos"
+                                autocomplete="off"
+                                required>
+
+                        <span id="contador">
+                            0/13
+                        </span>
+
+                    </div>
+
+                    <span class="helper-text">
+                        Ingrese únicamente números.
+                    </span>
+
+                </div>
+
+                <button
+                        class="submit-button"
+                        type="submit">
+                    Verificar registro
+                </button>
+
+            </form>
+
+            <div class="login-question">
+
+                ¿Ya tiene cuenta?
+
+                <a th:href="@{/login}">
+                    Iniciar sesión
+                </a>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <section class="info-section">
+
+        <div class="info-grid">
+
+            <article class="info-card">
+
+                <div class="info-card-icon">
+                    🏥
+                </div>
+
+                <h4>Servicios</h4>
+
+                <p>
+                    Acceda a los servicios disponibles
+                    para atención médica y hospitalaria.
+                </p>
+
+            </article>
+
+            <article class="info-card">
+
+                <div class="info-card-icon">
+                    🩺
+                </div>
+
+                <h4>Especialidades</h4>
+
+                <p>
+                    Consulte las áreas médicas disponibles
+                    según cada una de nuestras sucursales.
+                </p>
+
+            </article>
+
+            <article class="info-card">
+
+                <div class="info-card-icon">
+                    📍
+                </div>
+
+                <h4>Ubicaciones</h4>
+
+                <p>
+                    Identifique la sucursal más conveniente
+                    para recibir la atención que necesita.
+                </p>
+
+            </article>
+
+            <article class="info-card">
+
+                <div class="info-card-icon">
+                    🕒
+                </div>
+
+                <h4>Horarios</h4>
+
+                <p>
+                    Consulte la disponibilidad médica al
+                    momento de programar una nueva cita.
+                </p>
+
+            </article>
+
+        </div>
+
+    </section>
+
+</main>
+
+<footer class="footer">
+    Sistema Informático Hospitalario
+</footer>
 
 <script>
 

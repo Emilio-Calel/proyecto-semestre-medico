@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Panel Médico | Sistema Hospitalario</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --teal-dark: #0f6f7a;
+            --teal: #1596a3;
+            --teal-light: #e8f6f7;
+            --background: #f4f8f9;
+            --white: #ffffff;
+            --text: #203438;
+            --muted: #71868a;
+            --border: #dbe8ea;
+
+            --success: #198754;
+            --success-bg: #eaf7f0;
+
+            --warning: #b7791f;
+            --warning-bg: #fff7df;
+
+            --danger: #c0392b;
+            --danger-bg: #fff0ee;
+
+            --blue: #2563eb;
+            --blue-bg: #eef4ff;
+        }
+
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .topbar {
+            min-height: 74px;
+            padding: 14px 34px;
+            background: linear-gradient(
+                    135deg,
+                    var(--teal-dark),
+                    var(--teal)
+            );
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            box-shadow: 0 5px 18px rgba(15, 111, 122, 0.16);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+        }
+
+        .brand-icon {
+            width: 43px;
+            height: 43px;
+            border-radius: 13px;
+            background: rgba(255, 255, 255, 0.16);
+            display: grid;
+            place-items: center;
+            font-size: 23px;
+        }
+
+        .brand h1 {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .brand p {
+            margin-top: 2px;
+            font-size: 13px;
+            opacity: .84;
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-home {
+            text-decoration: none;
+            color: white;
+            background: rgba(255, 255, 255, 0.14);
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: .2s;
+        }
+
+        .btn-home:hover {
+            background: rgba(255, 255, 255, 0.23);
+        }
+
+        .container {
+            width: min(1480px, calc(100% - 40px));
+            margin: 30px auto 55px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .page-header h2 {
+            font-size: 28px;
+            color: var(--teal-dark);
+            margin-bottom: 7px;
+        }
+
+        .page-header p {
+            color: var(--muted);
+            font-size: 15px;
+        }
+
+        .refresh-indicator {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px 14px;
+            color: var(--muted);
+            font-size: 13px;
+            box-shadow: 0 5px 16px rgba(35, 73, 79, .05);
+            white-space: nowrap;
+        }
+
+        .alert {
+            padding: 14px 17px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            border: 1px solid transparent;
+        }
+
+        .alert-success {
+            background: var(--success-bg);
+            border-color: #bde6cc;
+            color: #17643d;
+        }
+
+        .alert-error {
+            background: var(--danger-bg);
+            border-color: #f0c5bf;
+            color: #9d3025;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 20px;
+            align-items: start;
+        }
+
+        .column {
+            background: rgba(255, 255, 255, .72);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            overflow: hidden;
+            min-height: 400px;
+        }
+
+        .column-header {
+            padding: 18px 19px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .column-header-left {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+        }
+
+        .column-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 11px;
+            display: grid;
+            place-items: center;
+            font-size: 19px;
+        }
+
+        .waiting .column-icon {
+            background: var(--warning-bg);
+        }
+
+        .consulting .column-icon {
+            background: var(--blue-bg);
+        }
+
+        .evaluated .column-icon {
+            background: var(--success-bg);
+        }
+
+        .column-header h3 {
+            font-size: 16px;
+            color: var(--text);
+        }
+
+        .column-header p {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 2px;
+        }
+
+        .count-badge {
+            min-width: 31px;
+            height: 31px;
+            padding: 0 9px;
+            border-radius: 999px;
+            display: grid;
+            place-items: center;
+            background: var(--teal-light);
+            color: var(--teal-dark);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .cards {
+            padding: 14px;
+            display: grid;
+            gap: 13px;
+        }
+
+        .appointment-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 17px;
+            box-shadow: 0 5px 18px rgba(35, 73, 79, .06);
+            transition: transform .2s, box-shadow .2s;
+        }
+
+        .appointment-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 9px 23px rgba(35, 73, 79, .09);
+        }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .appointment-number {
+            color: var(--teal-dark);
+            font-weight: 800;
+            font-size: 15px;
+        }
+
+        .emergency {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 9px;
+            border-radius: 999px;
+            background: var(--danger-bg);
+            color: var(--danger);
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .patient-name {
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+
+        .details {
+            display: grid;
+            gap: 7px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .detail-row {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .status {
+            margin-top: 13px;
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 8px;
+            background: var(--teal-light);
+            color: var(--teal-dark);
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .actions {
+            margin-top: 16px;
+            display: grid;
+            gap: 8px;
+        }
+
+        button,
+        .button-link {
+            width: 100%;
+            min-height: 39px;
+            border: none;
+            border-radius: 10px;
+            padding: 9px 12px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 650;
+            text-align: center;
+            text-decoration: none;
+            transition: .2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(
+                    135deg,
+                    var(--teal-dark),
+                    var(--teal)
+            );
+            color: white;
+        }
+
+        .btn-primary:hover {
+            filter: brightness(.96);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #edf3f4;
+            color: #425c60;
+        }
+
+        .btn-secondary:hover {
+            background: #e2ecee;
+        }
+
+        .btn-danger {
+            background: var(--danger-bg);
+            color: var(--danger);
+            border: 1px solid #f2cdc8;
+        }
+
+        .btn-danger:hover {
+            background: #fde4e1;
+        }
+
+        .btn-success {
+            background: var(--success-bg);
+            color: var(--success);
+            border: 1px solid #c6e8d3;
+        }
+
+        .btn-success:hover {
+            background: #def2e6;
+        }
+
+        .future-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .future-button {
+            background: #f5f7f8;
+            color: #97a4a7;
+            cursor: not-allowed;
+            border: 1px dashed #d5e0e2;
+        }
+
+        .empty-state {
+            padding: 35px 18px;
+            text-align: center;
+            color: var(--muted);
+        }
+
+        .empty-state .icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            opacity: .65;
+        }
+
+        .empty-state strong {
+            display: block;
+            color: #5a6e72;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .empty-state span {
+            font-size: 12px;
+        }
+
+        @media (max-width: 1100px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .column {
+                min-height: auto;
+            }
+        }
+
+        @media (max-width: 650px) {
+            .topbar {
+                padding: 14px 18px;
+            }
+
+            .brand p {
+                display: none;
+            }
+
+            .container {
+                width: min(100% - 24px, 1480px);
+                margin-top: 20px;
+            }
+
+            .page-header {
+                flex-direction: column;
+            }
+
+            .future-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <div class="brand">
+
+        <div class="brand-icon">
+            🩺
+        </div>
+
+        <div>
+            <h1>Panel Médico</h1>
+            <p>Sistema Informático Hospitalario</p>
+        </div>
+
+    </div>
+
+    <div class="top-actions">
+        <a th:href="@{/}"
+           class="btn-home">
+            ← Panel principal
+        </a>
+    </div>
+
+</header>
+
+<main class="container">
+
+    <div class="page-header">
+
+        <div>
+            <h2>Consultas asignadas</h2>
+            <p>
+                Administra pacientes en espera, consultas activas
+                y atenciones pendientes de cierre.
+            </p>
+        </div>
+
+        <div class="refresh-indicator">
+            ↻ Actualización automática cada 30 segundos
+        </div>
+
+    </div>
+
+    <div th:if="${mensaje}"
+         class="alert alert-success"
+         th:text="${mensaje}">
+    </div>
+
+    <div th:if="${error}"
+         class="alert alert-error"
+         th:text="${error}">
+    </div>
+
+    <section class="dashboard-grid">
+
+        <!-- =========================================
+             EN ESPERA
+             ========================================= -->
+
+        <div class="column waiting">
+
+            <div class="column-header">
+
+                <div class="column-header-left">
+
+                    <div class="column-icon">
+                        ⏳
+                    </div>
+
+                    <div>
+                        <h3>En Espera de Consulta</h3>
+                        <p>Pacientes listos para ser atendidos</p>
+                    </div>
+
+                </div>
+
+                <div class="count-badge"
+                     th:text="${#lists.size(enEspera)}">
+                    0
+                </div>
+
+            </div>
+
+            <div class="cards">
+
+                <div th:if="${#lists.isEmpty(enEspera)}"
+                     class="empty-state">
+
+                    <div class="icon">✓</div>
+
+                    <strong>No hay pacientes en espera</strong>
+
+                    <span>
+                        Las nuevas citas aparecerán aquí automáticamente.
+                    </span>
+
+                </div>
+
+                <article class="appointment-card"
+                         th:each="cita : ${enEspera}"
+                         th:attr="
+                            data-cita-id=${cita.citaId},
+                            data-numero=${cita.numeroCita},
+                            data-paciente=${cita.paciente}
+                         ">
+
+                    <div class="card-top">
+
+                        <span class="appointment-number"
+                              th:text="'Cita #' + ${cita.numeroCita}">
+                            Cita #0001
+                        </span>
+
+                        <span th:if="${cita.emergencia}"
+                              class="emergency">
+                            ⚠ Emergencia
+                        </span>
+
+                    </div>
+
+                    <div class="patient-name"
+                         th:text="${cita.paciente}">
+                        Nombre del paciente
+                    </div>
+
+                    <div class="details">
+
+                        <div class="detail-row">
+                            🩺
+                            <span th:text="${cita.especialidad}">
+                                Especialidad
+                            </span>
+                        </div>
+
+                        <div class="detail-row">
+                            🕒
+                            <span th:text="${#temporals.format(
+                                    cita.fechaHora,
+                                    'dd/MM/yyyy HH:mm'
+                            )}">
+                                Fecha
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <span class="status">
+                        EN ESPERA
+                    </span>
+
+                    <div class="actions">
+
+                        <form th:action="@{
+                                /medico/consulta/iniciar/{id}
+                                (id=${cita.citaId})
+                              }"
+                              method="post">
+
+                            <button type="submit"
+                                    class="btn-primary">
+                                ▶ Iniciar Consulta
+                            </button>
+
+                        </form>
+
+                        <form th:action="@{
+                                /medico/no-asistio/{id}
+                                (id=${cita.citaId})
+                              }"
+                              method="post"
+                              onsubmit="return confirm(
+                                  '¿Desea marcar esta cita como No Asistió?'
+                              );">
+
+                            <button type="submit"
+                                    class="btn-danger">
+                                No Asistió
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+        </div>
+
+        <!-- =========================================
+             EN CONSULTA
+             ========================================= -->
+
+        <div class="column consulting">
+
+            <div class="column-header">
+
+                <div class="column-header-left">
+
+                    <div class="column-icon">
+                        🩺
+                    </div>
+
+                    <div>
+                        <h3>En Consulta Médica</h3>
+                        <p>Consultas actualmente en curso</p>
+                    </div>
+
+                </div>
+
+                <div class="count-badge"
+                     th:text="${#lists.size(enConsulta)}">
+                    0
+                </div>
+
+            </div>
+
+            <div class="cards">
+
+                <div th:if="${#lists.isEmpty(enConsulta)}"
+                     class="empty-state">
+
+                    <div class="icon">🩺</div>
+
+                    <strong>No hay consultas activas</strong>
+
+                    <span>
+                        Los pacientes que inicies aparecerán aquí.
+                    </span>
+
+                </div>
+
+                <article class="appointment-card"
+                         th:each="cita : ${enConsulta}"
+                         th:attr="
+                            data-cita-id=${cita.citaId},
+                            data-numero=${cita.numeroCita},
+                            data-paciente=${cita.paciente}
+                         ">
+
+                    <div class="card-top">
+
+                        <span class="appointment-number"
+                              th:text="'Cita #' + ${cita.numeroCita}">
+                        </span>
+
+                        <span th:if="${cita.emergencia}"
+                              class="emergency">
+                            ⚠ Emergencia
+                        </span>
+
+                    </div>
+
+                    <div class="patient-name"
+                         th:text="${cita.paciente}">
+                    </div>
+
+                    <div class="details">
+
+                        <div class="detail-row">
+                            🩺
+                            <span th:text="${cita.especialidad}">
+                            </span>
+                        </div>
+
+                        <div class="detail-row">
+                            🕒
+                            <span th:text="${#temporals.format(
+                                    cita.fechaHora,
+                                    'dd/MM/yyyy HH:mm'
+                            )}">
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <span class="status">
+                        CONSULTA MÉDICA
+                    </span>
+
+                    <div class="actions">
+
+                        <a th:href="@{
+                                /medico/consulta/{id}
+                                (id=${cita.citaId})
+                           }"
+                           class="button-link btn-primary">
+
+                            Ver / Completar Consulta
+
+                        </a>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+        </div>
+
+        <!-- =========================================
+             EVALUADOS
+             ========================================= -->
+
+        <div class="column evaluated">
+
+            <div class="column-header">
+
+                <div class="column-header-left">
+
+                    <div class="column-icon">
+                        ✓
+                    </div>
+
+                    <div>
+                        <h3>Evaluados — Pendiente de cierre</h3>
+                        <p>Indicaciones posteriores a la consulta</p>
+                    </div>
+
+                </div>
+
+                <div class="count-badge"
+                     th:text="${#lists.size(evaluados)}">
+                    0
+                </div>
+
+            </div>
+
+            <div class="cards">
+
+                <div th:if="${#lists.isEmpty(evaluados)}"
+                     class="empty-state">
+
+                    <div class="icon">📋</div>
+
+                    <strong>No hay atenciones pendientes</strong>
+
+                    <span>
+                        Las consultas finalizadas aparecerán aquí.
+                    </span>
+
+                </div>
+
+                <article class="appointment-card"
+                         th:each="cita : ${evaluados}">
+
+                    <div class="card-top">
+
+                        <span class="appointment-number"
+                              th:text="'Cita #' + ${cita.numeroCita}">
+                        </span>
+
+                        <span th:if="${cita.emergencia}"
+                              class="emergency">
+                            ⚠ Emergencia
+                        </span>
+
+                    </div>
+
+                    <div class="patient-name"
+                         th:text="${cita.paciente}">
+                    </div>
+
+                    <div class="details">
+
+                        <div class="detail-row">
+                            🩺
+                            <span th:text="${cita.especialidad}">
+                            </span>
+                        </div>
+
+                        <div class="detail-row">
+                            🕒
+                            <span th:text="${#temporals.format(
+                                    cita.fechaHora,
+                                    'dd/MM/yyyy HH:mm'
+                            )}">
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <span class="status">
+                        PENDIENTE DE CIERRE
+                    </span>
+
+                    <div class="actions">
+
+                        <!-- CU-09 y receta se conectarán
+                             en los siguientes bloques -->
+
+                        <div class="future-actions">
+
+                            <a th:href="@{
+        /medico/orden-laboratorio/{id}
+        (id=${cita.citaId})
+   }"
+                               class="button-link btn-secondary">
+
+                                🧪 Orden Lab
+
+                            </a>
+
+                            <button type="button"
+                                    class="future-button"
+                                    disabled>
+                                💊 Receta
+                            </button>
+
+                        </div>
+
+                        <form th:action="@{
+                                /medico/finalizar/{id}
+                                (id=${cita.citaId})
+                              }"
+                              method="post"
+                              onsubmit="return confirm(
+                                  '¿Confirma que desea finalizar la atención?'
+                              );">
+
+                            <button type="submit"
+                                    class="btn-success">
+                                ✓ Finalizar Atención
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+<script th:inline="javascript">
+
+    /*
+     * =========================================================
+     * ACTUALIZACIÓN AUTOMÁTICA CADA 30 SEGUNDOS
+     * =========================================================
+     */
+
+    setInterval(() => {
+
+        /*
+         * No recargamos si el usuario tiene una
+         * confirmación activa.
+         */
+
+        window.location.reload();
+
+    }, 30000);
+
+
+    /*
+     * =========================================================
+     * TTS - LLAMADO DEL PACIENTE
+     * =========================================================
+     */
+
+    const ttsCitaId =
+        /*[[${ttsCitaId}]]*/ null;
+
+    function anunciarPaciente() {
+
+        if (!ttsCitaId) {
+            return;
+        }
+
+        if (!("speechSynthesis" in window)) {
+            return;
+        }
+
+        const tarjeta =
+            document.querySelector(
+                `[data-cita-id="${ttsCitaId}"]`
+            );
+
+        if (!tarjeta) {
+            return;
+        }
+
+        const numero =
+            tarjeta.dataset.numero || "";
+
+        const paciente =
+            tarjeta.dataset.paciente || "";
+
+        const texto =
+            `Turno número ${numero}. ` +
+            `Paciente ${paciente}, ` +
+            `favor pasar a consulta médica.`;
+
+        window.speechSynthesis.cancel();
+
+        const mensaje =
+            new SpeechSynthesisUtterance(texto);
+
+        mensaje.lang = "es-GT";
+        mensaje.rate = 0.95;
+        mensaje.pitch = 1;
+        mensaje.volume = 1;
+
+        const voces =
+            window.speechSynthesis.getVoices();
+
+        const vozEspanol =
+            voces.find(voz =>
+                voz.lang &&
+                voz.lang.toLowerCase().startsWith("es")
+            );
+
+        if (vozEspanol) {
+            mensaje.voice = vozEspanol;
+        }
+
+        window.speechSynthesis.speak(
+            mensaje
+        );
+    }
+
+    /*
+     * Algunos navegadores cargan las voces
+     * después del DOM.
+     */
+
+    window.addEventListener(
+        "load",
+        () => {
+
+            setTimeout(
+                anunciarPaciente,
+                500
+            );
+
+        }
+    );
+
+</script>
+
+</body>
+</html>
