@@ -1,7 +1,6 @@
 package com.example.proyecto_semestre_medico.service.impl;
 
-import com.example.proyecto_semestre_medico.dto.ExamenOpcionDTO;
-import com.example.proyecto_semestre_medico.dto.OrdenLaboratorioFormDTO;
+import com.example.proyecto_semestre_medico.dto.*;
 import com.example.proyecto_semestre_medico.model.*;
 import com.example.proyecto_semestre_medico.repository.*;
 import com.example.proyecto_semestre_medico.service.OrdenLaboratorioService;
@@ -9,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -23,19 +23,52 @@ public class OrdenLaboratorioServiceImpl
     private final CatalogoExamenRepository catalogoExamenRepository;
     private final MedicoRepository medicoRepository;
 
+    private final OrdenLaboratorioDetalleRepository
+            ordenLaboratorioDetalleRepository;
+
+    private final ResultadoLaboratorioRepository
+            resultadoLaboratorioRepository;
+
+    private final UsuarioRepository usuarioRepository;
+
     public OrdenLaboratorioServiceImpl(
             OrdenLaboratorioRepository ordenLaboratorioRepository,
             ConsultaMedicaRepository consultaMedicaRepository,
             CitaRepository citaRepository,
             CatalogoExamenRepository catalogoExamenRepository,
-            MedicoRepository medicoRepository
+            MedicoRepository medicoRepository,
+            OrdenLaboratorioDetalleRepository ordenLaboratorioDetalleRepository,
+            ResultadoLaboratorioRepository resultadoLaboratorioRepository,
+            UsuarioRepository usuarioRepository
     ) {
-        this.ordenLaboratorioRepository = ordenLaboratorioRepository;
-        this.consultaMedicaRepository = consultaMedicaRepository;
-        this.citaRepository = citaRepository;
-        this.catalogoExamenRepository = catalogoExamenRepository;
-        this.medicoRepository = medicoRepository;
+        this.ordenLaboratorioRepository =
+                ordenLaboratorioRepository;
+
+        this.consultaMedicaRepository =
+                consultaMedicaRepository;
+
+        this.citaRepository =
+                citaRepository;
+
+        this.catalogoExamenRepository =
+                catalogoExamenRepository;
+
+        this.medicoRepository =
+                medicoRepository;
+
+        this.ordenLaboratorioDetalleRepository =
+                ordenLaboratorioDetalleRepository;
+
+        this.resultadoLaboratorioRepository =
+                resultadoLaboratorioRepository;
+
+        this.usuarioRepository =
+                usuarioRepository;
     }
+
+    // =====================================================
+    // CATÁLOGO DE EXÁMENES
+    // =====================================================
 
     @Override
     @Transactional(readOnly = true)
@@ -56,6 +89,10 @@ public class OrdenLaboratorioServiceImpl
                 )
                 .toList();
     }
+
+    // =====================================================
+    // CREACIÓN DE ORDEN DESDE CU-08
+    // =====================================================
 
     @Override
     @Transactional
@@ -90,11 +127,6 @@ public class OrdenLaboratorioServiceImpl
                                 )
                         );
 
-        /*
-         * Seguridad:
-         * el médico solamente puede generar órdenes
-         * para sus propias citas.
-         */
         if (!cita.getMedico()
                 .getId()
                 .equals(medico.getId())) {
@@ -104,10 +136,6 @@ public class OrdenLaboratorioServiceImpl
             );
         }
 
-        /*
-         * CU-08 indica que las órdenes se generan
-         * desde la sección Evaluados.
-         */
         if (!"PENDIENTE_CIERRE".equals(
                 cita.getEstadoCita().getCodigo()
         )) {
@@ -143,9 +171,6 @@ public class OrdenLaboratorioServiceImpl
             );
         }
 
-        /*
-         * Eliminamos posibles IDs repetidos.
-         */
         List<Long> idsUnicos =
                 dto.getExamenesIds()
                         .stream()
@@ -229,11 +254,6 @@ public class OrdenLaboratorioServiceImpl
                     examen
             );
 
-            /*
-             * Guardamos una copia del precio actual.
-             * Si el catálogo cambia mañana, la orden
-             * conserva el precio histórico.
-             */
             detalle.setPrecio(
                     examen.getPrecio()
             );
@@ -242,9 +262,10 @@ public class OrdenLaboratorioServiceImpl
                     detalle
             );
 
-            total = total.add(
-                    examen.getPrecio()
-            );
+            total =
+                    total.add(
+                            examen.getPrecio()
+                    );
         }
 
         orden.setMontoTotal(
@@ -254,6 +275,561 @@ public class OrdenLaboratorioServiceImpl
         return ordenLaboratorioRepository.save(
                 orden
         );
+    }
+
+    // =====================================================
+    // LISTADO Y FILTROS CU-09
+    // =====================================================
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<OrdenLaboratorioListaDTO> listarOrdenes(
+            String estado,
+            String paciente,
+            String medico
+    ) {
+
+        return ordenLaboratorioRepository
+                .buscar(
+                        limpiar(estado),
+                        limpiar(paciente),
+                        limpiar(medico)
+                )
+                .stream()
+                .map(this::convertirLista)
+                .toList();
+    }
+
+    // =====================================================
+    // DETALLE DE ORDEN
+    // =====================================================
+
+    @Override
+    @Transactional(readOnly = true)
+    public OrdenLaboratorioDetalleDTO obtenerDetalle(
+            Long ordenId
+    ) {
+
+        OrdenLaboratorio orden =
+                obtenerOrden(ordenId);
+
+        OrdenLaboratorioDetalleDTO dto =
+                new OrdenLaboratorioDetalleDTO();
+
+        dto.setId(
+                orden.getId()
+        );
+
+        dto.setNumeroOrden(
+                orden.getNumeroOrden()
+        );
+
+        dto.setPaciente(
+                orden.getPaciente()
+                        .getNombreCompleto()
+        );
+
+        dto.setMedico(
+                orden.getMedico()
+                        .getPersonal()
+                        .getNombreCompleto()
+        );
+
+        dto.setEstado(
+                orden.getEstado()
+        );
+
+        dto.setMontoTotal(
+                orden.getMontoTotal()
+        );
+
+        dto.setExterna(
+                Boolean.TRUE.equals(
+                        orden.getExterna()
+                )
+        );
+
+        dto.setNotas(
+                orden.getNotas()
+        );
+
+        dto.setFechaCreacion(
+                orden.getFechaCreacion()
+        );
+
+        List<OrdenLaboratorioDetalle> detalles =
+                ordenLaboratorioDetalleRepository
+                        .findByOrdenLaboratorioId(
+                                ordenId
+                        );
+
+        List<ExamenOrdenDetalleDTO> examenes =
+                new ArrayList<>();
+
+        for (OrdenLaboratorioDetalle detalle : detalles) {
+
+            ExamenOrdenDetalleDTO examenDto =
+                    new ExamenOrdenDetalleDTO();
+
+            CatalogoExamen examen =
+                    detalle.getExamen();
+
+            examenDto.setDetalleId(
+                    detalle.getId()
+            );
+
+            examenDto.setCodigo(
+                    examen.getCodigo()
+            );
+
+            examenDto.setNombre(
+                    examen.getNombre()
+            );
+
+            examenDto.setPrecio(
+                    detalle.getPrecio()
+            );
+
+            examenDto.setUnidadReferencia(
+                    examen.getUnidadReferencia()
+            );
+
+            examenDto.setRangoReferencia(
+                    examen.getRangoReferencia()
+            );
+
+            ResultadoLaboratorio resultado =
+                    resultadoLaboratorioRepository
+                            .findByOrdenDetalleId(
+                                    detalle.getId()
+                            )
+                            .orElse(null);
+
+            if (resultado != null) {
+
+                examenDto.setValorResultado(
+                        resultado.getValorResultado()
+                );
+
+                examenDto.setUnidad(
+                        resultado.getUnidad()
+                );
+
+                examenDto.setFechaResultado(
+                        resultado.getFechaResultado()
+                );
+
+                examenDto.setFueraRango(
+                        resultado.getFueraRango()
+                );
+
+                examenDto.setNotasResultado(
+                        resultado.getNotas()
+                );
+
+                examenDto.setPublicado(
+                        resultado.getPublicado()
+                );
+
+            } else {
+
+                examenDto.setPublicado(
+                        false
+                );
+
+                examenDto.setFueraRango(
+                        false
+                );
+            }
+
+            examenes.add(
+                    examenDto
+            );
+        }
+
+        dto.setExamenes(
+                examenes
+        );
+
+        return dto;
+    }
+
+    // =====================================================
+    // REGISTRAR / MODIFICAR RESULTADO
+    // =====================================================
+
+    @Override
+    @Transactional
+    public void guardarResultado(
+            ResultadoLaboratorioFormDTO dto,
+            String nombreUsuario
+    ) {
+
+        if (dto == null
+                || dto.getDetalleId() == null) {
+
+            throw new IllegalArgumentException(
+                    "El examen es obligatorio."
+            );
+        }
+
+        OrdenLaboratorioDetalle detalle =
+                ordenLaboratorioDetalleRepository
+                        .findById(
+                                dto.getDetalleId()
+                        )
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "El examen de la orden no existe."
+                                )
+                        );
+
+        OrdenLaboratorio orden =
+                detalle.getOrdenLaboratorio();
+
+        /*
+         * Regla CU-09:
+         * no se pueden registrar resultados
+         * hasta que la orden haya sido pagada.
+         *
+         * CU-10 será quien cambie:
+         * PENDIENTE -> EN_PROCESO
+         */
+        if (!"EN_PROCESO".equals(
+                orden.getEstado()
+        )) {
+
+            throw new IllegalArgumentException(
+                    "La orden debe estar en estado EN_PROCESO para registrar resultados."
+            );
+        }
+
+        String valor =
+                limpiar(
+                        dto.getValorResultado()
+                );
+
+        if (valor == null) {
+
+            throw new IllegalArgumentException(
+                    "El valor del resultado es obligatorio."
+            );
+        }
+
+        String unidad =
+                limpiar(
+                        dto.getUnidad()
+                );
+
+        if (unidad == null) {
+
+            throw new IllegalArgumentException(
+                    "La unidad del resultado es obligatoria."
+            );
+        }
+
+        Usuario usuario =
+                obtenerUsuario(
+                        nombreUsuario
+                );
+
+        ResultadoLaboratorio resultado =
+                resultadoLaboratorioRepository
+                        .findByOrdenDetalleId(
+                                detalle.getId()
+                        )
+                        .orElse(null);
+
+        if (resultado != null
+                && Boolean.TRUE.equals(
+                resultado.getPublicado()
+        )) {
+
+            throw new IllegalArgumentException(
+                    "El resultado ya fue publicado y no puede modificarse."
+            );
+        }
+
+        if (resultado == null) {
+
+            resultado =
+                    new ResultadoLaboratorio();
+
+            resultado.setOrdenDetalle(
+                    detalle
+            );
+
+            resultado.setUsuarioRegistro(
+                    usuario
+            );
+        }
+
+        resultado.setValorResultado(
+                valor
+        );
+
+        resultado.setUnidad(
+                unidad
+        );
+
+        /*
+         * Guardamos una copia del rango actual
+         * del catálogo para conservar historial.
+         */
+        resultado.setRangoReferencia(
+                limpiar(
+                        detalle.getExamen()
+                                .getRangoReferencia()
+                )
+        );
+
+        resultado.setFechaResultado(
+                dto.getFechaResultado() != null
+                        ? dto.getFechaResultado()
+                        : LocalDateTime.now()
+        );
+
+        resultado.setFueraRango(
+                Boolean.TRUE.equals(
+                        dto.getFueraRango()
+                )
+        );
+
+        resultado.setNotas(
+                limpiar(
+                        dto.getNotas()
+                )
+        );
+
+        if (resultado.getPublicado() == null) {
+            resultado.setPublicado(
+                    false
+            );
+        }
+
+        resultadoLaboratorioRepository.save(
+                resultado
+        );
+    }
+
+    // =====================================================
+    // PUBLICAR RESULTADO
+    // =====================================================
+
+    @Override
+    @Transactional
+    public void publicarResultado(
+            Long detalleId,
+            String nombreUsuario
+    ) {
+
+        OrdenLaboratorioDetalle detalle =
+                ordenLaboratorioDetalleRepository
+                        .findById(detalleId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "El examen de la orden no existe."
+                                )
+                        );
+
+        OrdenLaboratorio orden =
+                detalle.getOrdenLaboratorio();
+
+        if (!"EN_PROCESO".equals(
+                orden.getEstado()
+        )) {
+
+            throw new IllegalArgumentException(
+                    "Solo pueden publicarse resultados de órdenes EN_PROCESO."
+            );
+        }
+
+        ResultadoLaboratorio resultado =
+                resultadoLaboratorioRepository
+                        .findByOrdenDetalleId(
+                                detalleId
+                        )
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Debe registrar el resultado antes de publicarlo."
+                                )
+                        );
+
+        if (Boolean.TRUE.equals(
+                resultado.getPublicado()
+        )) {
+
+            throw new IllegalArgumentException(
+                    "El resultado ya fue publicado."
+            );
+        }
+
+        Usuario usuario =
+                obtenerUsuario(
+                        nombreUsuario
+                );
+
+        resultado.setPublicado(
+                true
+        );
+
+        resultado.setFechaPublicacion(
+                LocalDateTime.now()
+        );
+
+        resultado.setUsuarioPublicacion(
+                usuario
+        );
+
+        resultadoLaboratorioRepository.save(
+                resultado
+        );
+
+        /*
+         * Después de publicar un examen,
+         * verificamos si todos los resultados
+         * de la orden ya fueron publicados.
+         */
+        verificarOrdenCompletada(
+                orden
+        );
+    }
+
+    // =====================================================
+    // COMPLETAR ORDEN AUTOMÁTICAMENTE
+    // =====================================================
+
+    private void verificarOrdenCompletada(
+            OrdenLaboratorio orden
+    ) {
+
+        List<OrdenLaboratorioDetalle> detalles =
+                ordenLaboratorioDetalleRepository
+                        .findByOrdenLaboratorioId(
+                                orden.getId()
+                        );
+
+        if (detalles.isEmpty()) {
+            return;
+        }
+
+        for (OrdenLaboratorioDetalle detalle : detalles) {
+
+            ResultadoLaboratorio resultado =
+                    resultadoLaboratorioRepository
+                            .findByOrdenDetalleId(
+                                    detalle.getId()
+                            )
+                            .orElse(null);
+
+            if (resultado == null
+                    || !Boolean.TRUE.equals(
+                    resultado.getPublicado()
+            )) {
+
+                return;
+            }
+        }
+
+        orden.setEstado(
+                "COMPLETADA"
+        );
+
+        ordenLaboratorioRepository.save(
+                orden
+        );
+    }
+
+    // =====================================================
+    // CONVERSIÓN PARA LA TABLA
+    // =====================================================
+
+    private OrdenLaboratorioListaDTO convertirLista(
+            OrdenLaboratorio orden
+    ) {
+
+        OrdenLaboratorioListaDTO dto =
+                new OrdenLaboratorioListaDTO();
+
+        dto.setId(
+                orden.getId()
+        );
+
+        dto.setNumeroOrden(
+                orden.getNumeroOrden()
+        );
+
+        dto.setPaciente(
+                orden.getPaciente()
+                        .getNombreCompleto()
+        );
+
+        dto.setMedico(
+                orden.getMedico()
+                        .getPersonal()
+                        .getNombreCompleto()
+        );
+
+        dto.setEstado(
+                orden.getEstado()
+        );
+
+        dto.setMontoTotal(
+                orden.getMontoTotal()
+        );
+
+        dto.setExterna(
+                Boolean.TRUE.equals(
+                        orden.getExterna()
+                )
+        );
+
+        dto.setFechaCreacion(
+                orden.getFechaCreacion()
+        );
+
+        return dto;
+    }
+
+    // =====================================================
+    // HELPERS
+    // =====================================================
+
+    private OrdenLaboratorio obtenerOrden(
+            Long ordenId
+    ) {
+
+        if (ordenId == null) {
+
+            throw new IllegalArgumentException(
+                    "La orden es obligatoria."
+            );
+        }
+
+        return ordenLaboratorioRepository
+                .findById(
+                        ordenId
+                )
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "La orden de laboratorio no existe."
+                        )
+                );
+    }
+
+    private Usuario obtenerUsuario(
+            String nombreUsuario
+    ) {
+
+        return usuarioRepository
+                .findByNombreUsuarioIgnoreCase(
+                        nombreUsuario
+                )
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "El usuario autenticado no existe."
+                        )
+                );
     }
 
     private String generarNumeroOrden() {
@@ -271,7 +847,9 @@ public class OrdenLaboratorioServiceImpl
 
         } while (
                 ordenLaboratorioRepository
-                        .findByNumeroOrden(numero)
+                        .findByNumeroOrden(
+                                numero
+                        )
                         .isPresent()
         );
 

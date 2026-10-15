@@ -24,4 +24,8 @@ public interface PagoLaboratorioRepository
             Long ordenLaboratorioId,
             String estado
     );
+
+    boolean existsByNumeroTransaccion(
+            String numeroTransaccion
+    );
 }

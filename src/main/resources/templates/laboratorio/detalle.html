@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Detalle de Orden | Sistema Hospitalario</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --teal-dark: #0f6f7a;
+            --teal: #1596a3;
+            --teal-light: #e8f6f7;
+
+            --background: #f4f8f9;
+            --white: #ffffff;
+
+            --text: #203438;
+            --muted: #71868a;
+            --border: #dbe8ea;
+
+            --success: #198754;
+            --success-bg: #e9f7ef;
+
+            --warning: #b7791f;
+            --warning-bg: #fff7df;
+
+            --info: #2471a3;
+            --info-bg: #eaf4fb;
+
+            --danger: #c0392b;
+            --danger-bg: #fff0ee;
+        }
+
+        body {
+            min-height: 100vh;
+
+            background: var(--background);
+
+            color: var(--text);
+
+            font-family:
+                    "Segoe UI",
+                    Arial,
+                    sans-serif;
+        }
+
+        .topbar {
+            min-height: 74px;
+
+            padding: 14px 34px;
+
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            gap: 20px;
+
+            color: white;
+
+            background: linear-gradient(
+                    135deg,
+                    var(--teal-dark),
+                    var(--teal)
+            );
+
+            box-shadow:
+                    0 5px 18px rgba(15,111,122,.16);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+        }
+
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+
+            display: grid;
+            place-items: center;
+
+            border-radius: 13px;
+
+            background:
+                    rgba(255,255,255,.16);
+
+            font-size: 23px;
+        }
+
+        .brand h1 {
+            font-size: 20px;
+        }
+
+        .brand p {
+            margin-top: 2px;
+
+            font-size: 13px;
+
+            opacity: .85;
+        }
+
+        .back-button {
+            padding: 10px 15px;
+
+            border-radius: 10px;
+
+            background:
+                    rgba(255,255,255,.14);
+
+            color: white;
+
+            text-decoration: none;
+
+            font-size: 14px;
+        }
+
+        .container {
+            width:
+                    min(1100px, calc(100% - 38px));
+
+            margin:
+                    30px auto 60px;
+        }
+
+        .alert {
+            margin-bottom: 18px;
+
+            padding: 13px 16px;
+
+            border-radius: 10px;
+
+            font-size: 13px;
+        }
+
+        .alert-success {
+            color: #12633e;
+
+            background:
+                    var(--success-bg);
+
+            border:
+                    1px solid #b9e2ca;
+        }
+
+        .alert-error {
+            color: #9d3025;
+
+            background:
+                    var(--danger-bg);
+
+            border:
+                    1px solid #edc8c1;
+        }
+
+        .summary {
+            margin-bottom: 20px;
+
+            padding: 24px;
+
+            border-radius: 18px;
+
+            color: white;
+
+            background: linear-gradient(
+                    135deg,
+                    var(--teal-dark),
+                    var(--teal)
+            );
+
+            box-shadow:
+                    0 8px 25px rgba(15,111,122,.16);
+        }
+
+        .summary-top {
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: flex-start;
+
+            gap: 20px;
+        }
+
+        .summary h2 {
+            font-size: 24px;
+        }
+
+        .patient {
+            margin-top: 5px;
+            opacity: .9;
+            font-size: 15px;
+        }
+
+        .summary-grid {
+            margin-top: 19px;
+
+            display: grid;
+
+            grid-template-columns:
+                    repeat(4, minmax(0,1fr));
+
+            gap: 15px;
+        }
+
+        .summary-item {
+            padding: 12px 14px;
+
+            border-radius: 11px;
+
+            background:
+                    rgba(255,255,255,.12);
+        }
+
+        .summary-label {
+            display: block;
+
+            margin-bottom: 4px;
+
+            opacity: .76;
+
+            font-size: 11px;
+
+            text-transform: uppercase;
+        }
+
+        .summary-value {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .status {
+            padding: 7px 11px;
+
+            border-radius: 20px;
+
+            background:
+                    rgba(255,255,255,.18);
+
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .external-badge {
+            margin-left: 7px;
+
+            padding: 5px 8px;
+
+            border-radius: 8px;
+
+            color: #614c12;
+
+            background: #ffe69b;
+
+            font-size: 10px;
+            font-weight: 800;
+        }
+
+        .payment-warning {
+            margin-bottom: 20px;
+
+            padding: 17px 19px;
+
+            display: flex;
+
+            align-items: flex-start;
+
+            gap: 12px;
+
+            border:
+                    1px solid #eedc9e;
+
+            border-radius: 13px;
+
+            color: #725719;
+
+            background:
+                    var(--warning-bg);
+        }
+
+        .payment-warning strong {
+            display: block;
+
+            margin-bottom: 4px;
+        }
+
+        .payment-warning p {
+            font-size: 13px;
+
+            line-height: 1.45;
+        }
+
+        .complete-message {
+            margin-bottom: 20px;
+
+            padding: 17px 19px;
+
+            border:
+                    1px solid #b9e2ca;
+
+            border-radius: 13px;
+
+            color: #12633e;
+
+            background:
+                    var(--success-bg);
+        }
+
+        .card {
+            margin-bottom: 15px;
+
+            overflow: hidden;
+
+            background: white;
+
+            border:
+                    1px solid var(--border);
+
+            border-radius: 16px;
+
+            box-shadow:
+                    0 6px 20px rgba(35,73,79,.05);
+        }
+
+        .exam-header {
+            padding: 18px 20px;
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            gap: 15px;
+
+            border-bottom:
+                    1px solid var(--border);
+        }
+
+        .exam-title {
+            display: flex;
+
+            align-items: flex-start;
+
+            gap: 12px;
+        }
+
+        .exam-icon {
+            width: 38px;
+            height: 38px;
+
+            flex-shrink: 0;
+
+            display: grid;
+            place-items: center;
+
+            border-radius: 10px;
+
+            color: var(--teal-dark);
+
+            background:
+                    var(--teal-light);
+        }
+
+        .exam-header h3 {
+            color: #334e52;
+
+            font-size: 16px;
+        }
+
+        .exam-code {
+            margin-top: 3px;
+
+            color: var(--teal);
+
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .published-badge {
+            padding: 6px 9px;
+
+            border-radius: 20px;
+
+            color: #12633e;
+
+            background:
+                    var(--success-bg);
+
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .pending-badge {
+            padding: 6px 9px;
+
+            border-radius: 20px;
+
+            color: #866016;
+
+            background:
+                    var(--warning-bg);
+
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .exam-body {
+            padding: 20px;
+        }
+
+        .reference-grid {
+            margin-bottom: 18px;
+
+            display: grid;
+
+            grid-template-columns:
+                    repeat(3, minmax(0,1fr));
+
+            gap: 12px;
+        }
+
+        .reference-box {
+            padding: 11px 13px;
+
+            border-radius: 9px;
+
+            background: #f7fafb;
+        }
+
+        .reference-box span {
+            display: block;
+
+            margin-bottom: 3px;
+
+            color: var(--muted);
+
+            font-size: 10px;
+
+            text-transform: uppercase;
+        }
+
+        .reference-box strong {
+            color: #405b5f;
+
+            font-size: 12px;
+        }
+
+        .result-grid {
+            display: grid;
+
+            grid-template-columns:
+                    2fr
+                    1fr
+                    1.4fr;
+
+            gap: 13px;
+        }
+
+        .field {
+            margin-bottom: 14px;
+        }
+
+        .field.full {
+            grid-column:
+                    1 / -1;
+        }
+
+        .field label {
+            display: block;
+
+            margin-bottom: 6px;
+
+            color: #486266;
+
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+
+            padding: 10px 11px;
+
+            border:
+                    1px solid #ccdadd;
+
+            border-radius: 9px;
+
+            outline: none;
+
+            background: white;
+
+            color: var(--text);
+
+            font: inherit;
+
+            font-size: 13px;
+        }
+
+        input {
+            min-height: 41px;
+        }
+
+        textarea {
+            min-height: 85px;
+
+            resize: vertical;
+        }
+
+        input:focus,
+        textarea:focus {
+            border-color: var(--teal);
+
+            box-shadow:
+                    0 0 0 3px
+                    rgba(21,150,163,.10);
+        }
+
+        .range-check {
+            margin-top: 5px;
+
+            display: inline-flex;
+
+            align-items: center;
+
+            gap: 8px;
+
+            cursor: pointer;
+
+            font-size: 12px;
+
+            color: #536d71;
+        }
+
+        .range-check input {
+            width: 16px;
+            height: 16px;
+            min-height: auto;
+
+            accent-color: var(--danger);
+        }
+
+        .outside-warning {
+            margin-top: 12px;
+
+            padding: 10px 12px;
+
+            border-radius: 8px;
+
+            color: #a33227;
+
+            background: var(--danger-bg);
+
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .exam-actions {
+            margin-top: 16px;
+
+            padding-top: 16px;
+
+            display: flex;
+
+            justify-content: flex-end;
+
+            gap: 9px;
+
+            border-top:
+                    1px solid var(--border);
+        }
+
+        .button {
+            min-height: 39px;
+
+            padding: 8px 15px;
+
+            border: none;
+
+            border-radius: 9px;
+
+            cursor: pointer;
+
+            text-decoration: none;
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-family: inherit;
+
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .button-primary {
+            color: white;
+
+            background: linear-gradient(
+                    135deg,
+                    var(--teal-dark),
+                    var(--teal)
+            );
+        }
+
+        .button-publish {
+            color: #12633e;
+
+            background: var(--success-bg);
+
+            border:
+                    1px solid #b9e2ca;
+        }
+
+        .result-readonly {
+            padding: 14px;
+
+            border-radius: 10px;
+
+            background: #f8fbfb;
+        }
+
+        .result-readonly-grid {
+            display: grid;
+
+            grid-template-columns:
+                    repeat(3, minmax(0,1fr));
+
+            gap: 13px;
+        }
+
+        .readonly-label {
+            display: block;
+
+            margin-bottom: 3px;
+
+            color: var(--muted);
+
+            font-size: 10px;
+
+            text-transform: uppercase;
+        }
+
+        .readonly-value {
+            color: #354f53;
+
+            font-size: 13px;
+
+            font-weight: 700;
+        }
+
+        .notes {
+            margin-top: 15px;
+
+            color: #577074;
+
+            line-height: 1.5;
+
+            font-size: 13px;
+        }
+
+        @media (max-width: 780px) {
+
+            .summary-grid,
+            .reference-grid,
+            .result-grid,
+            .result-readonly-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-top {
+                flex-direction: column;
+            }
+
+            .topbar {
+                padding:
+                        14px 18px;
+            }
+
+            .exam-actions {
+                flex-direction: column;
+            }
+
+            .button {
+                width: 100%;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+
+<header class="topbar">
+
+    <div class="brand">
+
+        <div class="brand-icon">
+            🧪
+        </div>
+
+        <div>
+
+            <h1>
+                Detalle de Orden
+            </h1>
+
+            <p>
+                Gestión de resultados de laboratorio
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <a th:href="@{/laboratorio}"
+       class="back-button">
+        ← Órdenes
+    </a>
+
+</header>
+
+
+<main class="container">
+
+
+    <div th:if="${mensaje}"
+         class="alert alert-success"
+         th:text="${mensaje}">
+    </div>
+
+
+    <div th:if="${error}"
+         class="alert alert-error"
+         th:text="${error}">
+    </div>
+
+
+    <!-- RESUMEN -->
+
+    <section class="summary">
+
+        <div class="summary-top">
+
+            <div>
+
+                <h2>
+
+                    <span th:text="${orden.numeroOrden}">
+                        LAB-000
+                    </span>
+
+                    <span th:if="${orden.externa}"
+                          class="external-badge">
+                        EXTERNA
+                    </span>
+
+                </h2>
+
+                <div class="patient"
+                     th:text="${orden.paciente}">
+                    Paciente
+                </div>
+
+            </div>
+
+
+            <span class="status"
+                  th:text="${orden.estado}">
+                PENDIENTE
+            </span>
+
+        </div>
+
+
+        <div class="summary-grid">
+
+            <div class="summary-item">
+
+                <span class="summary-label">
+                    Médico
+                </span>
+
+                <span class="summary-value"
+                      th:text="${orden.medico}">
+                    Médico
+                </span>
+
+            </div>
+
+
+            <div class="summary-item">
+
+                <span class="summary-label">
+                    Fecha
+                </span>
+
+                <span class="summary-value"
+                      th:text="${#temporals.format(
+                            orden.fechaCreacion,
+                            'dd/MM/yyyy HH:mm'
+                      )}">
+                </span>
+
+            </div>
+
+
+            <div class="summary-item">
+
+                <span class="summary-label">
+                    Exámenes
+                </span>
+
+                <span class="summary-value"
+                      th:text="${#lists.size(orden.examenes)}">
+                    0
+                </span>
+
+            </div>
+
+
+            <div class="summary-item">
+
+                <span class="summary-label">
+                    Total
+                </span>
+
+                <span class="summary-value"
+                      th:text="'Q' + ${#numbers.formatDecimal(
+                            orden.montoTotal,
+                            1,
+                            2
+                      )}">
+                    Q0.00
+                </span>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ORDEN PENDIENTE DE PAGO -->
+
+    <section th:if="${orden.estado == 'PENDIENTE'
+                      and !orden.externa}"
+             class="payment-warning">
+
+        <div>
+            💳
+        </div>
+
+        <div>
+
+            <strong>
+                Orden pendiente de pago
+            </strong>
+
+            <p>
+                El paciente debe realizar el pago en caja
+                antes de que laboratorio pueda registrar
+                resultados. CU-10 cambiará esta orden a
+                EN_PROCESO cuando el pago sea aprobado.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- ORDEN EXTERNA -->
+
+    <section th:if="${orden.externa}"
+             class="payment-warning">
+
+        <div>
+            ↗️
+        </div>
+
+        <div>
+
+            <strong>
+                Orden de laboratorio externa
+            </strong>
+
+            <p>
+                Esta solicitud fue marcada por el médico
+                para realizarse fuera del laboratorio
+                interno.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- ORDEN COMPLETADA -->
+
+    <section th:if="${orden.estado == 'COMPLETADA'}"
+             class="complete-message">
+
+        <strong>
+            ✅ Orden completada
+        </strong>
+
+        <p>
+            Todos los exámenes poseen resultados
+            publicados.
+        </p>
+
+    </section>
+
+
+    <!-- NOTAS GENERALES -->
+
+    <section th:if="${orden.notas != null}"
+             class="card">
+
+        <div class="exam-body">
+
+            <strong>
+                Observaciones de la orden
+            </strong>
+
+            <div class="notes"
+                 th:text="${orden.notas}">
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- EXÁMENES -->
+
+    <section class="card"
+             th:each="examen : ${orden.examenes}">
+
+
+        <div class="exam-header">
+
+            <div class="exam-title">
+
+                <div class="exam-icon">
+                    🔬
+                </div>
+
+                <div>
+
+                    <h3 th:text="${examen.nombre}">
+                        Examen
+                    </h3>
+
+                    <div class="exam-code"
+                         th:text="${examen.codigo}">
+                        COD001
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <span th:if="${examen.publicado}"
+                  class="published-badge">
+                ✓ Publicado
+            </span>
+
+
+            <span th:if="${!examen.publicado}"
+                  class="pending-badge">
+                Pendiente
+            </span>
+
+        </div>
+
+
+        <div class="exam-body">
+
+
+            <!-- REFERENCIAS -->
+
+            <div class="reference-grid">
+
+                <div class="reference-box">
+
+                    <span>
+                        Precio
+                    </span>
+
+                    <strong th:text="'Q' +
+                            ${#numbers.formatDecimal(
+                                examen.precio,
+                                1,
+                                2
+                            )}">
+                        Q0.00
+                    </strong>
+
+                </div>
+
+
+                <div class="reference-box">
+
+                    <span>
+                        Unidad de referencia
+                    </span>
+
+                    <strong th:text="${examen.unidadReferencia != null
+                            ? examen.unidadReferencia
+                            : 'No definida'}">
+                    </strong>
+
+                </div>
+
+
+                <div class="reference-box">
+
+                    <span>
+                        Rango de referencia
+                    </span>
+
+                    <strong th:text="${examen.rangoReferencia != null
+                            ? examen.rangoReferencia
+                            : 'No definido'}">
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <!-- RESULTADO PUBLICADO -->
+
+            <div th:if="${examen.publicado}"
+                 class="result-readonly">
+
+
+                <div class="result-readonly-grid">
+
+                    <div>
+
+                        <span class="readonly-label">
+                            Resultado
+                        </span>
+
+                        <span class="readonly-value"
+                              th:text="${examen.valorResultado}">
+                        </span>
+
+                    </div>
+
+
+                    <div>
+
+                        <span class="readonly-label">
+                            Unidad
+                        </span>
+
+                        <span class="readonly-value"
+                              th:text="${examen.unidad}">
+                        </span>
+
+                    </div>
+
+
+                    <div>
+
+                        <span class="readonly-label">
+                            Fecha
+                        </span>
+
+                        <span class="readonly-value"
+                              th:text="${examen.fechaResultado != null
+                                ? #temporals.format(
+                                    examen.fechaResultado,
+                                    'dd/MM/yyyy HH:mm'
+                                )
+                                : '-'}">
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div th:if="${examen.fueraRango}"
+                     class="outside-warning">
+
+                    ⚠ Resultado marcado fuera del
+                    rango de referencia.
+
+                </div>
+
+
+                <div th:if="${examen.notasResultado != null}"
+                     class="notes">
+
+                    <strong>
+                        Observaciones:
+                    </strong>
+
+                    <span th:text="${examen.notasResultado}">
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- FORMULARIO PARA EN_PROCESO -->
+
+            <form th:if="${orden.estado == 'EN_PROCESO'
+                          and !examen.publicado}"
+                  th:action="@{/laboratorio/resultado/guardar}"
+                  method="post">
+
+
+                <input type="hidden"
+                       name="ordenId"
+                       th:value="${orden.id}">
+
+
+                <input type="hidden"
+                       name="detalleId"
+                       th:value="${examen.detalleId}">
+
+
+                <div class="result-grid">
+
+
+                    <div class="field">
+
+                        <label>
+                            Valor del resultado *
+                        </label>
+
+                        <input type="text"
+                               name="valorResultado"
+                               maxlength="500"
+                               required
+                               th:value="${examen.valorResultado}"
+                               placeholder="Ej. 95">
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label>
+                            Unidad *
+                        </label>
+
+                        <input type="text"
+                               name="unidad"
+                               maxlength="50"
+                               required
+                               th:value="${examen.unidad != null
+                                    ? examen.unidad
+                                    : examen.unidadReferencia}"
+                               placeholder="mg/dL">
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label>
+                            Fecha del resultado
+                        </label>
+
+                        <input type="datetime-local"
+                               name="fechaResultado"
+                               th:value="${examen.fechaResultado != null
+                                    ? #temporals.format(
+                                        examen.fechaResultado,
+                                        'yyyy-MM-dd''T''HH:mm'
+                                    )
+                                    : #temporals.format(
+                                        #temporals.createNow(),
+                                        'yyyy-MM-dd''T''HH:mm'
+                                    )}">
+
+                    </div>
+
+
+                    <div class="field full">
+
+                        <label class="range-check">
+
+                            <input type="checkbox"
+                                   name="fueraRango"
+                                   value="true"
+                                   th:checked="${examen.fueraRango}">
+
+                            Marcar resultado como
+                            fuera del rango de referencia
+
+                        </label>
+
+                    </div>
+
+
+                    <div class="field full">
+
+                        <label>
+                            Observaciones
+                        </label>
+
+                        <textarea name="notas"
+                                  maxlength="2000"
+                                  placeholder="Observaciones del resultado..."
+                                  th:text="${examen.notasResultado}">
+                        </textarea>
+
+                    </div>
+
+                </div>
+
+
+                <div th:if="${examen.fueraRango}"
+                     class="outside-warning">
+
+                    ⚠ Resultado marcado como
+                    fuera de rango.
+
+                </div>
+
+
+                <div class="exam-actions">
+
+                    <button type="submit"
+                            class="button button-primary">
+                        💾 Guardar resultado
+                    </button>
+
+                </div>
+
+            </form>
+
+
+            <!-- PUBLICACIÓN -->
+
+            <form th:if="${orden.estado == 'EN_PROCESO'
+                          and examen.valorResultado != null
+                          and !examen.publicado}"
+                  th:action="@{
+                        /laboratorio/resultado/publicar/{detalleId}
+                        (detalleId=${examen.detalleId})
+                  }"
+                  method="post"
+                  class="exam-actions"
+                  onsubmit="return confirm(
+                    '¿Está seguro de publicar este resultado? Después de publicarlo ya no podrá editarse.'
+                  );">
+
+
+                <input type="hidden"
+                       name="ordenId"
+                       th:value="${orden.id}">
+
+
+                <button type="submit"
+                        class="button button-publish">
+
+                    ✓ Publicar resultado
+
+                </button>
+
+            </form>
+
+
+            <!-- BLOQUEADO POR PAGO -->
+
+            <div th:if="${orden.estado == 'PENDIENTE'
+                         and !orden.externa}"
+                 class="payment-warning"
+                 style="margin: 0;">
+
+                <div>
+                    🔒
+                </div>
+
+                <div>
+
+                    <strong>
+                        Resultado bloqueado
+                    </strong>
+
+                    <p>
+                        El paciente todavía no ha pagado
+                        esta orden.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+</main>
+
+</body>
+</html>
