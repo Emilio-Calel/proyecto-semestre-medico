@@ -22,5 +22,5 @@ public interface DespachoMedicamentoService {
     List<DespachoMedicamento>
     listarDespachosPorReceta(
             Long recetaId
-    ); 
+    );
 }

@@ -15,6 +15,8 @@ import com.example.proyecto_semestre_medico.repository.MedicamentoRepository;
 import com.example.proyecto_semestre_medico.repository.RecetaRepository;
 import com.example.proyecto_semestre_medico.repository.UsuarioRepository;
 import com.example.proyecto_semestre_medico.service.RecetaService;
+import com.example.proyecto_semestre_medico.model.Medico;
+import com.example.proyecto_semestre_medico.repository.MedicoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,12 +43,16 @@ public class RecetaServiceImpl
     private final AuditoriaRepository
             auditoriaRepository;
 
+    private final MedicoRepository
+            medicoRepository;
+
     public RecetaServiceImpl(
             RecetaRepository recetaRepository,
             ConsultaMedicaRepository consultaMedicaRepository,
             MedicamentoRepository medicamentoRepository,
             UsuarioRepository usuarioRepository,
-            AuditoriaRepository auditoriaRepository
+            AuditoriaRepository auditoriaRepository,
+            MedicoRepository medicoRepository
     ) {
         this.recetaRepository =
                 recetaRepository;
@@ -62,6 +68,9 @@ public class RecetaServiceImpl
 
         this.auditoriaRepository =
                 auditoriaRepository;
+
+        this.medicoRepository =
+                medicoRepository;
     }
 
     @Override
@@ -83,6 +92,38 @@ public class RecetaServiceImpl
                                         "Consulta médica no encontrada."
                                 )
                         );
+
+        /*
+         * Verificamos que la consulta realmente
+         * pertenezca al médico autenticado.
+         *
+         * No confiamos únicamente en el citaId
+         * recibido desde el formulario.
+         */
+        Medico medicoAutenticado =
+                medicoRepository
+                        .findByPersonalUsuarioNombreUsuario(
+                                nombreUsuario
+                        )
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "No se encontró el médico asociado al usuario autenticado."
+                                )
+                        );
+
+        if (consulta.getMedico() == null
+                || consulta.getMedico().getId() == null
+                || !consulta
+                .getMedico()
+                .getId()
+                .equals(
+                        medicoAutenticado.getId()
+                )) {
+
+            throw new IllegalArgumentException(
+                    "No tiene autorización para generar una receta para esta consulta."
+            );
+        }
 
         if (!"FINALIZADA".equalsIgnoreCase(
                 consulta.getEstado()

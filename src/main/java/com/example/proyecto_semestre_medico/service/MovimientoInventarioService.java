@@ -53,4 +53,13 @@ public interface MovimientoInventarioService {
             Long id,
             String nombreUsuario
     );
+
+    MovimientoInventarioMedicamento registrarDespachoAutomatico(
+            Long medicamentoId,
+            Long sucursalId,
+            Integer cantidad,
+            String referencia,
+            String motivo,
+            String nombreUsuario
+    );
 }

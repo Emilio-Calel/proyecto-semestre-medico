@@ -269,6 +269,180 @@ public class MovimientoInventarioServiceImpl
     }
 
     @Override
+    @Transactional
+    public MovimientoInventarioMedicamento
+    registrarDespachoAutomatico(
+            Long medicamentoId,
+            Long sucursalId,
+            Integer cantidad,
+            String referencia,
+            String motivo,
+            String nombreUsuario
+    ) {
+
+        if (medicamentoId == null) {
+
+            throw new IllegalArgumentException(
+                    "Debe indicar el medicamento a despachar."
+            );
+        }
+
+        if (sucursalId == null) {
+
+            throw new IllegalArgumentException(
+                    "Debe indicar la sucursal del despacho."
+            );
+        }
+
+        if (cantidad == null
+                || cantidad <= 0) {
+
+            throw new IllegalArgumentException(
+                    "La cantidad a despachar debe ser mayor que 0."
+            );
+        }
+
+        validarReferencia(
+                referencia
+        );
+
+        InventarioMedicamento inventario =
+                inventarioRepository
+                        .findByMedicamentoIdAndSucursalIdAndActivoTrue(
+                                medicamentoId,
+                                sucursalId
+                        )
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "No existe inventario activo para el medicamento seleccionado en esta sucursal."
+                                )
+                        );
+
+        if (!Boolean.TRUE.equals(
+                inventario
+                        .getMedicamento()
+                        .getActivo()
+        )) {
+
+            throw new IllegalArgumentException(
+                    "El medicamento se encuentra inactivo."
+            );
+        }
+
+        if (!Boolean.TRUE.equals(
+                inventario
+                        .getSucursal()
+                        .getActivo()
+        )) {
+
+            throw new IllegalArgumentException(
+                    "La sucursal se encuentra inactiva."
+            );
+        }
+
+        int stockAnterior =
+                inventario.getStockActual();
+
+        if (cantidad > stockAnterior) {
+
+            throw new IllegalArgumentException(
+                    "Stock insuficiente. Disponible: "
+                            + stockAnterior
+                            + ", solicitado: "
+                            + cantidad
+                            + "."
+            );
+        }
+
+        int stockNuevo =
+                stockAnterior - cantidad;
+
+        /*
+         * InventarioMedicamento tiene @Version,
+         * por lo que Hibernate protege contra
+         * modificaciones concurrentes.
+         */
+        inventario.setStockActual(
+                stockNuevo
+        );
+
+        inventarioRepository.saveAndFlush(
+                inventario
+        );
+
+        Usuario usuario =
+                buscarUsuario(
+                        nombreUsuario
+                );
+
+        MovimientoInventarioMedicamento movimiento =
+                new MovimientoInventarioMedicamento();
+
+        movimiento.setInventario(
+                inventario
+        );
+
+        movimiento.setTipoMovimiento(
+                TipoMovimientoInventario.DESPACHO
+        );
+
+        movimiento.setCantidad(
+                cantidad
+        );
+
+        /*
+         * DESPACHO no representa una compra,
+         * por lo que no registra costo unitario.
+         */
+        movimiento.setCostoUnitario(
+                null
+        );
+
+        movimiento.setReferencia(
+                normalizarOpcional(
+                        referencia
+                )
+        );
+
+        movimiento.setMotivo(
+                normalizarOpcional(
+                        motivo
+                )
+        );
+
+        movimiento.setStockAnterior(
+                stockAnterior
+        );
+
+        movimiento.setStockNuevo(
+                stockNuevo
+        );
+
+        movimiento.setUsuario(
+                usuario
+        );
+
+        movimiento.setFechaMovimiento(
+                LocalDateTime.now()
+        );
+
+        movimiento.setActivo(
+                true
+        );
+
+        movimiento =
+                movimientoRepository
+                        .save(movimiento);
+
+        registrarAuditoria(
+                usuario,
+                movimiento
+        );
+
+        return movimiento;
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<MovimientoInventarioMedicamento>
     listarPorMes(
