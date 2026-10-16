@@ -20,4 +20,9 @@ public interface RecetaService {
     List<Receta> listarTodas();
 
     List<Medicamento> listarMedicamentosActivos();
+
+    Receta marcarComoNoAdquirida(
+            Long recetaId,
+            String nombreUsuario
+    );
 }

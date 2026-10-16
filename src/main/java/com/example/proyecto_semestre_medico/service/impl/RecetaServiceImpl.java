@@ -307,6 +307,105 @@ public class RecetaServiceImpl
                 .findByActivoTrueOrderByNombreAsc();
     }
 
+    @Override
+    @Transactional
+    public Receta marcarComoNoAdquirida(
+            Long recetaId,
+            String nombreUsuario
+    ) {
+
+        if (recetaId == null) {
+
+            throw new IllegalArgumentException(
+                    "La receta es obligatoria."
+            );
+        }
+
+        Receta receta =
+                recetaRepository
+                        .findById(recetaId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Receta no encontrada."
+                                )
+                        );
+
+        /*
+         * Antes de cambiar el estado verificamos
+         * si la receta ya venció.
+         */
+        if (verificarVencimiento(receta)) {
+
+            recetaRepository.save(
+                    receta
+            );
+        }
+
+        if (!Boolean.TRUE.equals(
+                receta.getActivo()
+        )) {
+
+            throw new IllegalArgumentException(
+                    "La receta se encuentra inactiva."
+            );
+        }
+
+        if (receta.getEstado()
+                == EstadoReceta.VENCIDA) {
+
+            throw new IllegalArgumentException(
+                    "Una receta vencida no puede marcarse como no adquirida."
+            );
+        }
+
+        if (receta.getEstado()
+                == EstadoReceta.DESPACHADA) {
+
+            throw new IllegalArgumentException(
+                    "Una receta completamente despachada no puede marcarse como no adquirida."
+            );
+        }
+
+        if (receta.getEstado()
+                == EstadoReceta.NO_ADQUIRIDA) {
+
+            throw new IllegalArgumentException(
+                    "La receta ya fue marcada como no adquirida."
+            );
+        }
+
+        if (receta.getEstado()
+                != EstadoReceta.PENDIENTE
+                && receta.getEstado()
+                != EstadoReceta.PARCIAL) {
+
+            throw new IllegalArgumentException(
+                    "El estado actual de la receta no permite esta operación."
+            );
+        }
+
+        receta.setEstado(
+                EstadoReceta.NO_ADQUIRIDA
+        );
+
+        receta =
+                recetaRepository.save(
+                        receta
+                );
+
+        Usuario usuario =
+                buscarUsuario(
+                        nombreUsuario
+                );
+
+        registrarAuditoriaNoAdquirida(
+                usuario,
+                receta
+        );
+
+        return receta;
+    }
+
     private void validar(
             RecetaFormDTO dto
     ) {
@@ -497,6 +596,44 @@ public class RecetaServiceImpl
                         .getDetalles()
                         .size()
                         + " medicamento(s)."
+        );
+
+        auditoriaRepository.save(
+                auditoria
+        );
+    }
+
+    private void registrarAuditoriaNoAdquirida(
+            Usuario usuario,
+            Receta receta
+    ) {
+
+        Auditoria auditoria =
+                new Auditoria();
+
+        auditoria.setUsuario(
+                usuario
+        );
+
+        auditoria.setAccion(
+                "MARCAR_RECETA_NO_ADQUIRIDA"
+        );
+
+        auditoria.setTipoEntidad(
+                "RECETA"
+        );
+
+        auditoria.setEntidadId(
+                receta
+                        .getId()
+                        .toString()
+        );
+
+        auditoria.setDetalle(
+                "La receta "
+                        + receta.getId()
+                        + " fue marcada como NO_ADQUIRIDA. "
+                        + "El paciente decidió no adquirir los medicamentos pendientes."
         );
 
         auditoriaRepository.save(

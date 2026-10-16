@@ -344,4 +344,88 @@ public class FarmaciaController {
                     + dto.getSucursalId();
         }
     }
+
+    /*
+     * =========================================================
+     * MARCAR RECETA COMO NO ADQUIRIDA
+     * =========================================================
+     */
+
+    @PostMapping("/recetas/{id}/no-adquirida")
+    public String marcarComoNoAdquirida(
+            @PathVariable Long id,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes
+    ) {
+
+        try {
+
+            recetaService
+                    .marcarComoNoAdquirida(
+                            id,
+                            authentication.getName()
+                    );
+
+            redirectAttributes.addFlashAttribute(
+                    "mensaje",
+                    "La receta fue marcada como NO ADQUIRIDA correctamente."
+            );
+
+        } catch (IllegalArgumentException e) {
+
+            redirectAttributes.addFlashAttribute(
+                    "error",
+                    e.getMessage()
+            );
+        }
+
+        return "redirect:/farmacia/recetas/"
+                + id;
+    }
+
+    /*
+     * =========================================================
+     * HISTORIAL DE DESPACHOS DE UNA RECETA
+     * =========================================================
+     */
+
+    @GetMapping("/recetas/{id}/historial")
+    public String verHistorialDespachos(
+            @PathVariable Long id,
+            Model model,
+            RedirectAttributes redirectAttributes
+    ) {
+
+        try {
+
+            Receta receta =
+                    recetaService
+                            .buscarPorId(id);
+
+            List<DespachoMedicamento> despachos =
+                    despachoMedicamentoService
+                            .listarDespachosPorReceta(id);
+
+            model.addAttribute(
+                    "receta",
+                    receta
+            );
+
+            model.addAttribute(
+                    "despachos",
+                    despachos
+            );
+
+            return "farmacia/recetas/historial";
+
+        } catch (IllegalArgumentException e) {
+
+            redirectAttributes.addFlashAttribute(
+                    "error",
+                    e.getMessage()
+            );
+
+            return "redirect:/farmacia";
+        }
+    }
 }

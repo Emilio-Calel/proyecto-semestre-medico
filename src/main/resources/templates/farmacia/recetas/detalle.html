@@ -108,6 +108,15 @@
             margin-bottom: 20px;
         }
 
+        .success {
+            background: #edf9f3;
+            border: 1px solid #b9e2ca;
+            color: #246b45;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 20px;
+        }
+
         @media (max-width: 700px) {
 
             .summary {
@@ -154,6 +163,49 @@
             💊 Despachar receta
         </a>
 
+        <a
+                class="btn"
+                style="
+        background:#536d75;
+        color:white;"
+                th:href="@{/farmacia/recetas/{id}/historial(id=${receta.id})}">
+            📋 Historial de despachos
+        </a>
+
+        <form
+                th:if="${receta.estado.name() == 'PENDIENTE'
+        or receta.estado.name() == 'PARCIAL'}"
+                th:action="@{/farmacia/recetas/{id}/no-adquirida(id=${receta.id})}"
+                method="post"
+                onsubmit="return confirm(
+            '¿Está seguro de que el paciente no adquirirá los medicamentos pendientes? Esta acción cerrará la receta.'
+        );">
+
+            <button
+                    type="submit"
+                    class="btn"
+                    style="
+            border:none;
+            cursor:pointer;
+            background:#a33b31;
+            color:white;">
+                ✕ Paciente no adquirió
+            </button>
+
+        </form>
+
+    </div>
+
+    <div
+            class="success"
+            th:if="${mensaje != null}"
+            th:text="${mensaje}">
+    </div>
+
+    <div
+            class="warning"
+            th:if="${error != null}"
+            th:text="${error}">
     </div>
 
     <div

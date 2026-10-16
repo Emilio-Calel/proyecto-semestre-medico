@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Historial de Despachos</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f4f8f9;
+            color: #203438;
+        }
+
+        .topbar {
+            background: linear-gradient(
+                    135deg,
+                    #0f6f7a,
+                    #1596a3
+            );
+            color: white;
+            padding: 22px 34px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+            padding: 35px 22px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #dbe8ea;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 7px 22px rgba(35,73,79,.06);
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .box {
+            background: #f7fafb;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .box small {
+            display: block;
+            color: #748389;
+            margin-bottom: 5px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 14px;
+            border-radius: 9px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .btn-secondary {
+            background: #e8eef0;
+            color: #405057;
+        }
+
+        .dispatch-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        .dispatch-number {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0f6f7a;
+        }
+
+        .total {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 1px solid #edf2f3;
+            font-size: 13px;
+        }
+
+        th {
+            background: #f6fafb;
+        }
+
+        .tag {
+            display: inline-block;
+            border-radius: 20px;
+            padding: 5px 9px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .tag-normal {
+            background: #e9f7f4;
+            color: #247062;
+        }
+
+        .tag-substitution {
+            background: #fff2db;
+            color: #8a5b13;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 35px 15px;
+            color: #66777c;
+        }
+
+        .substitution-reason {
+            margin-top: 6px;
+            font-size: 12px;
+            color: #76551e;
+        }
+
+        @media (max-width: 750px) {
+
+            .summary {
+                grid-template-columns: 1fr;
+            }
+
+            .table-wrapper {
+                overflow-x: auto;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <h1>
+        Historial de despachos
+    </h1>
+
+    <p th:text="'Receta #' + ${receta.id}">
+    </p>
+
+</header>
+
+<main class="container">
+
+    <div style="margin-bottom:20px;">
+
+        <a
+                class="btn btn-secondary"
+                th:href="@{/farmacia/recetas/{id}(id=${receta.id})}">
+            ← Volver a receta
+        </a>
+
+    </div>
+
+    <section class="card">
+
+        <div class="summary">
+
+            <div class="box">
+
+                <small>Paciente</small>
+
+                <strong
+                        th:text="${receta.consultaMedica.cita.paciente.nombreCompleto}">
+                </strong>
+
+            </div>
+
+            <div class="box">
+
+                <small>Médico</small>
+
+                <strong
+                        th:text="${receta.consultaMedica.medico.personal.nombreCompleto}">
+                </strong>
+
+            </div>
+
+            <div class="box">
+
+                <small>Estado de receta</small>
+
+                <strong
+                        th:text="${receta.estado}">
+                </strong>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <section
+            class="card"
+            th:if="${#lists.isEmpty(despachos)}">
+
+        <div class="empty">
+
+            <h3 style="margin-bottom:8px;">
+                Sin despachos registrados
+            </h3>
+
+            <p>
+                Esta receta todavía no posee despachos.
+            </p>
+
+        </div>
+
+    </section>
+
+    <section
+            class="card"
+            th:each="despacho : ${despachos}">
+
+        <div class="dispatch-header">
+
+            <div>
+
+                <div
+                        class="dispatch-number"
+                        th:text="'Despacho #' + ${despacho.id}">
+                </div>
+
+                <div style="
+                    margin-top:6px;
+                    color:#68797e;
+                    font-size:13px;"
+                     th:text="${#temporals.format(
+                        despacho.fechaDespacho,
+                        'dd/MM/yyyy HH:mm'
+                     )}">
+                </div>
+
+            </div>
+
+            <div
+                    class="total"
+                    th:text="${'Q '
+                    + #numbers.formatDecimal(
+                        despacho.montoTotal,
+                        1,
+                        2
+                    )}">
+            </div>
+
+        </div>
+
+        <div class="summary"
+             style="margin-bottom:20px;">
+
+            <div class="box">
+
+                <small>Sucursal</small>
+
+                <strong
+                        th:text="${despacho.sucursal.nombre}">
+                </strong>
+
+            </div>
+
+            <div class="box">
+
+                <small>Registrado por</small>
+
+                <strong
+                        th:text="${despacho.usuario != null
+                        ? despacho.usuario.nombreUsuario
+                        : 'Sistema'}">
+                </strong>
+
+            </div>
+
+            <div class="box">
+
+                <small>Medicamentos entregados</small>
+
+                <strong
+                        th:text="${#lists.size(despacho.detalles)}">
+                </strong>
+
+            </div>
+
+        </div>
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+
+                <tr>
+                    <th>Prescrito</th>
+                    <th>Entregado</th>
+                    <th>Cantidad</th>
+                    <th>Precio</th>
+                    <th>Subtotal</th>
+                    <th>Tipo</th>
+                </tr>
+
+                </thead>
+
+                <tbody>
+
+                <tr th:each="detalle : ${despacho.detalles}">
+
+                    <td
+                            th:text="${detalle.recetaDetalle.medicamento.nombre}">
+                    </td>
+
+                    <td>
+
+                        <strong
+                                th:text="${detalle.medicamentoDespachado.nombre}">
+                        </strong>
+
+                        <div
+                                class="substitution-reason"
+                                th:if="${detalle.sustituido
+                                and detalle.motivoSustitucion != null}"
+                                th:text="${detalle.motivoSustitucion}">
+                        </div>
+
+                    </td>
+
+                    <td th:text="${detalle.cantidad}">
+                    </td>
+
+                    <td
+                            th:text="${'Q '
+                            + #numbers.formatDecimal(
+                                detalle.precioUnitario,
+                                1,
+                                2
+                            )}">
+                    </td>
+
+                    <td
+                            th:text="${'Q '
+        + #numbers.formatDecimal(
+            detalle.precioUnitario.doubleValue()
+                * detalle.cantidad,
+            1,
+            2
+        )}">
+                    </td>
+
+                    <td>
+
+                        <span
+                                class="tag tag-substitution"
+                                th:if="${detalle.sustituido}">
+                            Sustitución
+                        </span>
+
+                        <span
+                                class="tag tag-normal"
+                                th:unless="${detalle.sustituido}">
+                            Normal
+                        </span>
+
+                    </td>
+
+                </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+</main>
+
+</body>
+</html>
