@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Historial de Inventario</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f8f9;
+            color: #1f2933;
+        }
+
+        .topbar {
+            background: linear-gradient(
+                    135deg,
+                    #0f6f7a,
+                    #1596a3
+            );
+            color: white;
+            padding: 22px 34px;
+        }
+
+        .container {
+            max-width: 1150px;
+            margin: 0 auto;
+            padding: 36px 24px;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns:
+                repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 22px;
+        }
+
+        .box,
+        .card {
+            background: white;
+            border: 1px solid #e2ebed;
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 8px 24px rgba(30,70,80,0.06);
+        }
+
+        .box small {
+            display: block;
+            color: #748389;
+            margin-bottom: 6px;
+        }
+
+        .box strong {
+            font-size: 21px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #edf2f3;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        th {
+            background: #f6fafb;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 14px;
+            border-radius: 9px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: #0f6f7a;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #e8eef0;
+            color: #405057;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 700px) {
+            .summary {
+                grid-template-columns: 1fr;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <h1>Historial de Inventario</h1>
+
+</header>
+
+<main class="container">
+
+    <div class="toolbar">
+
+        <a
+                class="btn btn-secondary"
+                th:href="@{/farmacia/inventario}">
+            ← Volver
+        </a>
+
+        <a
+                class="btn btn-primary"
+                th:href="@{
+                    /farmacia/inventario/nuevo
+                    (inventarioId=${inventario.id})
+                }">
+            + Nuevo movimiento
+        </a>
+
+    </div>
+
+    <section class="summary">
+
+        <div class="box">
+
+            <small>
+                Medicamento
+            </small>
+
+            <strong th:text="${inventario.medicamento.nombre}">
+            </strong>
+
+        </div>
+
+        <div class="box">
+
+            <small>
+                Sucursal
+            </small>
+
+            <strong th:text="${inventario.sucursal.nombre}">
+            </strong>
+
+        </div>
+
+        <div class="box">
+
+            <small>
+                Stock actual
+            </small>
+
+            <strong th:text="${inventario.stockActual}">
+            </strong>
+
+        </div>
+
+    </section>
+
+    <section class="card">
+
+        <table th:if="${!#lists.isEmpty(movimientos)}">
+
+            <thead>
+
+            <tr>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Cantidad</th>
+                <th>Anterior</th>
+                <th>Nuevo</th>
+                <th>Costo</th>
+                <th>Referencia</th>
+                <th>Motivo</th>
+            </tr>
+
+            </thead>
+
+            <tbody>
+
+            <tr th:each="mov : ${movimientos}">
+
+                <td th:text="${#temporals.format(
+                    mov.fechaMovimiento,
+                    'dd/MM/yyyy HH:mm'
+                )}">
+                </td>
+
+                <td th:text="${mov.tipoMovimiento}">
+                </td>
+
+                <td th:text="${mov.cantidad}">
+                </td>
+
+                <td th:text="${mov.stockAnterior}">
+                </td>
+
+                <td th:text="${mov.stockNuevo}">
+                </td>
+
+                <td th:text="${mov.costoUnitario != null
+                    ? mov.costoUnitario
+                    : '-'}">
+                </td>
+
+                <td th:text="${mov.referencia != null
+                    ? mov.referencia
+                    : '-'}">
+                </td>
+
+                <td th:text="${mov.motivo != null
+                    ? mov.motivo
+                    : '-'}">
+                </td>
+
+            </tr>
+
+            </tbody>
+
+        </table>
+
+        <div th:if="${#lists.isEmpty(movimientos)}">
+            No hay movimientos para este inventario.
+        </div>
+
+    </section>
+
+</main>
+
+</body>
+</html>

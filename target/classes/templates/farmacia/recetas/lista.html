@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Recetas | Farmacia</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f4f8f9;
+            color: #203438;
+        }
+
+        .topbar {
+            background: linear-gradient(
+                    135deg,
+                    #0f6f7a,
+                    #1596a3
+            );
+            color: white;
+            padding: 22px 34px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 35px 22px;
+        }
+
+        .toolbar,
+        .card {
+            background: white;
+            border: 1px solid #dbe8ea;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 7px 22px rgba(35,73,79,.06);
+        }
+
+        .toolbar {
+            margin-bottom: 20px;
+        }
+
+        .toolbar form {
+            display: flex;
+            gap: 12px;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #526167;
+        }
+
+        select {
+            padding: 10px 12px;
+            border: 1px solid #ccdadd;
+            border-radius: 8px;
+        }
+
+        .btn {
+            display: inline-block;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 14px;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .btn-primary {
+            background: #0f6f7a;
+            color: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 12px 10px;
+            border-bottom: 1px solid #edf2f3;
+            font-size: 13px;
+        }
+
+        th {
+            background: #f6fafb;
+            color: #526167;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 6px 9px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        .PENDIENTE {
+            background: #fff5d9;
+            color: #876313;
+        }
+
+        .PARCIAL {
+            background: #e8f1ff;
+            color: #315f9c;
+        }
+
+        .DESPACHADA {
+            background: #e9f7ef;
+            color: #237a4b;
+        }
+
+        .VENCIDA {
+            background: #fff0ef;
+            color: #a33b31;
+        }
+
+        .NO_ADQUIRIDA {
+            background: #edf0f1;
+            color: #57666b;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 35px;
+            color: #748389;
+        }
+
+        .expired {
+            background: #fffafa;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <h1>Farmacia — Recetas Médicas</h1>
+
+    <p>
+        Consulte recetas pendientes, parciales y despachadas.
+    </p>
+
+</header>
+
+<main class="container">
+
+    <section class="toolbar">
+
+        <form
+                method="get"
+                th:action="@{/farmacia}">
+
+            <div>
+
+                <label for="estado">
+                    Estado
+                </label>
+
+                <select
+                        id="estado"
+                        name="estado">
+
+                    <option
+                            value="TODOS">
+                        Todos
+                    </option>
+
+                    <option
+                            th:each="estado : ${estados}"
+                            th:value="${estado}"
+                            th:selected="${estadoSeleccionado != null
+                                and estadoSeleccionado == estado.name()}"
+                            th:text="${estado}">
+                    </option>
+
+                </select>
+
+            </div>
+
+            <button
+                    type="submit"
+                    class="btn btn-primary">
+                Filtrar
+            </button>
+
+        </form>
+
+    </section>
+
+    <section class="card">
+
+        <div class="table-wrapper">
+
+            <table th:if="${!#lists.isEmpty(recetas)}">
+
+                <thead>
+
+                <tr>
+                    <th>Receta</th>
+                    <th>Paciente</th>
+                    <th>Médico</th>
+                    <th>Emisión</th>
+                    <th>Vencimiento</th>
+                    <th>Estado</th>
+                    <th>Acción</th>
+                </tr>
+
+                </thead>
+
+                <tbody>
+
+                <tr
+                        th:each="receta : ${recetas}"
+                        th:classappend="${receta.estado.name() == 'VENCIDA'}
+                            ? 'expired' : ''">
+
+                    <td th:text="'#' + ${receta.id}">
+                    </td>
+
+                    <td th:text="${receta.consultaMedica.cita.paciente.nombreCompleto}">
+                    </td>
+
+                    <td th:text="${receta.consultaMedica.medico.personal.nombreCompleto}">
+                    </td>
+
+                    <td th:text="${#temporals.format(
+                        receta.fechaEmision,
+                        'dd/MM/yyyy HH:mm'
+                    )}">
+                    </td>
+
+                    <td th:text="${#temporals.format(
+                        receta.fechaVencimiento,
+                        'dd/MM/yyyy HH:mm'
+                    )}">
+                    </td>
+
+                    <td>
+
+                        <span
+                                class="status"
+                                th:classappend="${receta.estado.name()}"
+                                th:text="${receta.estado}">
+                        </span>
+
+                    </td>
+
+                    <td>
+
+                        <a
+                                class="btn btn-primary"
+                                th:href="@{
+                                    /farmacia/recetas/{id}
+                                    (id=${receta.id})
+                                }">
+                            Ver receta
+                        </a>
+
+                    </td>
+
+                </tr>
+
+                </tbody>
+
+            </table>
+
+            <div
+                    class="empty"
+                    th:if="${#lists.isEmpty(recetas)}">
+
+                No hay recetas registradas.
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+</body>
+</html>

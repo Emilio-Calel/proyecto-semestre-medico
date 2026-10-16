@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Detalle de Receta</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f4f8f9;
+            color: #203438;
+        }
+
+        .topbar {
+            background: linear-gradient(
+                    135deg,
+                    #0f6f7a,
+                    #1596a3
+            );
+            color: white;
+            padding: 22px 34px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            padding: 35px 22px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #dbe8ea;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 7px 22px rgba(35,73,79,.06);
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns:
+                repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .box {
+            background: #f7fafb;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .box small {
+            display: block;
+            color: #748389;
+            margin-bottom: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 1px solid #edf2f3;
+            font-size: 13px;
+        }
+
+        th {
+            background: #f6fafb;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 14px;
+            border-radius: 9px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .btn-secondary {
+            background: #e8eef0;
+            color: #405057;
+        }
+
+        .warning {
+            background: #fff0ef;
+            border: 1px solid #efc4c0;
+            color: #a33b31;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 700px) {
+
+            .summary {
+                grid-template-columns: 1fr;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <h1 th:text="'Receta #' + ${receta.id}">
+        Receta
+    </h1>
+
+</header>
+
+<main class="container">
+
+    <div style="margin-bottom:20px;">
+
+        <a
+                class="btn btn-secondary"
+                th:href="@{/farmacia}">
+            ← Volver
+        </a>
+
+    </div>
+
+    <div
+            class="warning"
+            th:if="${receta.estado.name() == 'VENCIDA'}">
+
+        Esta receta está vencida y no puede ser despachada.
+
+    </div>
+
+    <section class="card">
+
+        <div class="summary">
+
+            <div class="box">
+
+                <small>Paciente</small>
+
+                <strong
+                        th:text="${receta.consultaMedica.cita.paciente.nombreCompleto}">
+                </strong>
+
+            </div>
+
+            <div class="box">
+
+                <small>Médico</small>
+
+                <strong
+                        th:text="${receta.consultaMedica.medico.personal.nombreCompleto}">
+                </strong>
+
+            </div>
+
+            <div class="box">
+
+                <small>Estado</small>
+
+                <strong
+                        th:text="${receta.estado}">
+                </strong>
+
+            </div>
+
+            <div class="box">
+
+                <small>Fecha de emisión</small>
+
+                <strong
+                        th:text="${#temporals.format(
+                            receta.fechaEmision,
+                            'dd/MM/yyyy HH:mm'
+                        )}">
+                </strong>
+
+            </div>
+
+            <div class="box">
+
+                <small>Válida hasta</small>
+
+                <strong
+                        th:text="${#temporals.format(
+                            receta.fechaVencimiento,
+                            'dd/MM/yyyy HH:mm'
+                        )}">
+                </strong>
+
+            </div>
+
+            <div class="box">
+
+                <small>Cita</small>
+
+                <strong
+                        th:text="${receta.consultaMedica.cita.numeroCita}">
+                </strong>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <section
+            class="card"
+            th:if="${receta.observaciones != null}">
+
+        <h3 style="margin-bottom:10px;">
+            Observaciones
+        </h3>
+
+        <p th:text="${receta.observaciones}">
+        </p>
+
+    </section>
+
+    <section class="card">
+
+        <h3 style="margin-bottom:18px;">
+            Medicamentos prescritos
+        </h3>
+
+        <table>
+
+            <thead>
+
+            <tr>
+                <th>Medicamento</th>
+                <th>Dosis</th>
+                <th>Cantidad</th>
+                <th>Unidad</th>
+                <th>Precio unitario</th>
+                <th>Indicaciones</th>
+            </tr>
+
+            </thead>
+
+            <tbody>
+
+            <tr th:each="detalle : ${receta.detalles}">
+
+                <td th:text="${detalle.medicamento.nombre}">
+                </td>
+
+                <td th:text="${detalle.dosis}">
+                </td>
+
+                <td th:text="${detalle.cantidad}">
+                </td>
+
+                <td th:text="${detalle.medicamento.unidad}">
+                </td>
+
+                <td th:text="${'Q '
+                    + #numbers.formatDecimal(
+                        detalle.medicamento.precio,
+                        1,
+                        2
+                    )}">
+                </td>
+
+                <td th:text="${detalle.indicaciones != null
+                    ? detalle.indicaciones
+                    : '-'}">
+                </td>
+
+            </tr>
+
+            </tbody>
+
+        </table>
+
+    </section>
+
+</main>
+
+</body>
+</html>

@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Generar Receta</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f4f8f9;
+            color: #203438;
+        }
+
+        .topbar {
+            background: linear-gradient(
+                    135deg,
+                    #0f6f7a,
+                    #1596a3
+            );
+            color: white;
+            padding: 20px 30px;
+        }
+
+        .topbar h1 {
+            font-size: 22px;
+            margin-bottom: 4px;
+        }
+
+        .container {
+            max-width: 1050px;
+            margin: 30px auto;
+            padding: 0 20px 50px;
+        }
+
+        .summary {
+            background: white;
+            border: 1px solid #dbe8ea;
+            border-radius: 16px;
+            padding: 22px;
+            margin-bottom: 20px;
+            box-shadow: 0 7px 22px rgba(35,73,79,.06);
+        }
+
+        .summary h2 {
+            color: #0f6f7a;
+            margin-bottom: 7px;
+        }
+
+        .summary p {
+            color: #71868a;
+            margin-bottom: 4px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #dbe8ea;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 7px 22px rgba(35,73,79,.06);
+        }
+
+        .error {
+            background: #fff0ee;
+            color: #9d3025;
+            border: 1px solid #f0c5bf;
+            border-radius: 10px;
+            padding: 13px;
+            margin-bottom: 18px;
+        }
+
+        .field {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: #415b5f;
+            margin-bottom: 7px;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            border: 1px solid #ccdadd;
+            border-radius: 9px;
+            padding: 10px 12px;
+            font: inherit;
+            background: white;
+        }
+
+        textarea {
+            min-height: 90px;
+            resize: vertical;
+        }
+
+        .detalle {
+            border: 1px solid #dbe8ea;
+            background: #f8fbfc;
+            border-radius: 13px;
+            padding: 18px;
+            margin-bottom: 15px;
+        }
+
+        .detalle-grid {
+            display: grid;
+            grid-template-columns: 2fr 2fr 1fr;
+            gap: 12px;
+        }
+
+        .detalle-actions {
+            margin-top: 10px;
+            text-align: right;
+        }
+
+        .btn {
+            display: inline-block;
+            border: none;
+            border-radius: 9px;
+            padding: 10px 15px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: #0f6f7a;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #e8eef0;
+            color: #405057;
+        }
+
+        .btn-danger {
+            background: #fff0ee;
+            color: #a33b31;
+            border: 1px solid #efc4c0;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin: 22px 0 15px;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 22px;
+            padding-top: 18px;
+            border-top: 1px solid #dbe8ea;
+        }
+
+        .help {
+            font-size: 12px;
+            color: #71868a;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 750px) {
+
+            .detalle-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                text-align: center;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <h1>Generar Receta Médica</h1>
+
+    <p>
+        Indique los medicamentos y tratamiento prescrito.
+    </p>
+
+</header>
+
+<main class="container">
+
+    <section class="summary">
+
+        <h2 th:text="${consulta.paciente}">
+            Paciente
+        </h2>
+
+        <p th:text="'Cita #' + ${consulta.numeroCita}">
+            Cita
+        </p>
+
+        <p>
+            La receta tendrá una vigencia automática de 7 días.
+        </p>
+
+    </section>
+
+    <section class="card">
+
+        <div
+                th:if="${error}"
+                class="error"
+                th:text="${error}">
+        </div>
+
+        <form
+                th:action="@{/medico/receta/guardar}"
+                th:object="${recetaForm}"
+                method="post">
+
+            <input
+                    type="hidden"
+                    th:field="*{citaId}">
+
+            <div class="field">
+
+                <label for="observaciones">
+                    Observaciones generales
+                </label>
+
+                <textarea
+                        id="observaciones"
+                        maxlength="1000"
+                        th:field="*{observaciones}"
+                        placeholder="Observaciones adicionales de la receta...">
+                </textarea>
+
+            </div>
+
+            <div class="toolbar">
+
+                <h3>
+                    Medicamentos
+                </h3>
+
+                <button
+                        type="button"
+                        id="agregarDetalle"
+                        class="btn btn-primary">
+                    + Agregar medicamento
+                </button>
+
+            </div>
+
+            <div id="detallesContainer">
+            </div>
+
+            <div class="actions">
+
+                <a
+                        class="btn btn-secondary"
+                        th:href="@{/medico}">
+                    Cancelar
+                </a>
+
+                <button
+                        type="submit"
+                        class="btn btn-primary">
+                    Generar receta
+                </button>
+
+            </div>
+
+        </form>
+
+    </section>
+
+</main>
+
+<template id="detalleTemplate">
+
+    <div class="detalle">
+
+        <div class="detalle-grid">
+
+            <div class="field">
+
+                <label>
+                    Medicamento *
+                </label>
+
+                <select
+                        class="medicamento"
+                        required>
+
+                    <option value="">
+                        Seleccione...
+                    </option>
+
+                    <option
+                            th:each="med : ${medicamentos}"
+                            th:value="${med.id}"
+                            th:text="${med.nombre
+                                + ' - '
+                                + med.unidad}">
+                    </option>
+
+                </select>
+
+            </div>
+
+            <div class="field">
+
+                <label>
+                    Dosis *
+                </label>
+
+                <input
+                        type="text"
+                        class="dosis"
+                        maxlength="200"
+                        required
+                        placeholder="Ej. 1 tableta cada 8 horas">
+
+            </div>
+
+            <div class="field">
+
+                <label>
+                    Cantidad *
+                </label>
+
+                <input
+                        type="number"
+                        class="cantidad"
+                        min="1"
+                        required>
+
+            </div>
+
+        </div>
+
+        <div class="field">
+
+            <label>
+                Indicaciones
+            </label>
+
+            <textarea
+                    class="indicaciones"
+                    maxlength="1000"
+                    placeholder="Ej. Tomar después de alimentos">
+            </textarea>
+
+        </div>
+
+        <div class="detalle-actions">
+
+            <button
+                    type="button"
+                    class="btn btn-danger eliminarDetalle">
+                Eliminar
+            </button>
+
+        </div>
+
+    </div>
+
+</template>
+
+<script>
+
+    const container =
+        document.getElementById(
+            "detallesContainer"
+        );
+
+    const template =
+        document.getElementById(
+            "detalleTemplate"
+        );
+
+    const botonAgregar =
+        document.getElementById(
+            "agregarDetalle"
+        );
+
+
+    function actualizarIndices() {
+
+        const detalles =
+            container.querySelectorAll(
+                ".detalle"
+            );
+
+        detalles.forEach(
+            (detalle, index) => {
+
+                detalle
+                    .querySelector(
+                        ".medicamento"
+                    )
+                    .name =
+                    `detalles[${index}].medicamentoId`;
+
+                detalle
+                    .querySelector(
+                        ".dosis"
+                    )
+                    .name =
+                    `detalles[${index}].dosis`;
+
+                detalle
+                    .querySelector(
+                        ".cantidad"
+                    )
+                    .name =
+                    `detalles[${index}].cantidad`;
+
+                detalle
+                    .querySelector(
+                        ".indicaciones"
+                    )
+                    .name =
+                    `detalles[${index}].indicaciones`;
+            }
+        );
+    }
+
+
+    function agregarDetalle() {
+
+        const fragmento =
+            template.content
+                .cloneNode(true);
+
+        const detalle =
+            fragmento.querySelector(
+                ".detalle"
+            );
+
+        detalle
+            .querySelector(
+                ".eliminarDetalle"
+            )
+            .addEventListener(
+                "click",
+                () => {
+
+                    detalle.remove();
+
+                    actualizarIndices();
+                }
+            );
+
+        container.appendChild(
+            fragmento
+        );
+
+        actualizarIndices();
+    }
+
+
+    botonAgregar.addEventListener(
+        "click",
+        agregarDetalle
+    );
+
+
+    /*
+     * Toda receta debe iniciar
+     * con al menos un medicamento.
+     */
+
+    agregarDetalle();
+
+</script>
+
+</body>
+</html>

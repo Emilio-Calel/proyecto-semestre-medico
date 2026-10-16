@@ -11,6 +11,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.example.proyecto_semestre_medico.dto.OrdenLaboratorioFormDTO;
 import com.example.proyecto_semestre_medico.model.OrdenLaboratorio;
 import com.example.proyecto_semestre_medico.service.OrdenLaboratorioService;
+import com.example.proyecto_semestre_medico.dto.RecetaFormDTO;
+import com.example.proyecto_semestre_medico.model.Receta;
+import com.example.proyecto_semestre_medico.service.RecetaService;
 
 @Controller
 @RequestMapping("/medico")
@@ -19,16 +22,21 @@ public class MedicoController {
 
     private final ConsultaMedicaService consultaMedicaService;
     private final OrdenLaboratorioService ordenLaboratorioService;
+    private final RecetaService recetaService;
 
     public MedicoController(
             ConsultaMedicaService consultaMedicaService,
-            OrdenLaboratorioService ordenLaboratorioService
+            OrdenLaboratorioService ordenLaboratorioService,
+            RecetaService recetaService
     ) {
         this.consultaMedicaService =
                 consultaMedicaService;
 
         this.ordenLaboratorioService =
                 ordenLaboratorioService;
+
+        this.recetaService =
+                recetaService;
     }
 
     /*
@@ -414,6 +422,132 @@ public class MedicoController {
             }
 
             return "medico/orden-laboratorio";
+        }
+    }
+
+    @GetMapping("/receta/{citaId}")
+    public String nuevaReceta(
+            @PathVariable Long citaId,
+            Authentication authentication,
+            Model model,
+            RedirectAttributes redirectAttributes
+    ) {
+
+        try {
+
+            ConsultaMedicaFormDTO consulta =
+                    consultaMedicaService
+                            .obtenerConsulta(
+                                    citaId,
+                                    authentication.getName()
+                            );
+
+            if (!"FINALIZADA".equalsIgnoreCase(
+                    consulta.getEstado()
+            )) {
+
+                throw new IllegalArgumentException(
+                        "La consulta debe estar finalizada antes de generar una receta."
+                );
+            }
+
+            RecetaFormDTO recetaForm =
+                    new RecetaFormDTO();
+
+            recetaForm.setCitaId(
+                    citaId
+            );
+
+            model.addAttribute(
+                    "recetaForm",
+                    recetaForm
+            );
+
+            model.addAttribute(
+                    "consulta",
+                    consulta
+            );
+
+            model.addAttribute(
+                    "medicamentos",
+                    recetaService
+                            .listarMedicamentosActivos()
+            );
+
+            return "medico/receta";
+
+        } catch (IllegalArgumentException e) {
+
+            redirectAttributes.addFlashAttribute(
+                    "error",
+                    e.getMessage()
+            );
+
+            return "redirect:/medico";
+        }
+    }
+
+    @PostMapping("/receta/guardar")
+    public String guardarReceta(
+            @ModelAttribute("recetaForm")
+            RecetaFormDTO dto,
+            Authentication authentication,
+            Model model,
+            RedirectAttributes redirectAttributes
+    ) {
+
+        try {
+
+            Receta receta =
+                    recetaService
+                            .crearReceta(
+                                    dto,
+                                    authentication.getName()
+                            );
+
+            redirectAttributes.addFlashAttribute(
+                    "mensaje",
+                    "Receta generada correctamente. "
+                            + "Número de receta: "
+                            + receta.getId()
+                            + ". Vigencia: 7 días."
+            );
+
+            return "redirect:/medico";
+
+        } catch (IllegalArgumentException e) {
+
+            model.addAttribute(
+                    "error",
+                    e.getMessage()
+            );
+
+            model.addAttribute(
+                    "recetaForm",
+                    dto
+            );
+
+            model.addAttribute(
+                    "medicamentos",
+                    recetaService
+                            .listarMedicamentosActivos()
+            );
+
+            try {
+
+                model.addAttribute(
+                        "consulta",
+                        consultaMedicaService
+                                .obtenerConsulta(
+                                        dto.getCitaId(),
+                                        authentication.getName()
+                                )
+                );
+
+            } catch (Exception ignored) {
+            }
+
+            return "medico/receta";
         }
     }
 }

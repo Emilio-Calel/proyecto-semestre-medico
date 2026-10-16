@@ -857,11 +857,15 @@
 
                             </a>
 
-                            <button type="button"
-                                    class="future-button"
-                                    disabled>
+                            <a th:href="@{
+        /medico/receta/{id}
+        (id=${cita.citaId})
+   }"
+                               class="button-link btn-secondary">
+
                                 💊 Receta
-                            </button>
+
+                            </a>
 
                         </div>
 
