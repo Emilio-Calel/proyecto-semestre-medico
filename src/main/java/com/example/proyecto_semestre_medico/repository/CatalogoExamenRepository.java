@@ -9,7 +9,15 @@ import java.util.Optional;
 public interface CatalogoExamenRepository
         extends JpaRepository<CatalogoExamen, Long> {
 
-    List<CatalogoExamen> findByActivoTrueOrderByNombreAsc();
+    List<CatalogoExamen>
+    findAllByOrderByNombreAsc();
 
-    Optional<CatalogoExamen> findByCodigoIgnoreCase(String codigo);
+    List<CatalogoExamen>
+    findByActivoTrueOrderByNombreAsc();
+
+    Optional<CatalogoExamen>
+    findByCodigoIgnoreCase(String codigo);
+
+    Optional<CatalogoExamen>
+    findByNombreIgnoreCase(String nombre);
 }

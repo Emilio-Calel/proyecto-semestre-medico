@@ -11,5 +11,11 @@ public interface EstadoCitaRepository
 
     Optional<EstadoCita> findByCodigo(String codigo);
 
+    Optional<EstadoCita> findByCodigoIgnoreCase(String codigo);
+
+    Optional<EstadoCita> findByNombreIgnoreCase(String nombre);
+
     List<EstadoCita> findByActivoTrueOrderByNombreAsc();
+
+    List<EstadoCita> findAllByOrderByNombreAsc();
 }

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Estados de Cita</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f8f9;
+            color: #1f2933;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            background: linear-gradient(
+                    135deg,
+                    #0f6f7a,
+                    #1596a3
+            );
+            color: white;
+            padding: 22px 34px;
+        }
+
+        .topbar h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .topbar p {
+            font-size: 13px;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 36px 24px;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e2ebed;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 24px rgba(30,70,80,0.07);
+        }
+
+        .btn {
+            border: none;
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 9px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #0f6f7a;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #e8eef0;
+            color: #405057;
+        }
+
+        .btn-danger {
+            background: #c0392b;
+            color: white;
+        }
+
+        .btn-success {
+            background: #2e8b57;
+            color: white;
+        }
+
+        .success,
+        .error {
+            padding: 13px 15px;
+            border-radius: 9px;
+            margin-bottom: 15px;
+        }
+
+        .success {
+            background: #e8f7ef;
+            color: #237a4b;
+            border: 1px solid #b9e7ce;
+        }
+
+        .error {
+            background: #fff0ef;
+            color: #a33b31;
+            border: 1px solid #efc4c0;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 13px 11px;
+            text-align: left;
+            border-bottom: 1px solid #edf2f3;
+        }
+
+        th {
+            background: #f6fafb;
+            color: #526167;
+            font-size: 13px;
+        }
+
+        td {
+            font-size: 14px;
+        }
+
+        .code {
+            font-family: Consolas, monospace;
+            font-weight: bold;
+            color: #0f6f7a;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 9px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .active {
+            background: #e6f7ed;
+            color: #237a4b;
+        }
+
+        .inactive {
+            background: #fdeceb;
+            color: #a33b31;
+        }
+
+        .actions {
+            display: flex;
+            gap: 7px;
+            flex-wrap: wrap;
+        }
+
+        .actions form {
+            margin: 0;
+        }
+
+        .empty {
+            text-align: center;
+            color: #7b898e;
+            padding: 35px;
+        }
+
+        .back {
+            margin-top: 22px;
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="topbar">
+    <h1>Estados de Cita</h1>
+    <p>
+        Administración de estados utilizados en el flujo de atención.
+    </p>
+</header>
+
+<main class="container">
+
+    <div class="toolbar">
+
+        <h2>Estados registrados</h2>
+
+        <a class="btn btn-primary"
+           th:href="@{/admin/estados-cita/nuevo}">
+            + Nuevo estado
+        </a>
+
+    </div>
+
+    <div
+            class="success"
+            th:if="${mensaje}"
+            th:text="${mensaje}">
+    </div>
+
+    <div
+            class="error"
+            th:if="${error}"
+            th:text="${error}">
+    </div>
+
+    <section class="card">
+
+        <div class="table-wrapper">
+
+            <table th:if="${!#lists.isEmpty(estados)}">
+
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Código</th>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+                </thead>
+
+                <tbody>
+
+                <tr th:each="estado : ${estados}">
+
+                    <td th:text="${estado.id}">
+                    </td>
+
+                    <td
+                            class="code"
+                            th:text="${estado.codigo}">
+                    </td>
+
+                    <td th:text="${estado.nombre}">
+                    </td>
+
+                    <td th:text="${estado.descripcion != null
+                        ? estado.descripcion
+                        : '-'}">
+                    </td>
+
+                    <td>
+
+                        <span
+                                th:if="${estado.activo}"
+                                class="badge active">
+                            Activo
+                        </span>
+
+                        <span
+                                th:unless="${estado.activo}"
+                                class="badge inactive">
+                            Inactivo
+                        </span>
+
+                    </td>
+
+                    <td>
+
+                        <div class="actions">
+
+                            <a
+                                    class="btn btn-secondary"
+                                    th:href="@{
+                                        /admin/estados-cita/editar/{id}
+                                        (id=${estado.id})
+                                    }">
+                                Editar
+                            </a>
+
+                            <form
+                                    th:if="${estado.activo}"
+                                    th:action="@{
+                                        /admin/estados-cita/desactivar/{id}
+                                        (id=${estado.id})
+                                    }"
+                                    method="post"
+                                    onsubmit="return confirm(
+                                        '¿Desea desactivar este estado?'
+                                    );">
+
+                                <button
+                                        type="submit"
+                                        class="btn btn-danger">
+                                    Desactivar
+                                </button>
+
+                            </form>
+
+                            <form
+                                    th:unless="${estado.activo}"
+                                    th:action="@{
+                                        /admin/estados-cita/reactivar/{id}
+                                        (id=${estado.id})
+                                    }"
+                                    method="post">
+
+                                <button
+                                        type="submit"
+                                        class="btn btn-success">
+                                    Reactivar
+                                </button>
+
+                            </form>
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+                </tbody>
+
+            </table>
+
+            <div
+                    class="empty"
+                    th:if="${#lists.isEmpty(estados)}">
+                No hay estados de cita registrados.
+            </div>
+
+        </div>
+
+    </section>
+
+    <div class="back">
+
+        <a class="btn btn-secondary"
+           th:href="@{/}">
+            ← Volver al panel principal
+        </a>
+
+    </div>
+
+</main>
+
+</body>
+</html>

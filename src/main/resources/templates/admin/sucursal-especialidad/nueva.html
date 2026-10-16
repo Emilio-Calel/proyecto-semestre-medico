@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+  <title>Asignar Especialidad</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f4f8f9;
+      color: #1f2933;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      background: linear-gradient(
+              135deg,
+              #0f6f7a,
+              #1596a3
+      );
+      color: white;
+      padding: 22px 34px;
+    }
+
+    .topbar h1 {
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+
+    .topbar p {
+      font-size: 13px;
+      color: rgba(255,255,255,0.8);
+    }
+
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 42px 24px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #e2ebed;
+      padding: 30px;
+      box-shadow: 0 8px 24px rgba(30,70,80,0.07);
+    }
+
+    .card h2 {
+      margin-bottom: 8px;
+      font-size: 22px;
+    }
+
+    .description {
+      color: #728187;
+      font-size: 14px;
+      margin-bottom: 26px;
+    }
+
+    .error {
+      background: #fff0ef;
+      color: #a33b31;
+      border: 1px solid #efc4c0;
+      padding: 13px 15px;
+      border-radius: 9px;
+      margin-bottom: 20px;
+    }
+
+    .field {
+      margin-bottom: 20px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 7px;
+      color: #4f5f65;
+    }
+
+    .field select {
+      width: 100%;
+      padding: 12px 13px;
+      border: 1px solid #ccd9dc;
+      border-radius: 9px;
+      background: white;
+      font-size: 14px;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 28px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: none;
+      text-decoration: none;
+      padding: 12px 17px;
+      border-radius: 9px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: #0f6f7a;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #0b5962;
+    }
+
+    .btn-secondary {
+      background: #e8eef0;
+      color: #405057;
+    }
+
+    .info {
+      background: #edf8f9;
+      border: 1px solid #c8e8eb;
+      color: #34676d;
+      border-radius: 9px;
+      padding: 13px 15px;
+      font-size: 13px;
+      line-height: 1.5;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 28px 14px;
+      }
+
+      .card {
+        padding: 22px;
+      }
+
+      .topbar {
+        padding: 20px 18px;
+      }
+
+      .actions {
+        flex-direction: column-reverse;
+      }
+
+      .btn {
+        width: 100%;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header class="topbar">
+
+  <h1>Asignar Especialidad</h1>
+
+  <p>
+    Configure qué especialidades estarán disponibles
+    en cada sede.
+  </p>
+
+</header>
+
+<main class="container">
+
+  <section class="card">
+
+    <h2>Nueva asignación</h2>
+
+    <p class="description">
+      Seleccione una sede y una especialidad activa.
+    </p>
+
+    <div class="error"
+         th:if="${error}"
+         th:text="${error}">
+    </div>
+
+    <form
+            th:action="@{/admin/sucursal-especialidad/guardar}"
+            method="post">
+
+      <div class="field">
+
+        <label for="sucursalId">
+          Sede *
+        </label>
+
+        <select
+                id="sucursalId"
+                name="sucursalId"
+                required>
+
+          <option value="">
+            Seleccione una sede
+          </option>
+
+          <option
+                  th:each="sucursal : ${sucursales}"
+                  th:value="${sucursal.id}"
+                  th:text="${sucursal.nombre}"
+                  th:selected="${sucursalSeleccionada != null
+                                and sucursalSeleccionada == sucursal.id}">
+          </option>
+
+        </select>
+
+      </div>
+
+      <div class="field">
+
+        <label for="especialidadId">
+          Especialidad *
+        </label>
+
+        <select
+                id="especialidadId"
+                name="especialidadId"
+                required>
+
+          <option value="">
+            Seleccione una especialidad
+          </option>
+
+          <option
+                  th:each="especialidad : ${especialidades}"
+                  th:value="${especialidad.id}"
+                  th:text="${especialidad.nombre}"
+                  th:selected="${especialidadSeleccionada != null
+                                and especialidadSeleccionada == especialidad.id}">
+          </option>
+
+        </select>
+
+      </div>
+
+      <div class="info">
+        Si esta combinación ya existía pero estaba
+        inactiva, el sistema reactivará la asignación
+        existente en lugar de crear un registro duplicado.
+      </div>
+
+      <div class="actions">
+
+        <a
+                class="btn btn-secondary"
+                th:href="@{/admin/sucursal-especialidad}">
+          Cancelar
+        </a>
+
+        <button
+                type="submit"
+                class="btn btn-primary">
+          Asignar
+        </button>
+
+      </div>
+
+    </form>
+
+  </section>
+
+</main>
+
+</body>
+</html>

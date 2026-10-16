@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface SucursalEspecialidadRepository
         extends JpaRepository<SucursalEspecialidad, Long> {
@@ -14,6 +15,27 @@ public interface SucursalEspecialidadRepository
     boolean existsBySucursalIdAndEspecialidadIdAndActivoTrue(
             Long sucursalId,
             Long especialidadId
+    );
+
+    Optional<SucursalEspecialidad>
+    findBySucursalIdAndEspecialidadId(
+            Long sucursalId,
+            Long especialidadId
+    );
+
+    List<SucursalEspecialidad>
+    findAllByOrderByIdDesc();
+
+    @Query("""
+        SELECT se
+        FROM SucursalEspecialidad se
+        JOIN FETCH se.sucursal s
+        JOIN FETCH se.especialidad e
+        WHERE (:id IS NULL OR se.id = :id)
+        ORDER BY se.id DESC
+    """)
+    List<SucursalEspecialidad> buscar(
+            @Param("id") Long id
     );
 
     @Query("""
@@ -25,7 +47,8 @@ public interface SucursalEspecialidadRepository
           AND se.especialidad.activo = true
         ORDER BY se.especialidad.nombre ASC
     """)
-    List<Especialidad> listarEspecialidadesActivasPorSucursal(
+    List<Especialidad>
+    listarEspecialidadesActivasPorSucursal(
             @Param("sucursalId") Long sucursalId
     );
 }

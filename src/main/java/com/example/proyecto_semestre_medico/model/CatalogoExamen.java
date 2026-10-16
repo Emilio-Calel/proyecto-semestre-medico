@@ -24,7 +24,7 @@ public class CatalogoExamen {
     @Column(
             name = "nombre",
             nullable = false,
-            length = 150
+            length = 200
     )
     private String nombre;
 
@@ -53,6 +53,16 @@ public class CatalogoExamen {
             scale = 2
     )
     private BigDecimal precio;
+
+    @ManyToOne(
+            fetch = FetchType.LAZY,
+            optional = false
+    )
+    @JoinColumn(
+            name = "laboratorio_id",
+            nullable = false
+    )
+    private Laboratorio laboratorio;
 
     @Column(
             name = "activo",
@@ -162,5 +172,16 @@ public class CatalogoExamen {
     ) {
         this.fechaCreacion =
                 fechaCreacion;
+    }
+
+    public Laboratorio getLaboratorio() {
+        return laboratorio;
+    }
+
+    public void setLaboratorio(
+            Laboratorio laboratorio
+    ) {
+        this.laboratorio =
+                laboratorio;
     }
 }

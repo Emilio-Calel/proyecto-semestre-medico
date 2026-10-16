@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Sucursal</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f8f9;
+            color: #1f2933;
+        }
+
+        .topbar {
+            background: linear-gradient(
+                    135deg,
+                    #0f6f7a,
+                    #1596a3
+            );
+            color: white;
+            padding: 22px 34px;
+        }
+
+        .container {
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 40px 22px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e2ebed;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 24px rgba(30,70,80,0.07);
+        }
+
+        .field {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #506067;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 11px 12px;
+            border: 1px solid #ccd9dc;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        textarea {
+            min-height: 105px;
+            resize: vertical;
+        }
+
+        .error {
+            background: #fff0ef;
+            color: #a33b31;
+            border: 1px solid #efc4c0;
+            padding: 13px;
+            border-radius: 9px;
+            margin-bottom: 20px;
+        }
+
+        .help {
+            color: #77868b;
+            font-size: 12px;
+            margin-top: 6px;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 27px;
+        }
+
+        .btn {
+            text-decoration: none;
+            border: none;
+            padding: 11px 17px;
+            border-radius: 9px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: #0f6f7a;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #e8eef0;
+            color: #405057;
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <h1 th:text="${sucursal.id == null
+        ? 'Nueva Sucursal'
+        : 'Editar Sucursal'}">
+    </h1>
+
+</header>
+
+<main class="container">
+
+    <section class="card">
+
+        <div
+                class="error"
+                th:if="${error}"
+                th:text="${error}">
+        </div>
+
+        <form
+                th:action="@{/admin/sucursales/guardar}"
+                th:object="${sucursal}"
+                method="post">
+
+            <input
+                    type="hidden"
+                    th:field="*{id}">
+
+            <div class="field">
+
+                <label for="nombre">
+                    Nombre *
+                </label>
+
+                <input
+                        id="nombre"
+                        type="text"
+                        maxlength="100"
+                        required
+                        th:field="*{nombre}">
+
+            </div>
+
+            <div class="field">
+
+                <label for="telefono">
+                    Teléfono
+                </label>
+
+                <input
+                        id="telefono"
+                        type="text"
+                        maxlength="8"
+                        minlength="8"
+                        inputmode="numeric"
+                        pattern="[0-9]{8}"
+                        placeholder="Ej. 22334455"
+                        th:field="*{telefono}">
+
+                <div class="help">
+                    Opcional. Si se ingresa, debe contener exactamente 8 dígitos.
+                </div>
+
+            </div>
+
+            <div class="field">
+
+                <label for="direccion">
+                    Dirección
+                </label>
+
+                <textarea
+                        id="direccion"
+                        maxlength="500"
+                        th:field="*{direccion}">
+                </textarea>
+
+            </div>
+
+            <div class="field">
+
+                <label for="descripcion">
+                    Descripción
+                </label>
+
+                <textarea
+                        id="descripcion"
+                        maxlength="250"
+                        th:field="*{descripcion}">
+                </textarea>
+
+            </div>
+
+            <div class="actions">
+
+                <a
+                        class="btn btn-secondary"
+                        th:href="@{/admin/sucursales}">
+                    Cancelar
+                </a>
+
+                <button
+                        type="submit"
+                        class="btn btn-primary">
+                    Guardar
+                </button>
+
+            </div>
+
+        </form>
+
+    </section>
+
+</main>
+
+</body>
+</html>
