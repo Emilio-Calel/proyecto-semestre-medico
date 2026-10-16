@@ -6,7 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface RolRepository extends JpaRepository<Rol, Long> {
+public interface RolRepository
+        extends JpaRepository<Rol, Long> {
 
     List<Rol> findByActivoTrueOrderByNombreAsc();
 
@@ -14,8 +15,17 @@ public interface RolRepository extends JpaRepository<Rol, Long> {
             String codigo
     );
 
-    Optional<Rol> findByNombreIgnoreCase(String nombre);
+    List<Rol> findAllByOrderByNombreAsc();
 
-    Optional<Rol> findByCodigo(String codigo);
+    Optional<Rol> findByNombreIgnoreCase(
+            String nombre
+    );
 
+    Optional<Rol> findByCodigo(
+            String codigo
+    );
+
+    Optional<Rol> findByCodigoIgnoreCase(
+            String codigo
+    );
 }

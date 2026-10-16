@@ -62,11 +62,18 @@ public class UsuarioDetailsService implements UserDetailsService {
                         && usuario.getBloqueadoHasta()
                         .isAfter(LocalDateTime.now());
 
+        boolean usuarioHabilitado =
+                Boolean.TRUE.equals(usuario.getActivo())
+                        && usuario.getRol() != null
+                        && Boolean.TRUE.equals(
+                        usuario.getRol().getActivo()
+                );
+
         return User.builder()
                 .username(usuario.getNombreUsuario())
                 .password(usuario.getPasswordHash())
                 .authorities(authorities)
-                .disabled(!Boolean.TRUE.equals(usuario.getActivo()))
+                .disabled(!usuarioHabilitado)
                 .accountLocked(bloqueadoTemporalmente)
                 .build();
     }

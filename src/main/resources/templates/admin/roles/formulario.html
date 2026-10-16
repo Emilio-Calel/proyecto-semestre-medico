@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Rol</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f8f9;
+            color: #1f2933;
+        }
+
+        .topbar {
+            background: linear-gradient(
+                    135deg,
+                    #0f6f7a,
+                    #1596a3
+            );
+            color: white;
+            padding: 22px 34px;
+        }
+
+        .container {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 40px 22px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e2ebed;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 24px rgba(30,70,80,0.07);
+        }
+
+        .field {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #506067;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 11px 12px;
+            border: 1px solid #ccd9dc;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        textarea {
+            min-height: 110px;
+            resize: vertical;
+        }
+
+        input[readonly] {
+            background: #eef3f4;
+            color: #58686e;
+            cursor: not-allowed;
+        }
+
+        .error {
+            background: #fff0ef;
+            color: #a33b31;
+            border: 1px solid #efc4c0;
+            padding: 13px;
+            border-radius: 9px;
+            margin-bottom: 20px;
+        }
+
+        .warning {
+            background: #fff8df;
+            color: #725c19;
+            border: 1px solid #eadb9c;
+            padding: 13px 15px;
+            border-radius: 9px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .help {
+            margin-top: 6px;
+            font-size: 12px;
+            color: #748389;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 27px;
+        }
+
+        .btn {
+            text-decoration: none;
+            border: none;
+            padding: 11px 17px;
+            border-radius: 9px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: #0f6f7a;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #e8eef0;
+            color: #405057;
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <h1 th:text="${rol.id == null
+        ? 'Nuevo Rol'
+        : 'Editar Rol'}">
+    </h1>
+
+</header>
+
+<main class="container">
+
+    <section class="card">
+
+        <div
+                class="error"
+                th:if="${error}"
+                th:text="${error}">
+        </div>
+
+        <div class="warning">
+            El código del rol se utiliza directamente en Spring Security.
+            Una vez creado, no puede modificarse desde este mantenimiento.
+            Los permisos asociados al rol tampoco se administran desde CU-14.
+        </div>
+
+        <form
+                th:action="@{/admin/roles/guardar}"
+                th:object="${rol}"
+                method="post">
+
+            <input
+                    type="hidden"
+                    th:field="*{id}">
+
+            <!-- CREACIÓN -->
+            <div
+                    class="field"
+                    th:if="${rol.id == null}">
+
+                <label for="codigoNuevo">
+                    Código *
+                </label>
+
+                <input
+                        id="codigoNuevo"
+                        type="text"
+                        maxlength="50"
+                        required
+                        pattern="[A-Za-z0-9_]+"
+                        placeholder="Ej. RADIOLOGO"
+                        th:field="*{codigo}">
+
+                <div class="help">
+                    Solo letras, números y guion bajo.
+                    Se guardará en mayúsculas.
+                </div>
+
+            </div>
+
+            <!-- EDICIÓN -->
+            <div
+                    class="field"
+                    th:if="${rol.id != null}">
+
+                <label for="codigoBloqueado">
+                    Código
+                </label>
+
+                <input
+                        id="codigoBloqueado"
+                        type="text"
+                        readonly
+                        th:value="${rol.codigo}">
+
+                <input
+                        type="hidden"
+                        th:field="*{codigo}">
+
+                <div class="help">
+                    Este código no puede modificarse porque
+                    forma parte de las reglas de seguridad.
+                </div>
+
+            </div>
+
+            <div class="field">
+
+                <label for="nombre">
+                    Nombre *
+                </label>
+
+                <input
+                        id="nombre"
+                        type="text"
+                        maxlength="200"
+                        required
+                        th:field="*{nombre}">
+
+            </div>
+
+            <div class="field">
+
+                <label for="descripcion">
+                    Descripción
+                </label>
+
+                <textarea
+                        id="descripcion"
+                        maxlength="500"
+                        th:field="*{descripcion}">
+                </textarea>
+
+            </div>
+
+            <div
+                    class="warning"
+                    th:if="${rol.id != null
+                        and (rol.codigo == 'ADMINISTRADOR'
+                        or rol.codigo == 'PACIENTE')}">
+
+                Este es un rol estructural del sistema.
+                Puede editar su nombre visible y descripción,
+                pero no debe desactivarse.
+
+            </div>
+
+            <div class="actions">
+
+                <a
+                        class="btn btn-secondary"
+                        th:href="@{/admin/roles}">
+                    Cancelar
+                </a>
+
+                <button
+                        type="submit"
+                        class="btn btn-primary">
+                    Guardar
+                </button>
+
+            </div>
+
+        </form>
+
+    </section>
+
+</main>
+
+</body>
+</html>
