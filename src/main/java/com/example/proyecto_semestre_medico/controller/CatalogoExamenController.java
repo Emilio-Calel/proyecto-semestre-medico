@@ -12,7 +12,7 @@ import java.security.Principal;
 
 @Controller
 @RequestMapping("/admin/examenes-laboratorio")
-@PreAuthorize("hasRole('ADMINISTRADOR')")
+
 public class CatalogoExamenController {
 
     private final CatalogoExamenService
@@ -26,6 +26,7 @@ public class CatalogoExamenController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('CATALOG_VIEW')")
     public String listar(
             Model model
     ) {
@@ -40,6 +41,7 @@ public class CatalogoExamenController {
     }
 
     @GetMapping("/nuevo")
+    @PreAuthorize("hasAuthority('CATALOG_CREATE')")
     public String nuevo(
             Model model
     ) {
@@ -59,6 +61,7 @@ public class CatalogoExamenController {
     }
 
     @GetMapping("/editar/{id}")
+    @PreAuthorize("hasAuthority('CATALOG_UPDATE')")
     public String editar(
             @PathVariable Long id,
             Model model
@@ -89,6 +92,9 @@ public class CatalogoExamenController {
     }
 
     @PostMapping("/guardar")
+    @PreAuthorize(
+            "hasAuthority('CATALOG_CREATE') or hasAuthority('CATALOG_UPDATE')"
+    )
     public String guardar(
             @ModelAttribute("examen")
             CatalogoExamen examen,
@@ -157,6 +163,7 @@ public class CatalogoExamenController {
     }
 
     @PostMapping("/desactivar/{id}")
+    @PreAuthorize("hasAuthority('CATALOG_DISABLE')")
     public String desactivar(
             @PathVariable Long id,
             Principal principal,
@@ -196,6 +203,7 @@ public class CatalogoExamenController {
     }
 
     @PostMapping("/reactivar/{id}")
+    @PreAuthorize("hasAuthority('CATALOG_UPDATE')")
     public String reactivar(
             @PathVariable Long id,
             Principal principal,

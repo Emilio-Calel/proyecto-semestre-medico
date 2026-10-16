@@ -12,7 +12,7 @@ import java.security.Principal;
 
 @Controller
 @RequestMapping("/admin/medicamentos")
-@PreAuthorize("hasRole('ADMINISTRADOR')")
+
 public class MedicamentoController {
 
     private final MedicamentoService medicamentoService;
@@ -25,6 +25,7 @@ public class MedicamentoController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('CATALOG_VIEW')")
     public String listar(
             Model model
     ) {
@@ -39,6 +40,7 @@ public class MedicamentoController {
     }
 
     @GetMapping("/nuevo")
+    @PreAuthorize("hasAuthority('CATALOG_CREATE')")
     public String nuevo(
             Model model
     ) {
@@ -52,6 +54,7 @@ public class MedicamentoController {
     }
 
     @GetMapping("/editar/{id}")
+    @PreAuthorize("hasAuthority('CATALOG_UPDATE')")
     public String editar(
             @PathVariable Long id,
             Model model
@@ -67,6 +70,9 @@ public class MedicamentoController {
     }
 
     @PostMapping("/guardar")
+    @PreAuthorize(
+            "hasAuthority('CATALOG_CREATE') or hasAuthority('CATALOG_UPDATE')"
+    )
     public String guardar(
             @ModelAttribute("medicamento")
             Medicamento medicamento,
@@ -116,6 +122,7 @@ public class MedicamentoController {
     }
 
     @PostMapping("/desactivar/{id}")
+    @PreAuthorize("hasAuthority('CATALOG_DISABLE')")
     public String desactivar(
             @PathVariable Long id,
             Principal principal,
@@ -155,6 +162,7 @@ public class MedicamentoController {
     }
 
     @PostMapping("/reactivar/{id}")
+    @PreAuthorize("hasAuthority('CATALOG_UPDATE')")
     public String reactivar(
             @PathVariable Long id,
             Principal principal,

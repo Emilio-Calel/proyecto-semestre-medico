@@ -15,7 +15,7 @@ import java.security.Principal;
 
 @Controller
 @RequestMapping("/admin/sucursal-especialidad")
-@PreAuthorize("hasRole('ADMINISTRADOR')")
+
 public class SucursalEspecialidadController {
 
     private final SucursalEspecialidadService
@@ -30,6 +30,7 @@ public class SucursalEspecialidadController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('CATALOG_VIEW')")
     public String listar(
             @RequestParam(
                     name = "id",
@@ -54,6 +55,7 @@ public class SucursalEspecialidadController {
     }
 
     @GetMapping("/nueva")
+    @PreAuthorize("hasAuthority('CATALOG_CREATE')")
     public String nueva(
             Model model
     ) {
@@ -64,6 +66,7 @@ public class SucursalEspecialidadController {
     }
 
     @PostMapping("/guardar")
+    @PreAuthorize("hasAuthority('CATALOG_CREATE')")
     public String guardar(
             @RequestParam(
                     name = "sucursalId",
@@ -131,6 +134,7 @@ public class SucursalEspecialidadController {
     }
 
     @PostMapping("/desactivar/{id}")
+    @PreAuthorize("hasAuthority('CATALOG_DISABLE')")
     public String desactivar(
             @PathVariable Long id,
             Principal principal,

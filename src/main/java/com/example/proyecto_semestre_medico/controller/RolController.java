@@ -12,7 +12,7 @@ import java.security.Principal;
 
 @Controller
 @RequestMapping("/admin/roles")
-@PreAuthorize("hasRole('ADMINISTRADOR')")
+
 public class RolController {
 
     private final RolService rolService;
@@ -24,9 +24,8 @@ public class RolController {
     }
 
     @GetMapping
-    public String listar(
-            Model model
-    ) {
+    @PreAuthorize("hasAuthority('CATALOG_VIEW')")
+    public String listar(Model model) {
 
         model.addAttribute(
                 "roles",
@@ -37,9 +36,8 @@ public class RolController {
     }
 
     @GetMapping("/nuevo")
-    public String nuevo(
-            Model model
-    ) {
+    @PreAuthorize("hasAuthority('CATALOG_CREATE')")
+    public String nuevo(Model model) {
 
         model.addAttribute(
                 "rol",
@@ -50,6 +48,7 @@ public class RolController {
     }
 
     @GetMapping("/editar/{id}")
+    @PreAuthorize("hasAuthority('CATALOG_UPDATE')")
     public String editar(
             @PathVariable Long id,
             Model model
@@ -64,6 +63,9 @@ public class RolController {
     }
 
     @PostMapping("/guardar")
+    @PreAuthorize(
+            "hasAuthority('CATALOG_CREATE') or hasAuthority('CATALOG_UPDATE')"
+    )
     public String guardar(
             @ModelAttribute("rol")
             Rol rol,
@@ -111,6 +113,7 @@ public class RolController {
     }
 
     @PostMapping("/desactivar/{id}")
+    @PreAuthorize("hasAuthority('CATALOG_DISABLE')")
     public String desactivar(
             @PathVariable Long id,
             Principal principal,
@@ -146,6 +149,7 @@ public class RolController {
     }
 
     @PostMapping("/reactivar/{id}")
+    @PreAuthorize("hasAuthority('CATALOG_UPDATE')")
     public String reactivar(
             @PathVariable Long id,
             Principal principal,

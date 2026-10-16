@@ -12,7 +12,7 @@ import java.security.Principal;
 
 @Controller
 @RequestMapping("/admin/laboratorios")
-@PreAuthorize("hasRole('ADMINISTRADOR')")
+
 public class LaboratorioCatalogoController {
 
     private final LaboratorioCatalogoService
@@ -27,6 +27,7 @@ public class LaboratorioCatalogoController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('CATALOG_VIEW')")
     public String listar(
             Model model
     ) {
@@ -41,6 +42,7 @@ public class LaboratorioCatalogoController {
     }
 
     @GetMapping("/nuevo")
+    @PreAuthorize("hasAuthority('CATALOG_CREATE')")
     public String nuevo(
             Model model
     ) {
@@ -54,6 +56,7 @@ public class LaboratorioCatalogoController {
     }
 
     @GetMapping("/editar/{id}")
+    @PreAuthorize("hasAuthority('CATALOG_UPDATE')")
     public String editar(
             @PathVariable Long id,
             Model model
@@ -69,6 +72,9 @@ public class LaboratorioCatalogoController {
     }
 
     @PostMapping("/guardar")
+    @PreAuthorize(
+            "hasAuthority('CATALOG_CREATE') or hasAuthority('CATALOG_UPDATE')"
+    )
     public String guardar(
             @ModelAttribute("laboratorio")
             Laboratorio laboratorio,
@@ -119,6 +125,7 @@ public class LaboratorioCatalogoController {
     }
 
     @PostMapping("/desactivar/{id}")
+    @PreAuthorize("hasAuthority('CATALOG_DISABLE')")
     public String desactivar(
             @PathVariable Long id,
             Principal principal,
@@ -158,6 +165,7 @@ public class LaboratorioCatalogoController {
     }
 
     @PostMapping("/reactivar/{id}")
+    @PreAuthorize("hasAuthority('CATALOG_UPDATE')")
     public String reactivar(
             @PathVariable Long id,
             Principal principal,

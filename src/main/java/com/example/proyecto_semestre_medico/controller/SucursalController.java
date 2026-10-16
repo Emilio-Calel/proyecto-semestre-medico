@@ -12,7 +12,7 @@ import java.security.Principal;
 
 @Controller
 @RequestMapping("/admin/sucursales")
-@PreAuthorize("hasRole('ADMINISTRADOR')")
+
 public class SucursalController {
 
     private final SucursalService sucursalService;
@@ -24,6 +24,7 @@ public class SucursalController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('CATALOG_VIEW')")
     public String listar(
             Model model
     ) {
@@ -37,6 +38,7 @@ public class SucursalController {
     }
 
     @GetMapping("/nueva")
+    @PreAuthorize("hasAuthority('CATALOG_CREATE')")
     public String nueva(
             Model model
     ) {
@@ -50,6 +52,7 @@ public class SucursalController {
     }
 
     @GetMapping("/editar/{id}")
+    @PreAuthorize("hasAuthority('CATALOG_UPDATE')")
     public String editar(
             @PathVariable Long id,
             Model model
@@ -64,6 +67,9 @@ public class SucursalController {
     }
 
     @PostMapping("/guardar")
+    @PreAuthorize(
+            "hasAuthority('CATALOG_CREATE') or hasAuthority('CATALOG_UPDATE')"
+    )
     public String guardar(
             @ModelAttribute("sucursal")
             Sucursal sucursal,
@@ -111,6 +117,7 @@ public class SucursalController {
     }
 
     @PostMapping("/desactivar/{id}")
+    @PreAuthorize("hasAuthority('CATALOG_DISABLE')")
     public String desactivar(
             @PathVariable Long id,
             Principal principal,
@@ -146,6 +153,7 @@ public class SucursalController {
     }
 
     @PostMapping("/reactivar/{id}")
+    @PreAuthorize("hasAuthority('CATALOG_UPDATE')")
     public String reactivar(
             @PathVariable Long id,
             Principal principal,
