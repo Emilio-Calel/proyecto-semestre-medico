@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Despachar receta</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f4f8f9;
+            color: #203438;
+        }
+
+        .topbar {
+            background: linear-gradient(
+                    135deg,
+                    #0f6f7a,
+                    #1596a3
+            );
+            color: white;
+            padding: 22px 34px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 35px 22px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #dbe8ea;
+            border-radius: 16px;
+            padding: 22px;
+            margin-bottom: 20px;
+            box-shadow: 0 7px 22px rgba(35,73,79,.06);
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns:
+                repeat(3, 1fr);
+            gap: 14px;
+        }
+
+        .box {
+            background: #f7fafb;
+            border-radius: 10px;
+            padding: 14px;
+        }
+
+        .box small {
+            display: block;
+            color: #75868b;
+            margin-bottom: 5px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            font-size: 12px;
+            color: #506166;
+            margin-bottom: 6px;
+        }
+
+        select,
+        input,
+        textarea {
+            width: 100%;
+            padding: 10px 11px;
+            border: 1px solid #ccdadd;
+            border-radius: 8px;
+            font-family: inherit;
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .btn {
+            display: inline-block;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 14px;
+            text-decoration: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .btn-primary {
+            background: #0f6f7a;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #e9eff1;
+            color: #405157;
+        }
+
+        .success {
+            background: #e9f7ef;
+            color: #24734b;
+            border: 1px solid #c7e6d3;
+            padding: 12px;
+            border-radius: 9px;
+            margin-bottom: 18px;
+        }
+
+        .error {
+            background: #fff0ef;
+            color: #a33b31;
+            border: 1px solid #edc6c2;
+            padding: 12px;
+            border-radius: 9px;
+            margin-bottom: 18px;
+        }
+
+        .warning {
+            background: #fff7df;
+            color: #80631c;
+            border: 1px solid #ead79a;
+            padding: 9px;
+            border-radius: 8px;
+            margin-top: 7px;
+            font-size: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px;
+        }
+
+        th,
+        td {
+            padding: 11px 9px;
+            border-bottom: 1px solid #edf2f3;
+            vertical-align: top;
+            font-size: 13px;
+        }
+
+        th {
+            background: #f6fafb;
+            text-align: left;
+            color: #506166;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        .stock-ok {
+            color: #24734b;
+            font-weight: bold;
+        }
+
+        .stock-low {
+            color: #b46c16;
+            font-weight: bold;
+        }
+
+        .stock-none {
+            color: #a33b31;
+            font-weight: bold;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 22px;
+        }
+
+        .price {
+            white-space: nowrap;
+            font-weight: bold;
+        }
+
+        .substitution {
+            margin-top: 8px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .total-box {
+            margin-top: 20px;
+            text-align: right;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 750px) {
+
+            .summary {
+                grid-template-columns: 1fr;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <h1 th:text="'Despachar receta #' + ${receta.id}">
+        Despachar receta
+    </h1>
+
+    <p>
+        Seleccione una sucursal y registre los medicamentos entregados.
+    </p>
+
+</header>
+
+<main class="container">
+
+    <div
+            class="success"
+            th:if="${mensaje}"
+            th:text="${mensaje}">
+    </div>
+
+    <div
+            class="error"
+            th:if="${error}"
+            th:text="${error}">
+    </div>
+
+    <section class="card">
+
+        <div class="summary">
+
+            <div class="box">
+                <small>Paciente</small>
+                <strong
+                        th:text="${receta.consultaMedica.cita.paciente.nombreCompleto}">
+                </strong>
+            </div>
+
+            <div class="box">
+                <small>Médico</small>
+                <strong
+                        th:text="${receta.consultaMedica.medico.personal.nombreCompleto}">
+                </strong>
+            </div>
+
+            <div class="box">
+                <small>Estado</small>
+                <strong
+                        th:text="${receta.estado}">
+                </strong>
+            </div>
+
+        </div>
+
+    </section>
+
+    <section class="card">
+
+        <h3 style="margin-bottom:15px;">
+            Sucursal de farmacia
+        </h3>
+
+        <form
+                method="get"
+                th:action="@{/farmacia/recetas/{id}/despachar(id=${receta.id})}">
+
+            <label for="sucursalId">
+                Seleccione una sucursal
+            </label>
+
+            <select
+                    id="sucursalId"
+                    name="sucursalId"
+                    required
+                    onchange="this.form.submit()">
+
+                <option value="">
+                    -- Seleccione --
+                </option>
+
+                <option
+                        th:each="sucursal : ${sucursales}"
+                        th:value="${sucursal.id}"
+                        th:selected="${sucursalId != null
+                            and sucursal.id == sucursalId}"
+                        th:text="${sucursal.nombre}">
+                </option>
+
+            </select>
+
+        </form>
+
+    </section>
+
+    <section
+            class="card"
+            th:if="${sucursalId != null}">
+
+        <form
+                method="post"
+                th:action="@{/farmacia/recetas/despachar}"
+                th:object="${despachoForm}"
+                id="despachoForm">
+
+            <input
+                    type="hidden"
+                    th:field="*{recetaId}">
+
+            <input
+                    type="hidden"
+                    th:field="*{sucursalId}">
+
+            <h3 style="margin-bottom:15px;">
+                Medicamentos pendientes
+            </h3>
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                    <tr>
+                        <th>Medicamento recetado</th>
+                        <th>Dosis</th>
+                        <th>Recetado</th>
+                        <th>Ya entregado</th>
+                        <th>Pendiente</th>
+                        <th>Stock</th>
+                        <th>Precio</th>
+                        <th>Cantidad a entregar</th>
+                        <th>Medicamento entregado</th>
+                        <th>Motivo sustitución</th>
+                    </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                    <tr th:each="detalle, stat : ${detalles}">
+
+                        <td>
+
+                            <strong
+                                    th:text="${detalle.medicamento}">
+                            </strong>
+
+                            <div
+                                    style="margin-top:5px;
+                                           font-size:11px;
+                                           color:#748389;"
+                                    th:text="${detalle.unidad}">
+                            </div>
+
+                        </td>
+
+                        <td th:text="${detalle.dosis}">
+                        </td>
+
+                        <td th:text="${detalle.cantidadRecetada}">
+                        </td>
+
+                        <td th:text="${detalle.cantidadDespachada}">
+                        </td>
+
+                        <td>
+                            <strong
+                                    th:text="${detalle.cantidadPendiente}">
+                            </strong>
+                        </td>
+
+                        <td>
+
+                            <span
+                                    th:class="${detalle.stockDisponible == 0
+                                        ? 'stock-none'
+                                        : (detalle.stockMinimo != null
+                                            and detalle.stockDisponible <= detalle.stockMinimo
+                                            ? 'stock-low'
+                                            : 'stock-ok')}"
+                                    th:text="${detalle.stockDisponible}">
+                            </span>
+
+                            <div
+                                    class="warning"
+                                    th:if="${detalle.stockMinimo != null
+                                        and detalle.stockDisponible <= detalle.stockMinimo}">
+
+                                Stock mínimo:
+                                <span th:text="${detalle.stockMinimo}">
+                                </span>
+
+                            </div>
+
+                        </td>
+
+                        <td
+                                class="price"
+                                th:text="${'Q '
+                                    + #numbers.formatDecimal(
+                                        detalle.precioUnitario,
+                                        1,
+                                        2
+                                    )}">
+                        </td>
+
+                        <td>
+
+                            <input
+                                    type="hidden"
+                                    th:field="*{detalles[__${stat.index}__].recetaDetalleId}">
+
+                            <input
+                                    type="number"
+                                    min="0"
+                                    th:max="${detalle.cantidadPendiente}"
+                                    th:field="*{detalles[__${stat.index}__].cantidad}"
+                                    class="cantidad-input"
+                                    th:attr="
+                                        data-precio=${detalle.precioUnitario},
+                                        data-pendiente=${detalle.cantidadPendiente}"
+                                    th:disabled="${detalle.cantidadPendiente == 0}">
+
+                        </td>
+
+                        <td>
+
+                            <select
+                                    th:field="*{detalles[__${stat.index}__].medicamentoDespachadoId}"
+                                    class="medicamento-select"
+                                    th:attr="data-original=${detalle.medicamentoId}"
+                                    th:disabled="${detalle.cantidadPendiente == 0}">
+
+                                <option
+                                        th:each="med : ${medicamentos}"
+                                        th:value="${med.id}"
+                                        th:selected="${med.id == detalle.medicamentoId}"
+                                        th:text="${med.nombre}">
+                                </option>
+
+                            </select>
+
+                        </td>
+
+                        <td>
+
+                            <textarea
+                                    th:field="*{detalles[__${stat.index}__].motivoSustitucion}"
+                                    class="motivo-input"
+                                    maxlength="500"
+                                    placeholder="Solo si se sustituye el medicamento"
+                                    th:disabled="${detalle.cantidadPendiente == 0}">
+                            </textarea>
+
+                        </td>
+
+                    </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <div class="total-box">
+
+                Total estimado:
+                <span id="totalEstimado">
+                    Q 0.00
+                </span>
+
+            </div>
+
+            <div class="actions">
+
+                <a
+                        class="btn btn-secondary"
+                        th:href="@{/farmacia/recetas/{id}(id=${receta.id})}">
+                    ← Cancelar
+                </a>
+
+                <button
+                        type="submit"
+                        class="btn btn-primary">
+                    Confirmar despacho
+                </button>
+
+            </div>
+
+        </form>
+
+    </section>
+
+</main>
+
+<script>
+
+    const cantidades =
+        document.querySelectorAll(
+            ".cantidad-input"
+        );
+
+    const selects =
+        document.querySelectorAll(
+            ".medicamento-select"
+        );
+
+    const motivos =
+        document.querySelectorAll(
+            ".motivo-input"
+        );
+
+    function recalcularTotal() {
+
+        let total = 0;
+
+        cantidades.forEach(
+            input => {
+
+                if (input.disabled) {
+                    return;
+                }
+
+                const cantidad =
+                    Number(input.value || 0);
+
+                const precio =
+                    Number(
+                        input.dataset.precio || 0
+                    );
+
+                total +=
+                    cantidad * precio;
+            }
+        );
+
+        document.getElementById(
+            "totalEstimado"
+        ).textContent =
+            "Q " + total.toFixed(2);
+    }
+
+    function actualizarSustitucion(
+        indice
+    ) {
+
+        const select =
+            selects[indice];
+
+        const motivo =
+            motivos[indice];
+
+        if (!select || !motivo) {
+            return;
+        }
+
+        const original =
+            String(
+                select.dataset.original
+            );
+
+        const seleccionado =
+            String(
+                select.value
+            );
+
+        const sustituido =
+            original !== seleccionado;
+
+        motivo.required =
+            sustituido;
+
+        if (!sustituido) {
+
+            motivo.value = "";
+        }
+    }
+
+    cantidades.forEach(
+        input => {
+
+            input.addEventListener(
+                "input",
+                recalcularTotal
+            );
+        }
+    );
+
+    selects.forEach(
+        (select, indice) => {
+
+            select.addEventListener(
+                "change",
+                () => {
+
+                    actualizarSustitucion(
+                        indice
+                    );
+                }
+            );
+
+            actualizarSustitucion(
+                indice
+            );
+        }
+    );
+
+    document.getElementById(
+        "despachoForm"
+    )?.addEventListener(
+        "submit",
+        function (event) {
+
+            let algunaCantidad = false;
+
+            cantidades.forEach(
+                input => {
+
+                    if (!input.disabled
+                        && Number(
+                            input.value || 0
+                        ) > 0) {
+
+                        algunaCantidad =
+                            true;
+                    }
+                }
+            );
+
+            if (!algunaCantidad) {
+
+                event.preventDefault();
+
+                alert(
+                    "Debe indicar al menos una cantidad mayor que 0."
+                );
+
+                return;
+            }
+
+            selects.forEach(
+                (select, indice) => {
+
+                    actualizarSustitucion(
+                        indice
+                    );
+                }
+            );
+        }
+    );
+
+    recalcularTotal();
+
+</script>
+
+</body>
+</html>

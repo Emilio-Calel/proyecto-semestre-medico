@@ -131,12 +131,27 @@
 
 <main class="container">
 
-    <div style="margin-bottom:20px;">
+    <div style="
+        margin-bottom:20px;
+        display:flex;
+        gap:10px;
+        flex-wrap:wrap;">
 
         <a
                 class="btn btn-secondary"
                 th:href="@{/farmacia}">
             ← Volver
+        </a>
+
+        <a
+                class="btn"
+                style="
+                background:#0f6f7a;
+                color:white;"
+                th:if="${receta.estado.name() == 'PENDIENTE'
+                or receta.estado.name() == 'PARCIAL'}"
+                th:href="@{/farmacia/recetas/{id}/despachar(id=${receta.id})}">
+            💊 Despachar receta
         </a>
 
     </div>
