@@ -2,12 +2,14 @@ package com.example.proyecto_semestre_medico.controller;
 
 import com.example.proyecto_semestre_medico.dto.VerificacionDpiDTO;
 import com.example.proyecto_semestre_medico.service.PortalPacienteService;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Controller
 public class PortalController {
@@ -21,10 +23,21 @@ public class PortalController {
                 portalPacienteService;
     }
 
-    @GetMapping("/portal")
+    @GetMapping({"/", "/portal"})
     public String portal(
-            Model model
+            Model model,
+            HttpServletRequest request
     ) {
+
+        /*
+         * El portal es público, pero contiene un formulario POST
+         * protegido por CSRF.
+         *
+         * Creamos la sesión antes de renderizar la vista para que
+         * Spring Security pueda generar el token CSRF sin intentar
+         * crear la sesión después de que la respuesta haya comenzado.
+         */
+        request.getSession(true);
 
         if (!model.containsAttribute(
                 "verificacionDpi"
@@ -60,13 +73,6 @@ public class PortalController {
 
                 case PACIENTE_REGISTRADO -> {
 
-                    redirectAttributes
-                            .addFlashAttribute(
-                                    "mensaje",
-                                    "Paciente registrado. "
-                                            + "Inicie sesión para continuar."
-                            );
-
                     return "redirect:/login";
                 }
 
@@ -78,6 +84,12 @@ public class PortalController {
                                     dto.getDpi().trim()
                             );
 
+                    redirectAttributes
+                            .addFlashAttribute(
+                                    "mensaje",
+                                    "No se encontró un registro asociado a este DPI. Será redirigido al formulario de registro."
+                            );
+
                     return "redirect:/registro";
                 }
 
@@ -85,10 +97,7 @@ public class PortalController {
 
                     model.addAttribute(
                             "error",
-                            "El DPI ingresado corresponde "
-                                    + "a un usuario interno y "
-                                    + "no puede utilizar el portal "
-                                    + "de pacientes."
+                            "Este DPI pertenece a un usuario del sistema interno. Por favor, contacte a recepción."
                     );
 
                     return "portal/index";
@@ -104,6 +113,15 @@ public class PortalController {
             model.addAttribute(
                     "error",
                     e.getMessage()
+            );
+
+            return "portal/index";
+
+        } catch (DataAccessException e) {
+
+            model.addAttribute(
+                    "error",
+                    "No se pudo conectar con el servidor. Intente de nuevo más tarde."
             );
 
             return "portal/index";

@@ -137,6 +137,16 @@
             font-size: 14px;
         }
 
+        .alert-info {
+            background: #eef9fa;
+            border: 1px solid #b9e1e5;
+            color: #0f6f7a;
+            padding: 14px 16px;
+            border-radius: 10px;
+            margin-bottom: 22px;
+            font-size: 14px;
+        }
+
         .form-card {
             background: #ffffff;
             border: 1px solid #e2ebed;
@@ -374,6 +384,14 @@
         </p>
 
     </section>
+
+    <div
+            class="alert-info"
+            th:if="${mensaje}">
+
+        <strong th:text="${mensaje}"></strong>
+
+    </div>
 
     <div
             class="alert-error"

@@ -414,6 +414,119 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        .appointment-icon {
+            width: 58px;
+            height: 58px;
+            border-radius: 16px;
+            background: #e8f6f7;
+            color: #0f6f7a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(17, 38, 43, 0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 1000;
+        }
+
+        .modal-overlay.modal-visible {
+            display: flex;
+        }
+
+        .modal-card {
+            width: 100%;
+            max-width: 480px;
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 34px;
+            position: relative;
+            box-shadow:
+                    0 24px 60px
+                    rgba(15, 60, 70, 0.25);
+        }
+
+        .modal-card h3 {
+            font-size: 25px;
+            color: #17343a;
+            margin-bottom: 10px;
+        }
+
+        .modal-description {
+            color: #738188;
+            line-height: 1.6;
+            margin-bottom: 22px;
+            font-size: 14px;
+        }
+
+        .modal-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: #e8f6f7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 25px;
+            margin-bottom: 18px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 17px;
+            border: none;
+            background: transparent;
+            color: #849297;
+            font-size: 28px;
+            cursor: pointer;
+        }
+
+        .modal-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .modal-actions .submit-button {
+            margin-top: 0;
+        }
+
+        .cancel-button {
+            border: 1px solid #ccd8db;
+            border-radius: 10px;
+            background: #ffffff;
+            color: #526168;
+            padding: 14px 18px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .cancel-button:hover {
+            background: #f3f7f8;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        .submit-button:disabled,
+        .cancel-button:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
     </style>
 </head>
 
@@ -518,66 +631,23 @@
 
         <div class="appointment-card">
 
-            <h3>Agendar una cita</h3>
-
-            <p>
-                Para continuar, ingrese su DPI.
-                Verificaremos si ya posee un registro
-                como paciente.
-            </p>
-
-            <div
-                    class="alert-error"
-                    th:if="${error}">
-
-                <strong th:text="${error}"></strong>
-
+            <div class="appointment-icon">
+                📅
             </div>
 
-            <form
-                    th:action="@{/portal/verificar-dpi}"
-                    th:object="${verificacionDpi}"
-                    method="post">
+            <h3>Agende su próxima cita</h3>
 
-                <div class="form-group">
+            <p>
+                Inicie el proceso de agendamiento y verifique
+                si ya cuenta con un registro como paciente.
+            </p>
 
-                    <label for="dpi">
-                        DPI
-                    </label>
-
-                    <div class="input-wrapper">
-
-                        <input
-                                type="text"
-                                id="dpi"
-                                th:field="*{dpi}"
-                                minlength="13"
-                                maxlength="13"
-                                pattern="[0-9]{13}"
-                                inputmode="numeric"
-                                placeholder="Ingrese los 13 dígitos"
-                                autocomplete="off"
-                                required>
-
-                        <span id="contador">
-                            0/13
-                        </span>
-
-                    </div>
-
-                    <span class="helper-text">
-                        Ingrese únicamente números.
-                    </span>
-
-                </div>
-
-                <button
-                        class="submit-button"
-                        type="submit">
-                    Verificar registro
-                </button>
-
-            </form>
+            <button
+                    type="button"
+                    class="submit-button"
+                    id="abrirModalDpi">
+                Agendar Cita
+            </button>
 
             <div class="login-question">
 
@@ -661,6 +731,102 @@
 
     </section>
 
+    <div
+            id="modalDpi"
+            th:class="${error != null} ? 'modal-overlay modal-visible' : 'modal-overlay'">
+
+        <div class="modal-card">
+
+            <button
+                    type="button"
+                    class="modal-close"
+                    id="cerrarModalDpi"
+                    aria-label="Cerrar">
+                ×
+            </button>
+
+            <div class="modal-icon">
+                🪪
+            </div>
+
+            <h3>
+                Verificar Registro
+            </h3>
+
+            <p class="modal-description">
+                Ingrese su número de DPI para verificar si está registrado en el sistema.
+            </p>
+
+            <div
+                    class="alert-error"
+                    th:if="${error}">
+
+                <strong th:text="${error}"></strong>
+
+            </div>
+
+            <form
+                    id="formVerificarDpi"
+                    th:action="@{/portal/verificar-dpi}"
+                    th:object="${verificacionDpi}"
+                    method="post">
+
+                <div class="form-group">
+
+                    <label for="dpi">
+                        DPI
+                    </label>
+
+                    <div class="input-wrapper">
+
+                        <input
+                                type="text"
+                                id="dpi"
+                                th:field="*{dpi}"
+                                minlength="13"
+                                maxlength="13"
+                                pattern="[0-9]{13}"
+                                inputmode="numeric"
+                                placeholder="Ingrese los 13 dígitos"
+                                autocomplete="off"
+                                required>
+
+                        <span id="contador">
+                        0/13 dígitos
+                    </span>
+
+                    </div>
+
+                    <span class="helper-text">
+                    Ingrese únicamente números.
+                </span>
+
+                </div>
+
+                <div class="modal-actions">
+
+                    <button
+                            type="button"
+                            class="cancel-button"
+                            id="cancelarModalDpi">
+                        Cancelar
+                    </button>
+
+                    <button
+                            type="submit"
+                            class="submit-button"
+                            id="btnVerificarDpi">
+                        Verificar DPI
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
 </main>
 
 <footer class="footer">
@@ -669,17 +835,59 @@
 
 <script>
 
+    const modalDpi =
+        document.getElementById("modalDpi");
+
+    const abrirModalDpi =
+        document.getElementById("abrirModalDpi");
+
+    const cerrarModalDpi =
+        document.getElementById("cerrarModalDpi");
+
+    const cancelarModalDpi =
+        document.getElementById("cancelarModalDpi");
+
     const dpiInput =
         document.getElementById("dpi");
 
     const contador =
         document.getElementById("contador");
 
+    const formVerificarDpi =
+        document.getElementById("formVerificarDpi");
+
+    const btnVerificarDpi =
+        document.getElementById("btnVerificarDpi");
+
+    function abrirModal() {
+
+        modalDpi.classList.add(
+            "modal-visible"
+        );
+
+        document.body.classList.add(
+            "modal-open"
+        );
+
+        setTimeout(
+            () => dpiInput.focus(),
+            100
+        );
+    }
+
+    function cerrarModal() {
+
+        modalDpi.classList.remove(
+            "modal-visible"
+        );
+
+        document.body.classList.remove(
+            "modal-open"
+        );
+    }
+
     function actualizarContador() {
 
-        /*
-         * Permitimos solamente dígitos.
-         */
         dpiInput.value =
             dpiInput.value
                 .replace(/\D/g, "")
@@ -687,15 +895,74 @@
 
         contador.textContent =
             dpiInput.value.length
-            + "/13";
+            + "/13 dígitos";
     }
+
+    abrirModalDpi.addEventListener(
+        "click",
+        abrirModal
+    );
+
+    cerrarModalDpi.addEventListener(
+        "click",
+        cerrarModal
+    );
+
+    cancelarModalDpi.addEventListener(
+        "click",
+        cerrarModal
+    );
+
+    modalDpi.addEventListener(
+        "click",
+        function (event) {
+
+            if (event.target === modalDpi) {
+                cerrarModal();
+            }
+        }
+    );
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (event.key === "Escape") {
+                cerrarModal();
+            }
+        }
+    );
 
     dpiInput.addEventListener(
         "input",
         actualizarContador
     );
 
+    formVerificarDpi.addEventListener(
+        "submit",
+        function () {
+
+            btnVerificarDpi.disabled = true;
+
+            cancelarModalDpi.disabled = true;
+
+            btnVerificarDpi.textContent =
+                "Verificando...";
+        }
+    );
+
     actualizarContador();
+
+    if (
+        modalDpi.classList.contains(
+            "modal-visible"
+        )
+    ) {
+
+        document.body.classList.add(
+            "modal-open"
+        );
+    }
 
 </script>
 

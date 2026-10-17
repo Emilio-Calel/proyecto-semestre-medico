@@ -14,17 +14,34 @@
 <h2>Iniciar sesión</h2>
 
 <div th:if="${param.error}">
-    Usuario o contraseña incorrectos.
+    Usuario o contraseña incorrectos. Intentos restantes:
+    <span th:text="${param.restantes}"></span>.
+</div>
+
+<div th:if="${param.bloqueado}">
+    Cuenta bloqueada temporalmente. Intente de nuevo en 15 minutos.
 </div>
 
 <div th:if="${param.logout}">
     Sesión cerrada correctamente.
+</div>
+
+<div th:if="${param.conexionError}">
+    No se pudo conectar con el servidor. Intente de nuevo más tarde.
+</div>
+<div th:if="${param.rolNoAutorizado}">
+    Este acceso es exclusivo para pacientes. Si es personal del hospital, use el panel administrativo.
 </div>
 <div th:if="${mensaje}">
     <strong th:text="${mensaje}"></strong>
 </div>
 
 <form th:action="@{/login}" method="post">
+
+    <input
+            type="hidden"
+            name="tipoAcceso"
+            th:value="${param.interno != null ? 'interno' : 'paciente'}">
 
     <div>
         <label for="username">
@@ -35,6 +52,7 @@
                 type="text"
                 id="username"
                 name="username"
+                th:disabled="${param.bloqueado}"
                 required>
     </div>
 
@@ -47,14 +65,23 @@
                 type="password"
                 id="password"
                 name="password"
+                th:disabled="${param.bloqueado}"
                 required>
     </div>
 
-    <button type="submit">
+    <button
+            type="submit"
+            th:disabled="${param.bloqueado}">
         Iniciar sesión
     </button>
 
 </form>
+
+<p>
+    <a th:href="@{/login(interno=true)}">
+        Acceso Panel Administrativo
+    </a>
+</p>
 
 <p>
     ¿No tiene una cuenta?
