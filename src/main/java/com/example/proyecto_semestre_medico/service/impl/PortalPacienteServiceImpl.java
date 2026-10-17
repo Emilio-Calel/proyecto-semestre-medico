@@ -1,5 +1,6 @@
 package com.example.proyecto_semestre_medico.service.impl;
 
+import com.example.proyecto_semestre_medico.model.Paciente;
 import com.example.proyecto_semestre_medico.repository.PacienteRepository;
 import com.example.proyecto_semestre_medico.repository.PersonalRepository;
 import com.example.proyecto_semestre_medico.service.DatosSensiblesService;
@@ -31,23 +32,8 @@ public class PortalPacienteServiceImpl
             String dpi
     ) {
 
-        if (dpi == null
-                || !dpi.trim()
-                .matches("^[0-9]{13}$")) {
-
-            throw new IllegalArgumentException(
-                    "El DPI debe contener exactamente 13 dígitos"
-            );
-        }
-
-        String dpiNormalizado =
-                dpi.trim();
-
         String dpiHash =
-                datosSensiblesService
-                        .generarHashBusqueda(
-                                dpiNormalizado
-                        );
+                obtenerHashDpiValido(dpi);
 
         /*
          * Primero revisamos personal interno.
@@ -71,5 +57,45 @@ public class PortalPacienteServiceImpl
 
         return ResultadoVerificacionDpi
                 .NO_REGISTRADO;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String obtenerNombrePacientePorDpi(
+            String dpi
+    ) {
+
+        String dpiHash =
+                obtenerHashDpiValido(dpi);
+
+        Paciente paciente =
+                pacienteRepository
+                        .findByDpiHash(dpiHash)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "No se encontró un registro asociado a este DPI."
+                                )
+                        );
+
+        return paciente.getNombreCompleto();
+    }
+
+    private String obtenerHashDpiValido(
+            String dpi
+    ) {
+
+        if (dpi == null
+                || !dpi.trim()
+                .matches("^[0-9]{13}$")) {
+
+            throw new IllegalArgumentException(
+                    "El DPI debe contener exactamente 13 dígitos"
+            );
+        }
+
+        return datosSensiblesService
+                .generarHashBusqueda(
+                        dpi.trim()
+                );
     }
 }

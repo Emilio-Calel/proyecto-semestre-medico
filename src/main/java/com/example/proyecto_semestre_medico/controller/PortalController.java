@@ -73,6 +73,20 @@ public class PortalController {
 
                 case PACIENTE_REGISTRADO -> {
 
+                    String nombrePaciente =
+                            portalPacienteService
+                                    .obtenerNombrePacientePorDpi(
+                                            dto.getDpi()
+                                    );
+
+                    redirectAttributes
+                            .addFlashAttribute(
+                                    "mensaje",
+                                    "Bienvenido(a), "
+                                            + nombrePaciente
+                                            + ". Será redirigido al formulario de agendamiento de cita."
+                            );
+
                     return "redirect:/login";
                 }
 

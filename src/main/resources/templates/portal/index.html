@@ -884,6 +884,18 @@
         document.body.classList.remove(
             "modal-open"
         );
+
+        dpiInput.value = "";
+
+        contador.textContent =
+            "0/13 dígitos";
+
+        btnVerificarDpi.disabled = false;
+
+        cancelarModalDpi.disabled = false;
+
+        btnVerificarDpi.textContent =
+            "Verificar DPI";
     }
 
     function actualizarContador() {
@@ -963,6 +975,42 @@
             "modal-open"
         );
     }
+
+    window.addEventListener(
+        "pageshow",
+        function () {
+
+            /*
+             * Cuando el usuario vuelve al portal usando
+             * el botón Atrás del navegador, algunos navegadores
+             * restauran el estado anterior de la página
+             * desde la caché de navegación.
+             *
+             * Limpiamos el modal para que CU-00 siempre
+             * comience desde un estado nuevo.
+             */
+
+            modalDpi.classList.remove(
+                "modal-visible"
+            );
+
+            document.body.classList.remove(
+                "modal-open"
+            );
+
+            dpiInput.value = "";
+
+            contador.textContent =
+                "0/13 dígitos";
+
+            btnVerificarDpi.disabled = false;
+
+            cancelarModalDpi.disabled = false;
+
+            btnVerificarDpi.textContent =
+                "Verificar DPI";
+        }
+    );
 
 </script>
 
