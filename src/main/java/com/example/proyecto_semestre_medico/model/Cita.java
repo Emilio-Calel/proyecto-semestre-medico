@@ -80,6 +80,30 @@ public class Cita {
     )
     private Boolean prioridadEmergencia = false;
 
+    /*
+     * =========================================================
+     * CU-12 - DATOS DE SEGUIMIENTO
+     * =========================================================
+     */
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "cita_seguimiento_de_id"
+    )
+    private Cita citaSeguimientoDe;
+
+    @Column(
+            name = "tipo_seguimiento",
+            length = 50
+    )
+    private String tipoSeguimiento;
+
+    @Column(
+            name = "prioridad_seguimiento",
+            length = 20
+    )
+    private String prioridadSeguimiento;
+
 
     @Version
     @Column(nullable = false)
@@ -231,5 +255,38 @@ public class Cita {
     ) {
         this.prioridadEmergencia =
                 prioridadEmergencia;
+    }
+
+    public Cita getCitaSeguimientoDe() {
+        return citaSeguimientoDe;
+    }
+
+    public void setCitaSeguimientoDe(
+            Cita citaSeguimientoDe
+    ) {
+        this.citaSeguimientoDe =
+                citaSeguimientoDe;
+    }
+
+    public String getTipoSeguimiento() {
+        return tipoSeguimiento;
+    }
+
+    public void setTipoSeguimiento(
+            String tipoSeguimiento
+    ) {
+        this.tipoSeguimiento =
+                tipoSeguimiento;
+    }
+
+    public String getPrioridadSeguimiento() {
+        return prioridadSeguimiento;
+    }
+
+    public void setPrioridadSeguimiento(
+            String prioridadSeguimiento
+    ) {
+        this.prioridadSeguimiento =
+                prioridadSeguimiento;
     }
 }

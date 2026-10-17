@@ -14,6 +14,15 @@ import com.example.proyecto_semestre_medico.service.OrdenLaboratorioService;
 import com.example.proyecto_semestre_medico.dto.RecetaFormDTO;
 import com.example.proyecto_semestre_medico.model.Receta;
 import com.example.proyecto_semestre_medico.service.RecetaService;
+import com.example.proyecto_semestre_medico.dto.HorarioDisponibleDTO;
+import com.example.proyecto_semestre_medico.dto.SeguimientoCitaDTO;
+import com.example.proyecto_semestre_medico.dto.SeguimientoContextoDTO;
+import com.example.proyecto_semestre_medico.model.Cita;
+import com.example.proyecto_semestre_medico.service.SeguimientoCitaService;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @Controller
 @RequestMapping("/medico")
@@ -23,11 +32,14 @@ public class MedicoController {
     private final ConsultaMedicaService consultaMedicaService;
     private final OrdenLaboratorioService ordenLaboratorioService;
     private final RecetaService recetaService;
+    private final SeguimientoCitaService
+            seguimientoCitaService;
 
     public MedicoController(
             ConsultaMedicaService consultaMedicaService,
             OrdenLaboratorioService ordenLaboratorioService,
-            RecetaService recetaService
+            RecetaService recetaService,
+            SeguimientoCitaService seguimientoCitaService
     ) {
         this.consultaMedicaService =
                 consultaMedicaService;
@@ -37,6 +49,9 @@ public class MedicoController {
 
         this.recetaService =
                 recetaService;
+
+        this.seguimientoCitaService =
+                seguimientoCitaService;
     }
 
     /*
@@ -548,6 +563,150 @@ public class MedicoController {
             }
 
             return "medico/receta";
+        }
+    }
+
+    /*
+     * =========================================================
+     * CU-12 - ABRIR PROGRAMACIÓN DE SEGUIMIENTO
+     * =========================================================
+     */
+
+    @GetMapping("/seguimiento/{citaId}")
+    public String nuevoSeguimiento(
+            @PathVariable Long citaId,
+
+            @RequestParam(
+                    name = "fecha",
+                    required = false
+            )
+            @DateTimeFormat(
+                    iso = DateTimeFormat.ISO.DATE
+            )
+            LocalDate fecha,
+
+            Authentication authentication,
+            Model model,
+            RedirectAttributes redirectAttributes
+    ) {
+
+        try {
+
+            SeguimientoContextoDTO contexto =
+                    seguimientoCitaService
+                            .obtenerContexto(
+                                    citaId,
+                                    authentication.getName()
+                            );
+
+            SeguimientoCitaDTO seguimientoForm =
+                    new SeguimientoCitaDTO();
+
+            seguimientoForm.setCitaOrigenId(
+                    citaId
+            );
+
+            seguimientoForm.setPrioridad(
+                    "NORMAL"
+            );
+
+            model.addAttribute(
+                    "contexto",
+                    contexto
+            );
+
+            model.addAttribute(
+                    "seguimientoForm",
+                    seguimientoForm
+            );
+
+            model.addAttribute(
+                    "fechaSeleccionada",
+                    fecha
+            );
+
+            if (fecha != null) {
+
+                List<HorarioDisponibleDTO> horarios =
+                        seguimientoCitaService
+                                .obtenerHorariosDisponibles(
+                                        citaId,
+                                        fecha,
+                                        authentication.getName()
+                                );
+
+                model.addAttribute(
+                        "horarios",
+                        horarios
+                );
+            }
+
+            return "medico/seguimiento";
+
+        } catch (IllegalArgumentException e) {
+
+            redirectAttributes.addFlashAttribute(
+                    "error",
+                    e.getMessage()
+            );
+
+            return "redirect:/medico";
+        }
+    }
+
+    /*
+     * =========================================================
+     * CU-12 - GUARDAR SEGUIMIENTO
+     * =========================================================
+     */
+
+    @PostMapping("/seguimiento/guardar")
+    public String guardarSeguimiento(
+            @ModelAttribute("seguimientoForm")
+            SeguimientoCitaDTO dto,
+
+            Authentication authentication,
+            RedirectAttributes redirectAttributes
+    ) {
+
+        try {
+
+            Cita seguimiento =
+                    seguimientoCitaService
+                            .crearSeguimiento(
+                                    dto,
+                                    authentication.getName()
+                            );
+
+            redirectAttributes.addFlashAttribute(
+                    "mensaje",
+                    "Seguimiento programado correctamente. "
+                            + "Nueva cita: "
+                            + seguimiento.getNumeroCita()
+                            + "."
+            );
+
+            return "redirect:/medico";
+
+        } catch (IllegalArgumentException e) {
+
+            redirectAttributes.addFlashAttribute(
+                    "error",
+                    e.getMessage()
+            );
+
+            String fecha =
+                    dto.getFechaHoraInicio() != null
+                            ? dto.getFechaHoraInicio()
+                            .toLocalDate()
+                            .toString()
+                            : "";
+
+            return "redirect:/medico/seguimiento/"
+                    + dto.getCitaOrigenId()
+                    + (fecha.isBlank()
+                    ? ""
+                    : "?fecha=" + fecha);
         }
     }
 }

@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Programar Seguimiento</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f4f8f9;
+            color: #203438;
+        }
+
+        .topbar {
+            background: linear-gradient(
+                    135deg,
+                    #0f6f7a,
+                    #1596a3
+            );
+            color: white;
+            padding: 22px 34px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            padding: 35px 22px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #dbe8ea;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 7px 22px rgba(35,73,79,.06);
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns:
+                repeat(3, 1fr);
+            gap: 14px;
+        }
+
+        .box {
+            background: #f7fafb;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .box small {
+            display: block;
+            color: #748389;
+            margin-bottom: 5px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(2, 1fr);
+            gap: 18px;
+        }
+
+        .field {
+            margin-bottom: 18px;
+        }
+
+        .field.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            display: block;
+            font-weight: 700;
+            font-size: 13px;
+            margin-bottom: 7px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 11px 12px;
+            border: 1px solid #ccdadd;
+            border-radius: 9px;
+            font-family: inherit;
+        }
+
+        textarea {
+            min-height: 110px;
+            resize: vertical;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 9px;
+            text-decoration: none;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: #0f6f7a;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #e8eef0;
+            color: #405057;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .horarios {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .horario-option {
+            position: relative;
+        }
+
+        .horario-option input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .horario-option label {
+            display: block;
+            margin: 0;
+            text-align: center;
+            padding: 11px;
+            background: #f2f7f8;
+            border: 1px solid #d5e3e5;
+            border-radius: 9px;
+            cursor: pointer;
+            color: #365358;
+        }
+
+        .horario-option input:checked + label {
+            background: #0f6f7a;
+            color: white;
+            border-color: #0f6f7a;
+        }
+
+        .empty {
+            padding: 16px;
+            border-radius: 9px;
+            background: #fff7df;
+            border: 1px solid #ead79a;
+            color: #80631c;
+        }
+
+        .help {
+            margin-top: 6px;
+            font-size: 12px;
+            color: #748389;
+        }
+
+        @media (max-width: 700px) {
+
+            .summary,
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <h1>Programar seguimiento</h1>
+
+    <p>
+        Programe una nueva cita asociada a la consulta finalizada.
+    </p>
+
+</header>
+
+<main class="container">
+
+    <section class="card">
+
+        <h3 style="margin-bottom:18px;">
+            Datos de la consulta original
+        </h3>
+
+        <div class="summary">
+
+            <div class="box">
+                <small>Paciente</small>
+                <strong th:text="${contexto.paciente}">
+                </strong>
+            </div>
+
+            <div class="box">
+                <small>Médico</small>
+                <strong th:text="${contexto.medico}">
+                </strong>
+            </div>
+
+            <div class="box">
+                <small>Cita original</small>
+                <strong th:text="${contexto.numeroCita}">
+                </strong>
+            </div>
+
+            <div class="box">
+                <small>Especialidad</small>
+                <strong th:text="${contexto.especialidad}">
+                </strong>
+            </div>
+
+            <div class="box">
+                <small>Sucursal</small>
+                <strong th:text="${contexto.sucursal}">
+                </strong>
+            </div>
+
+        </div>
+
+    </section>
+
+    <section class="card">
+
+        <h3 style="margin-bottom:18px;">
+            1. Seleccione la fecha
+        </h3>
+
+        <form
+                method="get"
+                th:action="@{/medico/seguimiento/{id}(id=${contexto.citaId})}">
+
+            <div class="field">
+
+                <label for="fecha">
+                    Fecha del seguimiento
+                </label>
+
+                <input
+                        type="date"
+                        id="fecha"
+                        name="fecha"
+                        required
+                        th:min="${#temporals.format(
+                            #temporals.createToday(),
+                            'yyyy-MM-dd'
+                        )}"
+                        th:value="${fechaSeleccionada != null
+                            ? fechaSeleccionada
+                            : ''}">
+
+            </div>
+
+            <button
+                    type="submit"
+                    class="btn btn-primary">
+                Consultar horarios
+            </button>
+
+        </form>
+
+    </section>
+
+    <section
+            class="card"
+            th:if="${fechaSeleccionada != null}">
+
+        <form
+                method="post"
+                th:action="@{/medico/seguimiento/guardar}"
+                th:object="${seguimientoForm}">
+
+            <input
+                    type="hidden"
+                    th:field="*{citaOrigenId}">
+
+            <h3 style="margin-bottom:18px;">
+                2. Complete el seguimiento
+            </h3>
+
+            <div class="field">
+
+                <label>
+                    Horario disponible
+                </label>
+
+                <div
+                        class="empty"
+                        th:if="${horarios == null
+                        or #lists.isEmpty(horarios)}">
+
+                    No hay horarios disponibles para la fecha seleccionada.
+
+                </div>
+
+                <div
+                        class="horarios"
+                        th:if="${horarios != null
+                        and !#lists.isEmpty(horarios)}">
+
+                    <div
+                            class="horario-option"
+                            th:each="horario, stat : ${horarios}">
+
+                        <input
+                                type="radio"
+                                th:id="'horario-' + ${stat.index}"
+                                th:field="*{fechaHoraInicio}"
+                                th:value="${horario.inicio}"
+                                required>
+
+                        <label
+                                th:for="'horario-' + ${stat.index}"
+                                th:text="${horario.etiqueta}">
+                        </label>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="form-grid">
+
+                <div class="field">
+
+                    <label for="tipoSeguimiento">
+                        Tipo de seguimiento
+                    </label>
+
+                    <select
+                            id="tipoSeguimiento"
+                            th:field="*{tipoSeguimiento}"
+                            required>
+
+                        <option value="">
+                            -- Seleccione --
+                        </option>
+
+                        <option value="MONITOREO_TRATAMIENTO">
+                            Monitoreo de Tratamiento
+                        </option>
+
+                        <option value="REVISION_RESULTADOS_LABORATORIO">
+                            Revisión de Resultados de Laboratorio
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="field">
+
+                    <label for="prioridad">
+                        Prioridad
+                    </label>
+
+                    <select
+                            id="prioridad"
+                            th:field="*{prioridad}"
+                            required>
+
+                        <option value="BAJA">
+                            Baja
+                        </option>
+
+                        <option value="NORMAL">
+                            Normal
+                        </option>
+
+                        <option value="ALTA">
+                            Alta
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="field full">
+
+                    <label for="motivo">
+                        Motivo / observaciones
+                    </label>
+
+                    <textarea
+                            id="motivo"
+                            th:field="*{motivo}"
+                            minlength="10"
+                            maxlength="2000"
+                            required
+                            placeholder="Indique el motivo del seguimiento...">
+                    </textarea>
+
+                    <div class="help">
+                        Entre 10 y 2000 caracteres.
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="actions">
+
+                <a
+                        class="btn btn-secondary"
+                        th:href="@{/medico}">
+                    ← Cancelar
+                </a>
+
+                <button
+                        type="submit"
+                        class="btn btn-primary"
+                        th:disabled="${horarios == null
+                        or #lists.isEmpty(horarios)}">
+                    📅 Programar seguimiento
+                </button>
+
+            </div>
+
+        </form>
+
+    </section>
+
+</main>
+
+</body>
+</html>

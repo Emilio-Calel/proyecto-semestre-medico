@@ -869,6 +869,16 @@
 
                         </div>
 
+                        <a th:href="@{
+        /medico/seguimiento/{id}
+        (id=${cita.citaId})
+   }"
+                           class="button-link btn-secondary">
+
+                            📅 Programar seguimiento
+
+                        </a>
+
                         <form th:action="@{
                                 /medico/finalizar/{id}
                                 (id=${cita.citaId})
