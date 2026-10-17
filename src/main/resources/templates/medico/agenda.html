@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Agenda Médica</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --teal-dark: #0f6f7a;
+            --teal: #1596a3;
+            --teal-light: #e8f6f7;
+
+            --background: #f4f8f9;
+            --white: #ffffff;
+
+            --text: #203438;
+            --muted: #6c8185;
+
+            --border: #dbe7e9;
+
+            --danger: #b44c42;
+            --danger-bg: #fff0ee;
+
+            --success: #267650;
+            --success-bg: #e9f7ef;
+
+            --warning: #956d1c;
+            --warning-bg: #fff8e6;
+        }
+
+        body {
+            margin: 0;
+            background: var(--background);
+            color: var(--text);
+            font-family:
+                    Inter,
+                    Arial,
+                    Helvetica,
+                    sans-serif;
+        }
+
+        .topbar {
+            min-height: 76px;
+            padding: 14px 28px;
+
+            background:
+                    linear-gradient(
+                            135deg,
+                            var(--teal-dark),
+                            var(--teal)
+                    );
+
+            color: white;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 20px;
+
+            box-shadow:
+                    0 5px 18px
+                    rgba(15, 111, 122, .20);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-icon {
+            width: 45px;
+            height: 45px;
+
+            border-radius: 14px;
+
+            background:
+                    rgba(255,255,255,.17);
+
+            display: grid;
+            place-items: center;
+
+            font-size: 23px;
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: 21px;
+        }
+
+        .brand p {
+            margin: 4px 0 0;
+            opacity: .85;
+            font-size: 12px;
+        }
+
+        .top-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .top-link {
+            text-decoration: none;
+            color: white;
+
+            border:
+                    1px solid
+                    rgba(255,255,255,.32);
+
+            border-radius: 10px;
+
+            padding: 9px 13px;
+            font-size: 13px;
+
+            background:
+                    rgba(255,255,255,.10);
+        }
+
+        .container {
+            width:
+                    min(
+                            calc(100% - 36px),
+                            1550px
+                    );
+
+            margin:
+                    26px auto 45px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 20px;
+            margin-bottom: 18px;
+        }
+
+        .page-header h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .page-header p {
+            margin: 6px 0 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .alert {
+            padding: 13px 15px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+
+        .alert-success {
+            background: var(--success-bg);
+            color: var(--success);
+            border: 1px solid #cce9d8;
+        }
+
+        .alert-error {
+            background: var(--danger-bg);
+            color: var(--danger);
+            border: 1px solid #f2cdc8;
+        }
+
+        .toolbar {
+            background: var(--white);
+
+            border:
+                    1px solid
+                    var(--border);
+
+            border-radius: 16px;
+
+            padding: 14px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            flex-wrap: wrap;
+
+            gap: 12px;
+
+            margin-bottom: 18px;
+
+            box-shadow:
+                    0 6px 20px
+                    rgba(35, 73, 79, .05);
+        }
+
+        .view-selector {
+            display: flex;
+            gap: 7px;
+            flex-wrap: wrap;
+        }
+
+        .view-button {
+            text-decoration: none;
+            border-radius: 9px;
+            padding: 9px 14px;
+
+            color: #50686d;
+
+            background: #edf3f4;
+
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .view-button.active {
+            background:
+                    linear-gradient(
+                            135deg,
+                            var(--teal-dark),
+                            var(--teal)
+                    );
+
+            color: white;
+        }
+
+        .date-form {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        input,
+        select,
+        textarea,
+        button {
+            font-family: inherit;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+
+            border:
+                    1px solid
+                    #ccdadd;
+
+            border-radius: 9px;
+
+            padding: 10px 11px;
+
+            background: white;
+            color: var(--text);
+
+            outline: none;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--teal);
+
+            box-shadow:
+                    0 0 0 3px
+                    rgba(21, 150, 163, .10);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 90px;
+        }
+
+        button,
+        .button {
+            border: none;
+            border-radius: 9px;
+
+            padding: 10px 14px;
+
+            cursor: pointer;
+
+            text-decoration: none;
+
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .btn-primary {
+            color: white;
+
+            background:
+                    linear-gradient(
+                            135deg,
+                            var(--teal-dark),
+                            var(--teal)
+                    );
+        }
+
+        .btn-secondary {
+            background: #edf3f4;
+            color: #456065;
+        }
+
+        .btn-danger {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+
+        .btn-success {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        .main-grid {
+            display: grid;
+
+            grid-template-columns:
+                    minmax(0, 2fr)
+                    minmax(320px, .85fr);
+
+            gap: 18px;
+
+            align-items: start;
+        }
+
+        .card {
+            background: var(--white);
+
+            border:
+                    1px solid
+                    var(--border);
+
+            border-radius: 17px;
+
+            box-shadow:
+                    0 7px 23px
+                    rgba(35, 73, 79, .055);
+        }
+
+        .card-header {
+            padding: 17px 18px;
+
+            border-bottom:
+                    1px solid
+                    var(--border);
+        }
+
+        .card-header h3 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .card-header p {
+            margin: 5px 0 0;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .calendar-body {
+            padding: 14px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            gap: 10px;
+        }
+
+        .calendar-grid.DIA {
+            grid-template-columns: 1fr;
+        }
+
+        .calendar-grid.SEMANA {
+            grid-template-columns:
+                    repeat(7, minmax(140px, 1fr));
+
+            overflow-x: auto;
+        }
+
+        .calendar-grid.MES {
+            grid-template-columns:
+                    repeat(7, minmax(125px, 1fr));
+
+            overflow-x: auto;
+        }
+
+        .day-column {
+            border:
+                    1px solid
+                    var(--border);
+
+            border-radius: 13px;
+
+            overflow: hidden;
+
+            background: #fbfdfd;
+
+            min-height: 180px;
+        }
+
+        .MES .day-column {
+            min-height: 145px;
+        }
+
+        .day-header {
+            padding: 10px 11px;
+
+            background:
+                    var(--teal-light);
+
+            color: var(--teal-dark);
+
+            border-bottom:
+                    1px solid
+                    #d6ecee;
+        }
+
+        .day-header strong {
+            display: block;
+            font-size: 13px;
+        }
+
+        .day-header span {
+            font-size: 11px;
+            opacity: .8;
+        }
+
+        .day-events {
+            padding: 8px;
+            display: grid;
+            gap: 7px;
+        }
+
+        .agenda-item {
+            border-radius: 10px;
+            padding: 9px;
+
+            border:
+                    1px solid
+                    var(--border);
+
+            background: white;
+
+            font-size: 11px;
+        }
+
+        .agenda-item.cita {
+            border-left:
+                    4px solid
+                    var(--teal);
+        }
+
+        .agenda-item.evento {
+            border-left:
+                    4px solid
+                    #9a75c3;
+        }
+
+        .item-time {
+            color: var(--muted);
+            font-size: 10px;
+            margin-bottom: 4px;
+        }
+
+        .item-title {
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .item-description {
+            color: var(--muted);
+            line-height: 1.4;
+        }
+
+        .item-badge {
+            display: inline-block;
+
+            margin-top: 6px;
+
+            border-radius: 999px;
+
+            padding: 4px 7px;
+
+            background: #edf3f4;
+
+            color: #536c71;
+
+            font-size: 9px;
+            font-weight: 800;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 7px;
+        }
+
+        .mini-button {
+            padding: 5px 7px;
+            font-size: 9px;
+        }
+
+        .empty-day {
+            color: #97a7aa;
+            font-size: 11px;
+            text-align: center;
+            padding: 25px 6px;
+        }
+
+        .side-column {
+            display: grid;
+            gap: 18px;
+        }
+
+        .form-body {
+            padding: 16px;
+        }
+
+        .field {
+            margin-bottom: 13px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: #496267;
+            margin-bottom: 6px;
+        }
+
+        .two-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 13px;
+        }
+
+        .checkbox-row input {
+            width: auto;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .tasks-toolbar {
+            padding: 12px 16px;
+
+            border-bottom:
+                    1px solid
+                    var(--border);
+
+            display: flex;
+            gap: 6px;
+
+            flex-wrap: wrap;
+        }
+
+        .task-filter {
+            text-decoration: none;
+
+            padding: 6px 9px;
+
+            border-radius: 8px;
+
+            background: #edf3f4;
+
+            color: #51686d;
+
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .task-list {
+            padding: 12px;
+
+            display: grid;
+            gap: 9px;
+        }
+
+        .task {
+            border:
+                    1px solid
+                    var(--border);
+
+            border-radius: 11px;
+
+            padding: 11px;
+
+            background: #fff;
+        }
+
+        .task.completed {
+            opacity: .65;
+        }
+
+        .task.completed .task-title {
+            text-decoration: line-through;
+        }
+
+        .task-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .task-title {
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .priority {
+            border-radius: 999px;
+
+            padding: 4px 7px;
+
+            font-size: 9px;
+            font-weight: 800;
+        }
+
+        .priority.ALTA {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+
+        .priority.NORMAL {
+            background: var(--warning-bg);
+            color: var(--warning);
+        }
+
+        .priority.BAJA {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        .task-description {
+            font-size: 11px;
+            color: var(--muted);
+
+            margin-top: 6px;
+
+            line-height: 1.4;
+        }
+
+        .task-date {
+            margin-top: 7px;
+
+            font-size: 10px;
+            color: #74888c;
+        }
+
+        .task-actions {
+            margin-top: 9px;
+            display: flex;
+            gap: 6px;
+        }
+
+        .task-actions form {
+            flex: 1;
+        }
+
+        .task-actions button {
+            width: 100%;
+        }
+
+        @media (max-width: 1050px) {
+
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 650px) {
+
+            .container {
+                width:
+                        min(
+                                calc(100% - 20px),
+                                1550px
+                        );
+            }
+
+            .topbar,
+            .page-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .two-fields {
+                grid-template-columns: 1fr;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <div class="brand">
+
+        <div class="brand-icon">
+            📅
+        </div>
+
+        <div>
+            <h1>Agenda Médica</h1>
+            <p>
+                Calendario, eventos y tareas
+            </p>
+        </div>
+
+    </div>
+
+    <div class="top-actions">
+
+        <a th:href="@{/medico}"
+           class="top-link">
+            ← Panel Médico
+        </a>
+
+        <a th:href="@{/}"
+           class="top-link">
+            Panel principal
+        </a>
+
+    </div>
+
+</header>
+
+<main class="container">
+
+    <div class="page-header">
+
+        <div>
+            <h2>Mi agenda</h2>
+
+            <p>
+                Consulte citas programadas,
+                gestione bloqueos y organice tareas.
+            </p>
+        </div>
+
+    </div>
+
+    <div th:if="${mensaje}"
+         class="alert alert-success"
+         th:text="${mensaje}">
+    </div>
+
+    <div th:if="${error}"
+         class="alert alert-error"
+         th:text="${error}">
+    </div>
+
+    <!-- =========================================
+         CONTROLES
+         ========================================= -->
+
+    <section class="toolbar">
+
+        <div class="view-selector">
+
+            <a th:href="@{/medico/agenda(
+                    vista='DIA',
+                    fecha=${fechaBase}
+               )}"
+               class="view-button"
+               th:classappend="${vista == 'DIA'} ? ' active'">
+                Día
+            </a>
+
+            <a th:href="@{/medico/agenda(
+                    vista='SEMANA',
+                    fecha=${fechaBase}
+               )}"
+               class="view-button"
+               th:classappend="${vista == 'SEMANA'} ? ' active'">
+                Semana
+            </a>
+
+            <a th:href="@{/medico/agenda(
+                    vista='MES',
+                    fecha=${fechaBase}
+               )}"
+               class="view-button"
+               th:classappend="${vista == 'MES'} ? ' active'">
+                Mes
+            </a>
+
+        </div>
+
+        <form method="get"
+              th:action="@{/medico/agenda}"
+              class="date-form">
+
+            <input type="hidden"
+                   name="vista"
+                   th:value="${vista}">
+
+            <input type="date"
+                   name="fecha"
+                   th:value="${fechaBase}">
+
+            <button type="submit"
+                    class="btn-primary">
+                Ir
+            </button>
+
+        </form>
+
+    </section>
+
+    <div class="main-grid">
+
+        <!-- =========================================
+             CALENDARIO
+             ========================================= -->
+
+        <section class="card">
+
+            <div class="card-header">
+
+                <h3 th:text="
+                    ${vista == 'DIA'}
+                    ? 'Vista diaria'
+                    : (${vista == 'MES'}
+                        ? 'Vista mensual'
+                        : 'Vista semanal')
+                ">
+                    Calendario
+                </h3>
+
+                <p>
+                    Las citas confirmadas y los eventos
+                    personales aparecen en el mismo calendario.
+                </p>
+
+            </div>
+
+            <div class="calendar-body">
+
+                <div class="calendar-grid"
+                     th:classappend="${vista}">
+
+                    <div class="day-column"
+                         th:each="entrada : ${agendaPorDia}">
+
+                        <div class="day-header">
+
+                            <strong
+                                    th:text="${#temporals.format(
+                                        entrada.key,
+                                        'EEEE'
+                                    )}">
+                                Día
+                            </strong>
+
+                            <span
+                                    th:text="${#temporals.format(
+                                        entrada.key,
+                                        'dd/MM/yyyy'
+                                    )}">
+                                Fecha
+                            </span>
+
+                        </div>
+
+                        <div class="day-events">
+
+                            <div th:if="${#lists.isEmpty(entrada.value)}"
+                                 class="empty-day">
+                                Sin actividades
+                            </div>
+
+                            <article
+                                    th:each="item : ${entrada.value}"
+                                    class="agenda-item"
+                                    th:classappend="
+                                        ${item.tipo == 'CITA'}
+                                        ? ' cita'
+                                        : ' evento'
+                                    ">
+
+                                <div class="item-time">
+
+                                    <span
+                                            th:text="${#temporals.format(
+                                                item.inicio,
+                                                'HH:mm'
+                                            )}">
+                                    </span>
+
+                                    -
+
+                                    <span
+                                            th:text="${#temporals.format(
+                                                item.fin,
+                                                'HH:mm'
+                                            )}">
+                                    </span>
+
+                                </div>
+
+                                <div class="item-title"
+                                     th:text="${item.titulo}">
+                                    Título
+                                </div>
+
+                                <div class="item-description"
+                                     th:text="${item.descripcion}">
+                                </div>
+
+                                <span class="item-badge"
+                                      th:if="${item.tipo == 'CITA'}"
+                                      th:text="${item.estado}">
+                                    CITA
+                                </span>
+
+                                <span class="item-badge"
+                                      th:if="${item.tipo == 'EVENTO'}"
+                                      th:text="${item.tipoEvento}">
+                                    EVENTO
+                                </span>
+
+                                <div class="item-actions"
+                                     th:if="${item.tipo == 'EVENTO'}">
+
+                                    <a th:href="@{
+                                            /medico/agenda/evento/editar/{id}
+                                            (id=${item.id})
+                                       }"
+                                       class="button btn-secondary mini-button">
+                                        Editar
+                                    </a>
+
+                                    <form th:action="@{
+                                            /medico/agenda/evento/eliminar/{id}
+                                            (id=${item.id})
+                                          }"
+                                          method="post"
+                                          onsubmit="return confirm(
+                                              '¿Eliminar este evento?'
+                                          );">
+
+                                        <button type="submit"
+                                                class="btn-danger mini-button">
+                                            Eliminar
+                                        </button>
+
+                                    </form>
+
+                                </div>
+
+                            </article>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <aside class="side-column">
+
+            <!-- =========================================
+                 EVENTOS
+                 ========================================= -->
+
+            <section class="card">
+
+                <div class="card-header">
+
+                    <h3 th:text="
+                        ${eventoForm.id != null}
+                        ? 'Editar evento'
+                        : 'Nuevo evento'
+                    ">
+                        Nuevo evento
+                    </h3>
+
+                    <p>
+                        Los eventos bloquean automáticamente
+                        esos horarios para nuevas citas.
+                    </p>
+
+                </div>
+
+                <div class="form-body">
+
+                    <form th:action="@{/medico/agenda/evento/guardar}"
+                          th:object="${eventoForm}"
+                          method="post">
+
+                        <input type="hidden"
+                               th:field="*{id}">
+
+                        <div class="field">
+
+                            <label>
+                                Título
+                            </label>
+
+                            <input type="text"
+                                   th:field="*{titulo}"
+                                   minlength="3"
+                                   maxlength="200"
+                                   required
+                                   placeholder="Ej. Reunión clínica">
+
+                        </div>
+
+                        <div class="field">
+
+                            <label>
+                                Tipo
+                            </label>
+
+                            <select th:field="*{tipoEvento}"
+                                    required>
+
+                                <option value="REUNION">
+                                    Reunión
+                                </option>
+
+                                <option value="DESCANSO">
+                                    Descanso
+                                </option>
+
+                                <option value="CAPACITACION">
+                                    Capacitación
+                                </option>
+
+                                <option value="PERSONAL">
+                                    Personal
+                                </option>
+
+                                <option value="OTRO">
+                                    Otro
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                        <div class="two-fields">
+
+                            <div class="field">
+
+                                <label>
+                                    Inicio
+                                </label>
+
+                                <input type="datetime-local"
+                                       th:field="*{fechaInicio}"
+                                       required>
+
+                            </div>
+
+                            <div class="field">
+
+                                <label>
+                                    Fin
+                                </label>
+
+                                <input type="datetime-local"
+                                       th:field="*{fechaFin}"
+                                       required>
+
+                            </div>
+
+                        </div>
+
+                        <div class="field">
+
+                            <label>
+                                Descripción
+                            </label>
+
+                            <textarea th:field="*{descripcion}"
+                                      maxlength="2000"
+                                      placeholder="Información adicional">
+                            </textarea>
+
+                        </div>
+
+                        <label class="checkbox-row">
+
+                            <input type="checkbox"
+                                   th:field="*{todoElDia}">
+
+                            Evento de todo el día
+
+                        </label>
+
+                        <div class="form-actions">
+
+                            <button type="submit"
+                                    class="btn-primary">
+
+                                <span th:text="
+                                    ${eventoForm.id != null}
+                                    ? 'Actualizar evento'
+                                    : 'Crear evento'
+                                ">
+                                    Crear evento
+                                </span>
+
+                            </button>
+
+                            <a th:if="${eventoForm.id != null}"
+                               th:href="@{/medico/agenda}"
+                               class="button btn-secondary">
+                                Cancelar edición
+                            </a>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </section>
+
+            <!-- =========================================
+                 NUEVA TAREA
+                 ========================================= -->
+
+            <section class="card">
+
+                <div class="card-header">
+
+                    <h3>Nueva tarea</h3>
+
+                    <p>
+                        Organice actividades y pendientes.
+                    </p>
+
+                </div>
+
+                <div class="form-body">
+
+                    <form th:action="@{/medico/agenda/tarea/guardar}"
+                          th:object="${tareaForm}"
+                          method="post">
+
+                        <input type="hidden"
+                               th:field="*{id}">
+
+                        <div class="field">
+
+                            <label>
+                                Título
+                            </label>
+
+                            <input type="text"
+                                   th:field="*{titulo}"
+                                   minlength="3"
+                                   maxlength="200"
+                                   required
+                                   placeholder="Ej. Revisar resultados">
+
+                        </div>
+
+                        <div class="field">
+
+                            <label>
+                                Descripción
+                            </label>
+
+                            <textarea th:field="*{descripcion}"
+                                      maxlength="2000">
+                            </textarea>
+
+                        </div>
+
+                        <div class="two-fields">
+
+                            <div class="field">
+
+                                <label>
+                                    Prioridad
+                                </label>
+
+                                <select th:field="*{prioridad}"
+                                        required>
+
+                                    <option value="BAJA">
+                                        Baja
+                                    </option>
+
+                                    <option value="NORMAL">
+                                        Normal
+                                    </option>
+
+                                    <option value="ALTA">
+                                        Alta
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                            <div class="field">
+
+                                <label>
+                                    Fecha límite
+                                </label>
+
+                                <input type="datetime-local"
+                                       th:field="*{fechaLimite}"
+                                       required>
+
+                            </div>
+
+                        </div>
+
+                        <button type="submit"
+                                class="btn-primary">
+                            Crear tarea
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </section>
+
+            <!-- =========================================
+                 LISTA DE TAREAS
+                 ========================================= -->
+
+            <section class="card">
+
+                <div class="card-header">
+
+                    <h3>Mis tareas</h3>
+
+                    <p>
+                        Pendientes y actividades completadas.
+                    </p>
+
+                </div>
+
+                <div class="tasks-toolbar">
+
+                    <a th:href="@{/medico/agenda(
+                            filtroTareas='TODAS'
+                       )}"
+                       class="task-filter">
+                        Todas
+                    </a>
+
+                    <a th:href="@{/medico/agenda(
+                            filtroTareas='PENDIENTES'
+                       )}"
+                       class="task-filter">
+                        Pendientes
+                    </a>
+
+                    <a th:href="@{/medico/agenda(
+                            filtroTareas='COMPLETADAS'
+                       )}"
+                       class="task-filter">
+                        Completadas
+                    </a>
+
+                </div>
+
+                <div class="task-list">
+
+                    <div th:if="${#lists.isEmpty(tareas)}"
+                         class="empty-day">
+                        No hay tareas para mostrar.
+                    </div>
+
+                    <article th:each="tarea : ${tareas}"
+                             class="task"
+                             th:classappend="
+                                ${tarea.completada}
+                                ? ' completed'
+                             ">
+
+                        <div class="task-top">
+
+                            <div class="task-title"
+                                 th:text="${tarea.titulo}">
+                                Tarea
+                            </div>
+
+                            <span class="priority"
+                                  th:classappend="${tarea.prioridad}"
+                                  th:text="${tarea.prioridad}">
+                                NORMAL
+                            </span>
+
+                        </div>
+
+                        <div th:if="${tarea.descripcion != null}"
+                             class="task-description"
+                             th:text="${tarea.descripcion}">
+                        </div>
+
+                        <div class="task-date">
+
+                            Fecha límite:
+
+                            <strong
+                                    th:text="${#temporals.format(
+                                        tarea.fechaLimite,
+                                        'dd/MM/yyyy HH:mm'
+                                    )}">
+                            </strong>
+
+                        </div>
+
+                        <div class="task-actions">
+
+                            <form th:action="@{
+                                    /medico/agenda/tarea/estado/{id}
+                                    (id=${tarea.id})
+                                  }"
+                                  method="post">
+
+                                <button type="submit"
+                                        class="btn-success"
+                                        th:text="
+                                            ${tarea.completada}
+                                            ? 'Reabrir'
+                                            : 'Completar'
+                                        ">
+                                    Completar
+                                </button>
+
+                            </form>
+
+                            <form th:action="@{
+                                    /medico/agenda/tarea/eliminar/{id}
+                                    (id=${tarea.id})
+                                  }"
+                                  method="post"
+                                  onsubmit="return confirm(
+                                      '¿Eliminar esta tarea?'
+                                  );">
+
+                                <button type="submit"
+                                        class="btn-danger">
+                                    Eliminar
+                                </button>
+
+                            </form>
+
+                        </div>
+
+                    </article>
+
+                </div>
+
+            </section>
+
+        </aside>
+
+    </div>
+
+</main>
+
+</body>
+
+</html>

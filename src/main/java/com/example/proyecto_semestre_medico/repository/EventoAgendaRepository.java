@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 public interface EventoAgendaRepository
         extends JpaRepository<EventoAgenda, Long> {
@@ -22,5 +24,28 @@ public interface EventoAgendaRepository
             @Param("medicoId") Long medicoId,
             @Param("fechaInicio") LocalDateTime fechaInicio,
             @Param("fechaFin") LocalDateTime fechaFin
+    );
+
+    @Query("""
+    SELECT e
+    FROM EventoAgenda e
+    JOIN FETCH e.medico m
+    JOIN FETCH m.personal
+    WHERE e.medico.id = :medicoId
+      AND e.activo = true
+      AND e.fechaInicio < :hasta
+      AND e.fechaFin > :desde
+    ORDER BY e.fechaInicio ASC
+""")
+    List<EventoAgenda> listarEnRango(
+            @Param("medicoId") Long medicoId,
+            @Param("desde") LocalDateTime desde,
+            @Param("hasta") LocalDateTime hasta
+    );
+
+    Optional<EventoAgenda>
+    findByIdAndMedicoIdAndActivoTrue(
+            Long id,
+            Long medicoId
     );
 }

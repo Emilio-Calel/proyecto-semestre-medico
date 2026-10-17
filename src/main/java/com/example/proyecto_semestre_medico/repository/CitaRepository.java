@@ -154,6 +154,39 @@ public interface CitaRepository
             @Param("hasta")
             LocalDateTime hasta
     );
+
+    @Query("""
+    SELECT c
+    FROM Cita c
+    JOIN FETCH c.paciente
+    JOIN FETCH c.sucursal
+    JOIN FETCH c.especialidad
+    JOIN FETCH c.medico m
+    JOIN FETCH m.personal
+    JOIN FETCH c.estadoCita
+    WHERE c.medico.id = :medicoId
+
+      AND c.fechaHoraInicio < :hasta
+      AND c.fechaHoraFin > :desde
+
+      AND c.estadoCita.codigo NOT IN (
+          'CANCELADA',
+          'EXPIRADA',
+          'NO_ASISTIO'
+      )
+
+      AND (
+          c.estadoCita.codigo <> 'PENDIENTE_PAGO'
+          OR c.origen = 'SEGUIMIENTO'
+      )
+
+    ORDER BY c.fechaHoraInicio ASC
+""")
+    List<Cita> listarAgendaMedico(
+            @Param("medicoId") Long medicoId,
+            @Param("desde") LocalDateTime desde,
+            @Param("hasta") LocalDateTime hasta
+    );
 }
 
 
