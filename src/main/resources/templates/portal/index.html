@@ -783,13 +783,9 @@
                                 type="text"
                                 id="dpi"
                                 th:field="*{dpi}"
-                                minlength="13"
-                                maxlength="13"
-                                pattern="[0-9]{13}"
-                                inputmode="numeric"
+                                maxlength="30"
                                 placeholder="Ingrese los 13 dígitos"
-                                autocomplete="off"
-                                required>
+                                autocomplete="off">
 
                         <span id="contador">
                         0/13 dígitos
@@ -800,6 +796,12 @@
                     <span class="helper-text">
                     Ingrese únicamente números.
                 </span>
+
+                    <div
+                            id="errorDpiCliente"
+                            class="alert-error"
+                            style="display: none; margin-top: 12px;">
+                    </div>
 
                 </div>
 
@@ -896,14 +898,23 @@
 
         btnVerificarDpi.textContent =
             "Verificar DPI";
+
+        const errorDpiCliente =
+            document.getElementById(
+                "errorDpiCliente"
+            );
+
+        if (errorDpiCliente) {
+
+            errorDpiCliente.textContent =
+                "";
+
+            errorDpiCliente.style.display =
+                "none";
+        }
     }
 
     function actualizarContador() {
-
-        dpiInput.value =
-            dpiInput.value
-                .replace(/\D/g, "")
-                .slice(0, 13);
 
         contador.textContent =
             dpiInput.value.length
@@ -952,8 +963,79 @@
 
     formVerificarDpi.addEventListener(
         "submit",
-        function () {
+        function (event) {
 
+            const valorDpi =
+                dpiInput.value.trim();
+
+            const errorDpiCliente =
+                document.getElementById(
+                    "errorDpiCliente"
+                );
+
+            errorDpiCliente.style.display =
+                "none";
+
+            errorDpiCliente.textContent =
+                "";
+
+            /*
+             * RN-GLOBAL-001
+             * DPI obligatorio.
+             */
+            if (valorDpi.length === 0) {
+
+                event.preventDefault();
+
+                errorDpiCliente.textContent =
+                    "El campo DPI es obligatorio. Por favor, ingrese su número de DPI.";
+
+                errorDpiCliente.style.display =
+                    "block";
+
+                return;
+            }
+
+            /*
+             * RN-GLOBAL-001
+             * Solo caracteres numéricos.
+             */
+            if (!/^[0-9]+$/.test(valorDpi)) {
+
+                event.preventDefault();
+
+                errorDpiCliente.textContent =
+                    "El DPI debe contener únicamente números. No se permiten letras ni caracteres especiales.";
+
+                errorDpiCliente.style.display =
+                    "block";
+
+                return;
+            }
+
+            /*
+             * RN-GLOBAL-001
+             * Exactamente 13 dígitos.
+             */
+            if (valorDpi.length !== 13) {
+
+                event.preventDefault();
+
+                errorDpiCliente.textContent =
+                    "El DPI debe contener exactamente 13 dígitos. Usted ingresó "
+                    + valorDpi.length
+                    + " dígitos.";
+
+                errorDpiCliente.style.display =
+                    "block";
+
+                return;
+            }
+
+            /*
+             * Si todo es válido, recién enviamos
+             * la solicitud al servidor.
+             */
             btnVerificarDpi.disabled = true;
 
             cancelarModalDpi.disabled = true;
@@ -978,17 +1060,30 @@
 
     window.addEventListener(
         "pageshow",
-        function () {
+        function (event) {
 
             /*
-             * Cuando el usuario vuelve al portal usando
-             * el botón Atrás del navegador, algunos navegadores
-             * restauran el estado anterior de la página
-             * desde la caché de navegación.
+             * Solo limpiamos el formulario cuando el navegador
+             * restauró esta página desde el historial.
              *
-             * Limpiamos el modal para que CU-00 siempre
-             * comience desde un estado nuevo.
+             * No debemos hacerlo durante una carga normal porque
+             * podríamos borrar mensajes de error devueltos
+             * por el servidor, como FA05.
              */
+            const navegacion =
+                performance
+                    .getEntriesByType("navigation")[0];
+
+            const regresoDesdeHistorial =
+                event.persisted
+                || (
+                    navegacion
+                    && navegacion.type === "back_forward"
+                );
+
+            if (!regresoDesdeHistorial) {
+                return;
+            }
 
             modalDpi.classList.remove(
                 "modal-visible"
@@ -1009,6 +1104,20 @@
 
             btnVerificarDpi.textContent =
                 "Verificar DPI";
+
+            const errorDpiCliente =
+                document.getElementById(
+                    "errorDpiCliente"
+                );
+
+            if (errorDpiCliente) {
+
+                errorDpiCliente.textContent =
+                    "";
+
+                errorDpiCliente.style.display =
+                    "none";
+            }
         }
     );
 

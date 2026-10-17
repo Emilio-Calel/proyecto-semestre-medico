@@ -84,18 +84,48 @@ public class PortalPacienteServiceImpl
             String dpi
     ) {
 
+        /*
+         * RN-GLOBAL-001:
+         * campo obligatorio.
+         */
         if (dpi == null
-                || !dpi.trim()
-                .matches("^[0-9]{13}$")) {
+                || dpi.trim().isEmpty()) {
 
             throw new IllegalArgumentException(
-                    "El DPI debe contener exactamente 13 dígitos"
+                    "El campo DPI es obligatorio. Por favor, ingrese su número de DPI."
+            );
+        }
+
+        String dpiNormalizado =
+                dpi.trim();
+
+        /*
+         * RN-GLOBAL-001:
+         * únicamente números.
+         */
+        if (!dpiNormalizado.matches("^[0-9]+$")) {
+
+            throw new IllegalArgumentException(
+                    "El DPI debe contener únicamente números. No se permiten letras ni caracteres especiales."
+            );
+        }
+
+        /*
+         * RN-GLOBAL-001:
+         * exactamente 13 dígitos.
+         */
+        if (dpiNormalizado.length() != 13) {
+
+            throw new IllegalArgumentException(
+                    "El DPI debe contener exactamente 13 dígitos. Usted ingresó "
+                            + dpiNormalizado.length()
+                            + " dígitos."
             );
         }
 
         return datosSensiblesService
                 .generarHashBusqueda(
-                        dpi.trim()
+                        dpiNormalizado
                 );
     }
 }

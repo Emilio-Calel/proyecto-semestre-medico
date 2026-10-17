@@ -8,6 +8,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -131,7 +132,8 @@ public class PortalController {
 
             return "portal/index";
 
-        } catch (DataAccessException e) {
+        } catch (DataAccessException
+                 | CannotCreateTransactionException e) {
 
             model.addAttribute(
                     "error",
