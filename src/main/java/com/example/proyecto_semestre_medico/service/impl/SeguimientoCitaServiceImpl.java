@@ -14,6 +14,7 @@ import com.example.proyecto_semestre_medico.repository.MedicoRepository;
 import com.example.proyecto_semestre_medico.service.CitaDisponibilidadService;
 import com.example.proyecto_semestre_medico.service.SeguimientoCitaService;
 import com.example.proyecto_semestre_medico.dto.SeguimientoContextoDTO;
+import com.example.proyecto_semestre_medico.service.CorreoPendienteService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,6 +64,9 @@ public class SeguimientoCitaServiceImpl
 
     private final int reservaMinutos;
 
+    private final CorreoPendienteService
+            correoPendienteService;
+
     public SeguimientoCitaServiceImpl(
             CitaRepository citaRepository,
             ConsultaMedicaRepository consultaMedicaRepository,
@@ -70,6 +74,7 @@ public class SeguimientoCitaServiceImpl
             EstadoCitaRepository estadoCitaRepository,
             EventoAgendaRepository eventoAgendaRepository,
             CitaDisponibilidadService citaDisponibilidadService,
+            CorreoPendienteService correoPendienteService,
 
             @Value("${app.citas.reserva-minutos:5}")
             int reservaMinutos
@@ -95,6 +100,9 @@ public class SeguimientoCitaServiceImpl
 
         this.reservaMinutos =
                 reservaMinutos;
+
+        this.correoPendienteService =
+                correoPendienteService;
     }
 
     /*
@@ -372,9 +380,16 @@ public class SeguimientoCitaServiceImpl
                         )
         );
 
-        return citaRepository.save(
-                seguimiento
+        Cita seguimientoGuardado =
+                citaRepository.save(
+                        seguimiento
+                );
+
+        registrarCorreoConfirmacion(
+                seguimientoGuardado
         );
+
+        return seguimientoGuardado;
     }
 
     /*
@@ -601,5 +616,96 @@ public class SeguimientoCitaServiceImpl
         );
 
         return numero;
+    }
+
+    private void registrarCorreoConfirmacion(
+            Cita seguimiento
+    ) {
+
+        String correoPaciente =
+                seguimiento
+                        .getPaciente()
+                        .getCorreo();
+
+        if (correoPaciente == null
+                || correoPaciente.isBlank()) {
+
+            return;
+        }
+
+        String tipoLegible =
+                switch (
+                        seguimiento
+                                .getTipoSeguimiento()
+                        ) {
+
+                    case "MONITOREO_TRATAMIENTO" ->
+                            "Monitoreo de Tratamiento";
+
+                    case "REVISION_RESULTADOS_LABORATORIO" ->
+                            "Revisión de Resultados de Laboratorio";
+
+                    default ->
+                            seguimiento.getTipoSeguimiento();
+                };
+
+        String contenido =
+                """
+                Sistema Informático Hospitalario
+    
+                Se ha programado una cita de seguimiento.
+    
+                Paciente: %s
+                Número de cita: %s
+                Tipo de seguimiento: %s
+                Prioridad: %s
+                Médico: %s
+                Especialidad: %s
+                Sucursal: %s
+                Fecha y hora: %s
+    
+                Motivo:
+                %s
+    
+                Este es un mensaje generado automáticamente por el sistema hospitalario.
+                """
+                        .formatted(
+                                seguimiento
+                                        .getPaciente()
+                                        .getNombreCompleto(),
+
+                                seguimiento
+                                        .getNumeroCita(),
+
+                                tipoLegible,
+
+                                seguimiento
+                                        .getPrioridadSeguimiento(),
+
+                                seguimiento
+                                        .getMedico()
+                                        .getPersonal()
+                                        .getNombreCompleto(),
+
+                                seguimiento
+                                        .getEspecialidad()
+                                        .getNombre(),
+
+                                seguimiento
+                                        .getSucursal()
+                                        .getNombre(),
+
+                                seguimiento
+                                        .getFechaHoraInicio(),
+
+                                seguimiento
+                                        .getMotivoConsulta()
+                        );
+
+        correoPendienteService.registrar(
+                correoPaciente,
+                "Confirmación de cita de seguimiento",
+                contenido
+        );
     }
 }

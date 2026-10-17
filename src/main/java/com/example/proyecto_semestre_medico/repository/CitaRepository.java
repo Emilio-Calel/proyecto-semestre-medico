@@ -126,6 +126,34 @@ public interface CitaRepository
             Long medicoId,
             String codigo
     );
+
+    @Query("""
+    SELECT c
+    FROM Cita c
+    JOIN FETCH c.paciente
+    JOIN FETCH c.medico m
+    JOIN FETCH m.personal
+    JOIN FETCH c.especialidad
+    JOIN FETCH c.sucursal
+    JOIN FETCH c.estadoCita
+    WHERE c.origen = 'SEGUIMIENTO'
+      AND c.recordatorioSeguimientoEnviado = false
+      AND c.fechaHoraInicio >= :desde
+      AND c.fechaHoraInicio < :hasta
+      AND c.estadoCita.codigo NOT IN (
+          'CANCELADA',
+          'EXPIRADA',
+          'NO_ASISTIO'
+      )
+    ORDER BY c.fechaHoraInicio ASC
+""")
+    List<Cita> buscarSeguimientosParaRecordatorio(
+            @Param("desde")
+            LocalDateTime desde,
+
+            @Param("hasta")
+            LocalDateTime hasta
+    );
 }
 
 

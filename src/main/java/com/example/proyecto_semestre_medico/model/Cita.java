@@ -104,6 +104,17 @@ public class Cita {
     )
     private String prioridadSeguimiento;
 
+    @Column(
+            name = "recordatorio_seguimiento_enviado",
+            nullable = false
+    )
+    private Boolean recordatorioSeguimientoEnviado = false;
+
+    @Column(
+            name = "fecha_recordatorio_seguimiento"
+    )
+    private LocalDateTime fechaRecordatorioSeguimiento;
+
 
     @Version
     @Column(nullable = false)
@@ -127,6 +138,10 @@ public class Cita {
 
         if (prioridadEmergencia == null) {
             prioridadEmergencia = false;
+        }
+
+        if (recordatorioSeguimientoEnviado == null) {
+            recordatorioSeguimientoEnviado = false;
         }
     }
 
@@ -288,5 +303,27 @@ public class Cita {
     ) {
         this.prioridadSeguimiento =
                 prioridadSeguimiento;
+    }
+
+    public Boolean getRecordatorioSeguimientoEnviado() {
+        return recordatorioSeguimientoEnviado;
+    }
+
+    public void setRecordatorioSeguimientoEnviado(
+            Boolean recordatorioSeguimientoEnviado
+    ) {
+        this.recordatorioSeguimientoEnviado =
+                recordatorioSeguimientoEnviado;
+    }
+
+    public LocalDateTime getFechaRecordatorioSeguimiento() {
+        return fechaRecordatorioSeguimiento;
+    }
+
+    public void setFechaRecordatorioSeguimiento(
+            LocalDateTime fechaRecordatorioSeguimiento
+    ) {
+        this.fechaRecordatorioSeguimiento =
+                fechaRecordatorioSeguimiento;
     }
 }
