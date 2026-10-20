@@ -229,11 +229,14 @@ public class UsuarioInternoController {
 
         try {
 
-            usuarioInternoService.desactivar(id);
+            String nombreUsuario =
+                    usuarioInternoService.desactivar(id);
 
             redirectAttributes.addFlashAttribute(
                     "mensaje",
-                    "Usuario desactivado correctamente"
+                    "El usuario "
+                            + nombreUsuario
+                            + " ha sido eliminado correctamente."
             );
 
         } catch (IllegalArgumentException e) {
