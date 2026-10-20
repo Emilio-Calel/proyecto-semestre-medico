@@ -66,8 +66,8 @@ public class RegistroPacienteController {
 
             redirectAttributes.addFlashAttribute(
                     "mensaje",
-                    "Registro completado correctamente. "
-                            + "Ya puede iniciar sesión."
+                    "¡Registro exitoso! Su cuenta ha sido creada. "
+                            + "Ahora puede iniciar sesión con sus credenciales."
             );
 
             return "redirect:/login";

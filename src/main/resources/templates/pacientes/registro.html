@@ -3,13 +3,16 @@
       xmlns:th="http://www.thymeleaf.org">
 
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
 
     <title>Registro de paciente</title>
 
     <style>
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -70,11 +73,17 @@
                     rgba(255, 255, 255, 0.8);
         }
 
-        .login-link {
+        .top-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .top-link {
             color: #ffffff;
             text-decoration: none;
-            border: 1px solid
-            rgba(255, 255, 255, 0.3);
+            border:
+                    1px solid
+                    rgba(255, 255, 255, 0.3);
             background:
                     rgba(255, 255, 255, 0.12);
             padding: 10px 15px;
@@ -86,7 +95,7 @@
                     transform 0.2s ease;
         }
 
-        .login-link:hover {
+        .top-link:hover {
             background:
                     rgba(255, 255, 255, 0.22);
             transform: translateY(-1px);
@@ -179,7 +188,8 @@
 
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns:
+                    repeat(2, 1fr);
             gap: 20px;
         }
 
@@ -218,6 +228,26 @@
                     rgba(21, 150, 163, 0.12);
         }
 
+        input.input-error {
+            border-color: #d32f2f;
+            background: #fffafa;
+            box-shadow:
+                    0 0 0 3px
+                    rgba(211, 47, 47, 0.08);
+        }
+
+        .field-error {
+            display: none;
+            color: #b3261e;
+            font-size: 12px;
+            line-height: 1.45;
+            font-weight: bold;
+        }
+
+        .field-error.visible {
+            display: block;
+        }
+
         small {
             color: #8a979c;
             font-size: 12px;
@@ -249,7 +279,25 @@
         .actions {
             margin-top: 28px;
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .back-button {
+            text-decoration: none;
+            border: 1px solid #c9d7da;
+            color: #526168;
+            background: #ffffff;
+            padding: 12px 18px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .back-button:hover {
+            background: #f4f8f9;
         }
 
         .submit-button {
@@ -298,9 +346,11 @@
         }
 
         @media (max-width: 700px) {
+
             .topbar {
                 min-height: auto;
                 padding: 14px 18px;
+                gap: 14px;
             }
 
             .brand-text span {
@@ -333,14 +383,23 @@
             }
 
             .actions {
-                justify-content: stretch;
+                flex-direction: column-reverse;
+                align-items: stretch;
             }
 
-            .submit-button {
+            .submit-button,
+            .back-button {
                 width: 100%;
+                text-align: center;
+            }
+
+            .top-actions {
+                flex-direction: column;
             }
         }
+
     </style>
+
 </head>
 
 <body>
@@ -360,11 +419,21 @@
 
     </div>
 
-    <a
-            class="login-link"
-            th:href="@{/login}">
-        Iniciar sesión
-    </a>
+    <div class="top-actions">
+
+        <a
+                class="top-link"
+                th:href="@{/portal}">
+            Portal
+        </a>
+
+        <a
+                class="top-link"
+                th:href="@{/login}">
+            Iniciar sesión
+        </a>
+
+    </div>
 
 </header>
 
@@ -376,7 +445,9 @@
             Registro de paciente
         </span>
 
-        <h2>Crear una cuenta</h2>
+        <h2>
+            Crear una cuenta
+        </h2>
 
         <p>
             Complete sus datos personales y de acceso
@@ -389,7 +460,9 @@
             class="alert-info"
             th:if="${mensaje}">
 
-        <strong th:text="${mensaje}"></strong>
+        <strong
+                th:text="${mensaje}">
+        </strong>
 
     </div>
 
@@ -397,7 +470,9 @@
             class="alert-error"
             th:if="${error}">
 
-        <strong th:text="${error}"></strong>
+        <strong
+                th:text="${error}">
+        </strong>
 
     </div>
 
@@ -405,7 +480,9 @@
 
         <div class="form-card-header">
 
-            <h3>Datos del paciente</h3>
+            <h3>
+                Datos del paciente
+            </h3>
 
             <p>
                 Los campos marcados con * son obligatorios.
@@ -416,21 +493,29 @@
         <div class="form-body">
 
             <form
+                    id="registroForm"
                     th:action="@{/registro}"
                     th:object="${pacienteForm}"
-                    method="post">
+                    method="post"
+                    novalidate>
 
                 <div class="form-grid">
 
                     <div class="section-title">
 
-                        <h4>Información personal</h4>
+                        <h4>
+                            Información personal
+                        </h4>
 
                         <p>
                             Datos básicos de identificación y contacto.
                         </p>
 
                     </div>
+
+                    <!-- ===================================== -->
+                    <!-- NOMBRE -->
+                    <!-- ===================================== -->
 
                     <div class="form-group full-width">
 
@@ -443,13 +528,20 @@
                                 type="text"
                                 id="nombreCompleto"
                                 th:field="*{nombreCompleto}"
-                                minlength="10"
                                 maxlength="100"
                                 placeholder="Ingrese su nombre completo"
-                                autocomplete="name"
-                                required>
+                                autocomplete="name">
+
+                        <span
+                                id="errorNombre"
+                                class="field-error">
+                        </span>
 
                     </div>
+
+                    <!-- ===================================== -->
+                    <!-- DPI -->
+                    <!-- ===================================== -->
 
                     <div class="form-group">
 
@@ -462,19 +554,25 @@
                                 type="text"
                                 id="dpi"
                                 th:field="*{dpi}"
-                                minlength="13"
                                 maxlength="13"
-                                pattern="[0-9]{13}"
                                 inputmode="numeric"
                                 placeholder="13 dígitos"
-                                autocomplete="off"
-                                required>
+                                autocomplete="off">
 
                         <small>
                             Exactamente 13 dígitos.
                         </small>
 
+                        <span
+                                id="errorDpi"
+                                class="field-error">
+                        </span>
+
                     </div>
+
+                    <!-- ===================================== -->
+                    <!-- NIT -->
+                    <!-- ===================================== -->
 
                     <div class="form-group">
 
@@ -487,18 +585,24 @@
                                 type="text"
                                 id="nit"
                                 th:field="*{nit}"
-                                minlength="8"
                                 maxlength="9"
-                                pattern="[A-Za-z0-9]{8,9}"
                                 placeholder="8 a 9 caracteres"
-                                autocomplete="off"
-                                required>
+                                autocomplete="off">
 
                         <small>
                             Entre 8 y 9 caracteres alfanuméricos.
                         </small>
 
+                        <span
+                                id="errorNit"
+                                class="field-error">
+                        </span>
+
                     </div>
+
+                    <!-- ===================================== -->
+                    <!-- TELÉFONO -->
+                    <!-- ===================================== -->
 
                     <div class="form-group">
 
@@ -511,19 +615,25 @@
                                 type="text"
                                 id="telefono"
                                 th:field="*{telefono}"
-                                minlength="8"
                                 maxlength="8"
-                                pattern="[0-9]{8}"
                                 inputmode="numeric"
                                 placeholder="8 dígitos"
-                                autocomplete="tel"
-                                required>
+                                autocomplete="tel">
 
                         <small>
                             Exactamente 8 dígitos.
                         </small>
 
+                        <span
+                                id="errorTelefono"
+                                class="field-error">
+                        </span>
+
                     </div>
+
+                    <!-- ===================================== -->
+                    <!-- SEGURO -->
+                    <!-- ===================================== -->
 
                     <div class="form-group">
 
@@ -535,7 +645,6 @@
                                 type="text"
                                 id="numeroSeguro"
                                 th:field="*{numeroSeguro}"
-                                minlength="5"
                                 maxlength="50"
                                 placeholder="Opcional">
 
@@ -543,7 +652,16 @@
                             Opcional. Entre 5 y 50 caracteres.
                         </small>
 
+                        <span
+                                id="errorSeguro"
+                                class="field-error">
+                        </span>
+
                     </div>
+
+                    <!-- ===================================== -->
+                    <!-- CORREO -->
+                    <!-- ===================================== -->
 
                     <div class="form-group full-width">
 
@@ -553,19 +671,25 @@
                         </label>
 
                         <input
-                                type="email"
+                                type="text"
                                 id="correo"
                                 th:field="*{correo}"
                                 maxlength="254"
-                                placeholder="ejemplo@correo.com"
-                                autocomplete="email"
-                                required>
+                                placeholder="usuario@dominio.com"
+                                autocomplete="email">
+
+                        <span
+                                id="errorCorreo"
+                                class="field-error">
+                        </span>
 
                     </div>
 
                     <div class="section-title">
 
-                        <h4>Datos de acceso</h4>
+                        <h4>
+                            Datos de acceso
+                        </h4>
 
                         <p>
                             Estas credenciales serán utilizadas
@@ -573,6 +697,10 @@
                         </p>
 
                     </div>
+
+                    <!-- ===================================== -->
+                    <!-- USUARIO -->
+                    <!-- ===================================== -->
 
                     <div class="form-group">
 
@@ -585,18 +713,24 @@
                                 type="text"
                                 id="nombreUsuario"
                                 th:field="*{nombreUsuario}"
-                                minlength="8"
                                 maxlength="9"
-                                pattern="[A-Za-z0-9]{8,9}"
                                 placeholder="8 a 9 caracteres"
-                                autocomplete="username"
-                                required>
+                                autocomplete="username">
 
                         <small>
                             Entre 8 y 9 caracteres alfanuméricos.
                         </small>
 
+                        <span
+                                id="errorUsuario"
+                                class="field-error">
+                        </span>
+
                     </div>
+
+                    <!-- ===================================== -->
+                    <!-- CONTRASEÑA -->
+                    <!-- ===================================== -->
 
                     <div class="form-group">
 
@@ -609,14 +743,17 @@
                                 type="password"
                                 id="password"
                                 th:field="*{password}"
-                                minlength="12"
                                 placeholder="Mínimo 12 caracteres"
-                                autocomplete="new-password"
-                                required>
+                                autocomplete="new-password">
 
                         <small>
                             Mínimo 12 caracteres.
                         </small>
+
+                        <span
+                                id="errorPassword"
+                                class="field-error">
+                        </span>
 
                     </div>
 
@@ -629,10 +766,17 @@
 
                 <div class="actions">
 
+                    <a
+                            class="back-button"
+                            th:href="@{/portal}"
+                            onclick="return confirmarRegreso();">
+                        ← Volver al portal
+                    </a>
+
                     <button
                             class="submit-button"
                             type="submit">
-                        Registrarme
+                        Registrarse
                     </button>
 
                 </div>
@@ -648,6 +792,475 @@
 <footer class="footer">
     Sistema Informático Hospitalario
 </footer>
+
+<script>
+
+    const form =
+        document.getElementById(
+            "registroForm"
+        );
+
+    const nombre =
+        document.getElementById(
+            "nombreCompleto"
+        );
+
+    const dpi =
+        document.getElementById(
+            "dpi"
+        );
+
+    const nit =
+        document.getElementById(
+            "nit"
+        );
+
+    const telefono =
+        document.getElementById(
+            "telefono"
+        );
+
+    const seguro =
+        document.getElementById(
+            "numeroSeguro"
+        );
+
+    const correo =
+        document.getElementById(
+            "correo"
+        );
+
+    const usuario =
+        document.getElementById(
+            "nombreUsuario"
+        );
+
+    const password =
+        document.getElementById(
+            "password"
+        );
+
+
+    const errorNombre =
+        document.getElementById(
+            "errorNombre"
+        );
+
+    const errorDpi =
+        document.getElementById(
+            "errorDpi"
+        );
+
+    const errorNit =
+        document.getElementById(
+            "errorNit"
+        );
+
+    const errorTelefono =
+        document.getElementById(
+            "errorTelefono"
+        );
+
+    const errorSeguro =
+        document.getElementById(
+            "errorSeguro"
+        );
+
+    const errorCorreo =
+        document.getElementById(
+            "errorCorreo"
+        );
+
+    const errorUsuario =
+        document.getElementById(
+            "errorUsuario"
+        );
+
+    const errorPassword =
+        document.getElementById(
+            "errorPassword"
+        );
+
+
+    function mostrarError(
+        campo,
+        contenedor,
+        mensaje
+    ) {
+
+        campo.classList.add(
+            "input-error"
+        );
+
+        contenedor.textContent =
+            mensaje;
+
+        contenedor.classList.add(
+            "visible"
+        );
+    }
+
+
+    function limpiarError(
+        campo,
+        contenedor
+    ) {
+
+        campo.classList.remove(
+            "input-error"
+        );
+
+        contenedor.textContent =
+            "";
+
+        contenedor.classList.remove(
+            "visible"
+        );
+    }
+
+
+    function limpiarErrores() {
+
+        limpiarError(
+            nombre,
+            errorNombre
+        );
+
+        limpiarError(
+            dpi,
+            errorDpi
+        );
+
+        limpiarError(
+            nit,
+            errorNit
+        );
+
+        limpiarError(
+            telefono,
+            errorTelefono
+        );
+
+        limpiarError(
+            seguro,
+            errorSeguro
+        );
+
+        limpiarError(
+            correo,
+            errorCorreo
+        );
+
+        limpiarError(
+            usuario,
+            errorUsuario
+        );
+
+        limpiarError(
+            password,
+            errorPassword
+        );
+    }
+
+
+    function confirmarRegreso() {
+
+        return confirm(
+            "¿Está seguro de que desea volver al portal? Los datos ingresados se perderán."
+        );
+    }
+
+
+    form.addEventListener(
+        "submit",
+        function (event) {
+
+            limpiarErrores();
+
+            let valido = true;
+
+            const valorNombre =
+                nombre.value.trim();
+
+            const valorDpi =
+                dpi.value.trim();
+
+            const valorNit =
+                nit.value.trim();
+
+            const valorTelefono =
+                telefono.value.trim();
+
+            const valorSeguro =
+                seguro.value.trim();
+
+            const valorCorreo =
+                correo.value.trim();
+
+            const valorUsuario =
+                usuario.value.trim();
+
+
+            // =============================================
+            // RN-CU02-01 NOMBRE
+            // =============================================
+
+            if (
+                valorNombre.length < 10
+                || valorNombre.length > 100
+            ) {
+
+                mostrarError(
+                    nombre,
+                    errorNombre,
+                    "El nombre debe contener entre 10 y 100 caracteres. Usted ingresó "
+                    + valorNombre.length
+                    + " caracteres."
+                );
+
+                valido = false;
+            }
+
+
+            // =============================================
+            // RN-GLOBAL-001 DPI
+            // =============================================
+
+            if (valorDpi.length === 0) {
+
+                mostrarError(
+                    dpi,
+                    errorDpi,
+                    "El campo DPI es obligatorio. Por favor, ingrese su número de DPI."
+                );
+
+                valido = false;
+
+            } else if (
+                !/^[0-9]+$/
+                    .test(valorDpi)
+            ) {
+
+                mostrarError(
+                    dpi,
+                    errorDpi,
+                    "El DPI debe contener únicamente números. No se permiten letras ni caracteres especiales."
+                );
+
+                valido = false;
+
+            } else if (
+                valorDpi.length !== 13
+            ) {
+
+                mostrarError(
+                    dpi,
+                    errorDpi,
+                    "El DPI debe contener exactamente 13 dígitos. Usted ingresó "
+                    + valorDpi.length
+                    + " dígitos."
+                );
+
+                valido = false;
+            }
+
+
+            // =============================================
+            // RN-GLOBAL-002 NIT
+            // =============================================
+
+            if (valorNit.length === 0) {
+
+                mostrarError(
+                    nit,
+                    errorNit,
+                    "El campo NIT es obligatorio."
+                );
+
+                valido = false;
+
+            } else if (
+                valorNit.length < 8
+                || valorNit.length > 9
+            ) {
+
+                mostrarError(
+                    nit,
+                    errorNit,
+                    "El NIT debe contener entre 8 y 9 caracteres. Usted ingresó "
+                    + valorNit.length
+                    + " caracteres."
+                );
+
+                valido = false;
+
+            } else if (
+                !/^[A-Za-z0-9]+$/
+                    .test(valorNit)
+            ) {
+
+                mostrarError(
+                    nit,
+                    errorNit,
+                    "El NIT debe contener únicamente caracteres alfanuméricos."
+                );
+
+                valido = false;
+            }
+
+
+            // =============================================
+            // RN-CU02-02 TELÉFONO
+            // =============================================
+
+            if (
+                !/^[0-9]{8}$/
+                    .test(valorTelefono)
+            ) {
+
+                mostrarError(
+                    telefono,
+                    errorTelefono,
+                    "El número de teléfono debe contener exactamente 8 dígitos numéricos."
+                );
+
+                valido = false;
+            }
+
+
+            // =============================================
+            // RN-CU02-03 SEGURO
+            // =============================================
+
+            if (
+                valorSeguro.length > 0
+                && (
+                    valorSeguro.length < 5
+                    || valorSeguro.length > 50
+                )
+            ) {
+
+                mostrarError(
+                    seguro,
+                    errorSeguro,
+                    "El número de seguro debe contener entre 5 y 50 caracteres."
+                );
+
+                valido = false;
+            }
+
+
+            // =============================================
+            // RN-CU02-04 CORREO
+            // =============================================
+
+            const regexCorreo =
+                /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+
+            if (
+                !regexCorreo.test(
+                    valorCorreo
+                )
+            ) {
+
+                mostrarError(
+                    correo,
+                    errorCorreo,
+                    "El formato del correo electrónico no es válido. Ejemplo: usuario@dominio.com"
+                );
+
+                valido = false;
+            }
+
+
+            // =============================================
+            // RN-CU02-05 USUARIO
+            // =============================================
+
+            if (
+                valorUsuario.length < 8
+            ) {
+
+                mostrarError(
+                    usuario,
+                    errorUsuario,
+                    "El usuario debe contener al menos 8 caracteres."
+                );
+
+                valido = false;
+
+            } else if (
+                valorUsuario.length > 9
+            ) {
+
+                mostrarError(
+                    usuario,
+                    errorUsuario,
+                    "El usuario no puede exceder los 9 caracteres."
+                );
+
+                valido = false;
+
+            } else if (
+                !/^[A-Za-z0-9]+$/
+                    .test(valorUsuario)
+            ) {
+
+                mostrarError(
+                    usuario,
+                    errorUsuario,
+                    "El usuario debe contener únicamente caracteres alfanuméricos."
+                );
+
+                valido = false;
+            }
+
+
+            // =============================================
+            // RN-CU02-06 CONTRASEÑA
+            // =============================================
+
+            if (
+                password.value.length < 12
+            ) {
+
+                mostrarError(
+                    password,
+                    errorPassword,
+                    "La contraseña debe contener al menos 12 caracteres."
+                );
+
+                valido = false;
+            }
+
+
+            // =============================================
+            // DETENER ENVÍO
+            // =============================================
+
+            if (!valido) {
+
+                event.preventDefault();
+
+                const primerError =
+                    document.querySelector(
+                        ".input-error"
+                    );
+
+                if (primerError) {
+
+                    primerError.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center"
+                    });
+
+                    primerError.focus();
+                }
+            }
+        }
+    );
+
+</script>
 
 </body>
 </html>
