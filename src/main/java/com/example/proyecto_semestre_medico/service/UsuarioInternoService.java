@@ -20,7 +20,7 @@ public interface UsuarioInternoService {
 
     void actualizar(UsuarioInternoEditarDTO dto);
 
-    void desactivar(Long usuarioId);
+    String desactivar(Long usuarioId);
 
     void reactivar(Long usuarioId);
 

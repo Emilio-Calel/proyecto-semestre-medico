@@ -4,9 +4,14 @@ public class UsuarioInternoListadoDTO {
 
     private Long usuarioId;
     private Long personalId;
+
     private String nombreUsuario;
     private String nombreCompleto;
+
     private String rol;
+    private String nitCifrado;
+    private String nit;
+
     private String sucursal;
     private Boolean activo;
 
@@ -16,6 +21,7 @@ public class UsuarioInternoListadoDTO {
             String nombreUsuario,
             String nombreCompleto,
             String rol,
+            String nitCifrado,
             String sucursal,
             Boolean activo
     ) {
@@ -24,6 +30,7 @@ public class UsuarioInternoListadoDTO {
         this.nombreUsuario = nombreUsuario;
         this.nombreCompleto = nombreCompleto;
         this.rol = rol;
+        this.nitCifrado = nitCifrado;
         this.sucursal = sucursal;
         this.activo = activo;
     }
@@ -46,6 +53,18 @@ public class UsuarioInternoListadoDTO {
 
     public String getRol() {
         return rol;
+    }
+
+    public String getNitCifrado() {
+        return nitCifrado;
+    }
+
+    public String getNit() {
+        return nit;
+    }
+
+    public void setNit(String nit) {
+        this.nit = nit;
     }
 
     public String getSucursal() {

@@ -1,292 +1,1339 @@
 <!DOCTYPE html>
 <html lang="es"
-      xmlns:th="http://www.thymeleaf.org">
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <head>
+
     <meta charset="UTF-8">
-    <title>Crear usuario interno</title>
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Crear Usuario</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f8f9;
+            color: #1f2933;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            background:
+                    linear-gradient(
+                            135deg,
+                            #0f6f7a,
+                            #1596a3
+                    );
+            color: #ffffff;
+            min-height: 74px;
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow:
+                    0 3px 12px
+                    rgba(15, 80, 90, 0.15);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background:
+                    rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 23px;
+        }
+
+        .brand h1 {
+            font-size: 20px;
+        }
+
+        .top-link {
+            color: #ffffff;
+            text-decoration: none;
+            border:
+                    1px solid
+                    rgba(255, 255, 255, 0.3);
+            background:
+                    rgba(255, 255, 255, 0.12);
+            padding: 10px 14px;
+            border-radius: 9px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 230px 1fr;
+            min-height:
+                    calc(100vh - 74px);
+        }
+
+        .sidebar {
+            background: #ffffff;
+            border-right:
+                    1px solid #dfe9eb;
+            padding: 28px 18px;
+        }
+
+        .sidebar-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            color: #8a989d;
+            margin-bottom: 12px;
+        }
+
+        .nav-link {
+            display: block;
+            text-decoration: none;
+            color: #45565c;
+            padding: 12px 14px;
+            border-radius: 9px;
+            margin-bottom: 7px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .nav-link:hover {
+            background: #eef7f8;
+            color: #0f6f7a;
+        }
+
+        .nav-link.active {
+            background: #dff2f4;
+            color: #0f6f7a;
+        }
+
+        .content {
+            padding: 34px;
+        }
+
+        .page-header {
+            margin-bottom: 24px;
+        }
+
+        .page-header h2 {
+            font-size: 28px;
+            margin-bottom: 7px;
+        }
+
+        .page-header p {
+            color: #738188;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .alert-error {
+            background: #fff1f1;
+            border: 1px solid #efb6b6;
+            color: #9b1c1c;
+            padding: 13px 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .form-card {
+            background: #ffffff;
+            border:
+                    1px solid #e0e9eb;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow:
+                    0 6px 18px
+                    rgba(30, 70, 80, 0.06);
+            max-width: 1000px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section:last-of-type {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            padding-bottom: 10px;
+            margin-bottom: 18px;
+            border-bottom:
+                    1px solid #e8eef0;
+        }
+
+        .section-title h3 {
+            font-size: 17px;
+            margin-bottom: 4px;
+        }
+
+        .section-title p {
+            color: #859298;
+            font-size: 12px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 13px;
+            color: #47565c;
+            font-weight: bold;
+        }
+
+        .required {
+            color: #b3261e;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 11px 12px;
+            border:
+                    1px solid #cbd8db;
+            border-radius: 9px;
+            background: #ffffff;
+            font-size: 14px;
+            color: #26353a;
+            transition:
+                    border-color 0.2s ease,
+                    box-shadow 0.2s ease;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #1596a3;
+            box-shadow:
+                    0 0 0 3px
+                    rgba(21, 150, 163, 0.12);
+        }
+
+        input.input-error,
+        select.input-error {
+            border-color: #c62828;
+            background: #fffafa;
+            box-shadow:
+                    0 0 0 3px
+                    rgba(198, 40, 40, 0.08);
+        }
+
+        .helper {
+            font-size: 11px;
+            color: #89969b;
+            line-height: 1.4;
+        }
+
+        .field-error {
+            display: none;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #b3261e;
+            font-weight: bold;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 30px;
+            padding-top: 22px;
+            border-top:
+                    1px solid #e7edef;
+        }
+
+        .btn {
+            min-width: 120px;
+            padding: 12px 18px;
+            border-radius: 9px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn-cancel {
+            background: #ffffff;
+            color: #536269;
+            border: 1px solid #c9d5d8;
+        }
+
+        .btn-create {
+            border: none;
+            color: #ffffff;
+            background:
+                    linear-gradient(
+                            135deg,
+                            #0f6f7a,
+                            #1596a3
+                    );
+        }
+
+        .btn-create:hover {
+            background:
+                    linear-gradient(
+                            135deg,
+                            #0b5962,
+                            #117f8b
+                    );
+        }
+
+        @media (max-width: 760px) {
+
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                border-right: none;
+                border-bottom:
+                        1px solid #dfe9eb;
+            }
+
+            .content {
+                padding: 22px 14px;
+            }
+
+            .form-card {
+                padding: 20px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-group.full {
+                grid-column: auto;
+            }
+
+            .form-actions {
+                flex-direction: column-reverse;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+    </style>
+
 </head>
 
 <body>
 
-<h1>Crear Usuario Interno</h1>
+<header class="topbar">
 
-<p>
-    <a th:href="@{/admin/usuarios}">
-        Volver al listado
+    <div class="brand">
+
+        <div class="brand-icon">
+            ⚙
+        </div>
+
+        <div>
+            <h1>
+                Administración de Usuarios
+            </h1>
+        </div>
+
+    </div>
+
+    <a
+            class="top-link"
+            th:href="@{/dashboard}">
+        Panel principal
     </a>
-</p>
 
-<div th:if="${error}">
-    <strong th:text="${error}"></strong>
+</header>
+
+<div class="layout">
+
+    <aside class="sidebar">
+
+        <div class="sidebar-title">
+            Módulo User
+        </div>
+
+        <a
+                class="nav-link"
+                th:href="@{/admin/usuarios}">
+            👥 Listar Usuarios
+        </a>
+
+        <a
+                class="nav-link active"
+                th:href="@{/admin/usuarios/nuevo}">
+            ➕ Crear Usuario
+        </a>
+
+    </aside>
+
+    <main class="content">
+
+        <div class="page-header">
+
+            <h2>
+                Crear Usuario
+            </h2>
+
+            <p>
+                Registre una nueva cuenta de usuario interno
+                y asigne los permisos correspondientes
+                mediante su rol.
+            </p>
+
+        </div>
+
+        <div
+                class="alert-error"
+                th:if="${error}"
+                th:text="${error}">
+        </div>
+
+        <form
+                id="formCrearUsuario"
+                class="form-card"
+                th:action="@{/admin/usuarios/guardar}"
+                th:object="${usuarioForm}"
+                method="post"
+                novalidate>
+
+            <!-- ========================================= -->
+            <!-- INFORMACION PRINCIPAL -->
+            <!-- ========================================= -->
+
+            <section class="section">
+
+                <div class="section-title">
+
+                    <h3>
+                        Información del usuario
+                    </h3>
+
+                    <p>
+                        Datos principales de identificación
+                        de la cuenta.
+                    </p>
+
+                </div>
+
+                <div class="form-grid">
+
+                    <div class="form-group full">
+
+                        <label for="nombreCompleto">
+                            Nombre Completo
+                            <span class="required">*</span>
+                        </label>
+
+                        <input
+                                type="text"
+                                id="nombreCompleto"
+                                th:field="*{nombreCompleto}"
+                                maxlength="150"
+                                autocomplete="name">
+
+                        <span
+                                id="errorNombre"
+                                class="field-error">
+                        </span>
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label for="nombreUsuario">
+                            Nombre de Usuario
+                            <span class="required">*</span>
+                        </label>
+
+                        <input
+                                type="text"
+                                id="nombreUsuario"
+                                th:field="*{nombreUsuario}"
+                                maxlength="30"
+                                autocomplete="off">
+
+                        <span class="helper">
+                            Debe contener entre 8 y 9
+                            caracteres alfanuméricos.
+                        </span>
+
+                        <span
+                                id="errorUsuario"
+                                class="field-error">
+                        </span>
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label for="passwordTemporal">
+                            Contraseña
+                            <span class="required">*</span>
+                        </label>
+
+                        <input
+                                type="password"
+                                id="passwordTemporal"
+                                th:field="*{passwordTemporal}"
+                                autocomplete="new-password">
+
+                        <span class="helper">
+                            Debe contener al menos 12 caracteres.
+                        </span>
+
+                        <span
+                                id="errorPassword"
+                                class="field-error">
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- ========================================= -->
+            <!-- ASIGNACION -->
+            <!-- ========================================= -->
+
+            <section class="section">
+
+                <div class="section-title">
+
+                    <h3>
+                        Asignación dentro del sistema
+                    </h3>
+
+                    <p>
+                        Seleccione el rol, sucursal,
+                        especialidad y estado.
+                    </p>
+
+                </div>
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+
+                        <label for="rolId">
+                            Rol
+                            <span class="required">*</span>
+                        </label>
+
+                        <select
+                                id="rolId"
+                                th:field="*{rolId}">
+
+                            <option value="">
+                                Seleccione...
+                            </option>
+
+                            <option
+                                    th:each="rol : ${roles}"
+                                    th:value="${rol.id}"
+                                    th:text="${rol.nombre}"
+                                    th:attr="data-codigo=${rol.codigo}">
+                            </option>
+
+                        </select>
+
+                        <span
+                                id="errorRol"
+                                class="field-error">
+                        </span>
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label for="sucursalId">
+                            Sucursal
+                            <span class="required">*</span>
+                        </label>
+
+                        <select
+                                id="sucursalId"
+                                th:field="*{sucursalId}">
+
+                            <option value="">
+                                Seleccione...
+                            </option>
+
+                            <option
+                                    th:each="sucursal : ${sucursales}"
+                                    th:value="${sucursal.id}"
+                                    th:text="${sucursal.nombre}">
+                            </option>
+
+                        </select>
+
+                        <span
+                                id="errorSucursal"
+                                class="field-error">
+                        </span>
+
+                    </div>
+
+                    <div
+                            id="contenedorEspecialidad"
+                            class="form-group"
+                            style="display:none;">
+
+                        <label for="especialidadId">
+                            Especialidad
+                            <span class="required">*</span>
+                        </label>
+
+                        <select
+                                id="especialidadId"
+                                th:field="*{especialidadId}">
+
+                            <option value="">
+                                Seleccione...
+                            </option>
+
+                            <option
+                                    th:each="especialidad : ${especialidades}"
+                                    th:value="${especialidad.id}"
+                                    th:text="${especialidad.nombre}">
+                            </option>
+
+                        </select>
+
+                        <span
+                                id="errorEspecialidad"
+                                class="field-error">
+                        </span>
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label for="activo">
+                            Estado
+                            <span class="required">*</span>
+                        </label>
+
+                        <select
+                                id="activo"
+                                th:field="*{activo}">
+
+                            <option value="true">
+                                Activo
+                            </option>
+
+                            <option value="false">
+                                Inactivo
+                            </option>
+
+                        </select>
+
+                        <span
+                                id="errorEstado"
+                                class="field-error">
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- ========================================= -->
+            <!-- DATOS ADICIONALES -->
+            <!-- ========================================= -->
+
+            <section class="section">
+
+                <div class="section-title">
+
+                    <h3>
+                        Datos adicionales
+                    </h3>
+
+                    <p>
+                        Los siguientes campos son opcionales.
+                    </p>
+
+                </div>
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+
+                        <label for="dpi">
+                            Documento de Identificación
+                        </label>
+
+                        <input
+                                type="text"
+                                id="dpi"
+                                th:field="*{dpi}"
+                                maxlength="30"
+                                autocomplete="off">
+
+                        <span class="helper">
+                            Opcional. Exactamente 13 dígitos.
+                        </span>
+
+                        <span
+                                id="errorDpi"
+                                class="field-error">
+                        </span>
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label for="nit">
+                            NIT
+                        </label>
+
+                        <input
+                                type="text"
+                                id="nit"
+                                th:field="*{nit}"
+                                maxlength="30"
+                                autocomplete="off">
+
+                        <span class="helper">
+                            Opcional. Entre 8 y 9
+                            caracteres alfanuméricos.
+                        </span>
+
+                        <span
+                                id="errorNit"
+                                class="field-error">
+                        </span>
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label for="telefono">
+                            Número de Teléfono
+                        </label>
+
+                        <input
+                                type="text"
+                                id="telefono"
+                                th:field="*{telefono}"
+                                maxlength="30"
+                                autocomplete="tel">
+
+                        <span class="helper">
+                            Opcional. Exactamente 8 dígitos.
+                        </span>
+
+                        <span
+                                id="errorTelefono"
+                                class="field-error">
+                        </span>
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label for="numeroSeguro">
+                            Número de Seguro
+                        </label>
+
+                        <input
+                                type="text"
+                                id="numeroSeguro"
+                                th:field="*{numeroSeguro}"
+                                maxlength="80">
+
+                        <span class="helper">
+                            Opcional. Entre 5 y 50 caracteres.
+                        </span>
+
+                        <span
+                                id="errorSeguro"
+                                class="field-error">
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            <div class="form-actions">
+
+                <a
+                        class="btn btn-cancel"
+                        th:href="@{/admin/usuarios}">
+                    Cancelar
+                </a>
+
+                <button
+                        id="btnCrear"
+                        class="btn btn-create"
+                        type="submit">
+                    Crear
+                </button>
+
+            </div>
+
+        </form>
+
+    </main>
+
 </div>
 
-<form
-        th:action="@{/admin/usuarios/guardar}"
-        th:object="${usuarioForm}"
-        method="post">
-
-    <div>
-        <label for="nombreCompleto">
-            Nombre completo *
-        </label>
-
-        <input
-                type="text"
-                id="nombreCompleto"
-                th:field="*{nombreCompleto}"
-                minlength="10"
-                maxlength="100"
-                required>
-    </div>
-
-    <br>
-
-    <div>
-        <label for="nombreUsuario">
-            Usuario *
-        </label>
-
-        <input
-                type="text"
-                id="nombreUsuario"
-                th:field="*{nombreUsuario}"
-                minlength="8"
-                maxlength="9"
-                pattern="[A-Za-z0-9]{8,9}"
-                required>
-
-        <small>
-            8 a 9 caracteres alfanuméricos.
-        </small>
-    </div>
-
-    <br>
-
-    <div>
-        <label for="passwordTemporal">
-            Contraseña temporal *
-        </label>
-
-        <input
-                type="password"
-                id="passwordTemporal"
-                th:field="*{passwordTemporal}"
-                minlength="12"
-                required>
-
-        <small>
-            Mínimo 12 caracteres.
-        </small>
-    </div>
-
-    <br>
-
-    <div>
-        <label for="rolId">
-            Rol *
-        </label>
-
-        <select
-                id="rolId"
-                th:field="*{rolId}"
-                required
-                onchange="actualizarEspecialidad()">
-
-            <option value="">
-                Seleccione...
-            </option>
-
-            <option
-                    th:each="rol : ${roles}"
-                    th:value="${rol.id}"
-                    th:text="${rol.nombre}"
-                    th:attr="data-codigo=${rol.codigo}">
-            </option>
-
-        </select>
-    </div>
-
-    <br>
-
-    <div>
-        <label for="sucursalId">
-            Sucursal *
-        </label>
-
-        <select
-                id="sucursalId"
-                th:field="*{sucursalId}"
-                required>
-
-            <option value="">
-                Seleccione...
-            </option>
-
-            <option
-                    th:each="sucursal : ${sucursales}"
-                    th:value="${sucursal.id}"
-                    th:text="${sucursal.nombre}">
-            </option>
-
-        </select>
-    </div>
-
-    <br>
-
-    <div id="contenedorEspecialidad"
-         style="display:none;">
-
-        <label for="especialidadId">
-            Especialidad *
-        </label>
-
-        <select
-                id="especialidadId"
-                th:field="*{especialidadId}">
-
-            <option value="">
-                Seleccione...
-            </option>
-
-            <option
-                    th:each="especialidad : ${especialidades}"
-                    th:value="${especialidad.id}"
-                    th:text="${especialidad.nombre}">
-            </option>
-
-        </select>
-
-    </div>
-
-    <br>
-
-    <div>
-        <label for="dpi">
-            DPI
-        </label>
-
-        <input
-                type="text"
-                id="dpi"
-                th:field="*{dpi}"
-                maxlength="13"
-                pattern="[0-9]{13}">
-
-        <small>
-            Opcional. Exactamente 13 dígitos.
-        </small>
-    </div>
-
-    <br>
-
-    <div>
-        <label for="nit">
-            NIT
-        </label>
-
-        <input
-                type="text"
-                id="nit"
-                th:field="*{nit}"
-                minlength="8"
-                maxlength="9"
-                pattern="[A-Za-z0-9]{8,9}">
-
-        <small>
-            Opcional. 8 a 9 caracteres alfanuméricos.
-        </small>
-    </div>
-
-    <br>
-
-    <div>
-        <label for="telefono">
-            Teléfono
-        </label>
-
-        <input
-                type="text"
-                id="telefono"
-                th:field="*{telefono}"
-                maxlength="8"
-                pattern="[0-9]{8}">
-
-        <small>
-            Opcional. 8 dígitos.
-        </small>
-    </div>
-
-    <br>
-
-    <div>
-        <label for="numeroSeguro">
-            Número de seguro
-        </label>
-
-        <input
-                type="text"
-                id="numeroSeguro"
-                th:field="*{numeroSeguro}"
-                minlength="5"
-                maxlength="50">
-
-        <small>
-            Opcional. Entre 5 y 50 caracteres.
-        </small>
-    </div>
-
-    <br>
-
-    <button type="submit">
-        Crear usuario
-    </button>
-
-</form>
-
 <script>
-    function actualizarEspecialidad() {
 
-        const rolSelect =
-            document.getElementById("rolId");
+    const form =
+        document.getElementById(
+            "formCrearUsuario"
+        );
 
-        const contenedor =
-            document.getElementById(
-                "contenedorEspecialidad"
-            );
+    const nombre =
+        document.getElementById(
+            "nombreCompleto"
+        );
 
-        const especialidad =
-            document.getElementById(
-                "especialidadId"
-            );
+    const usuario =
+        document.getElementById(
+            "nombreUsuario"
+        );
+
+    const password =
+        document.getElementById(
+            "passwordTemporal"
+        );
+
+    const rol =
+        document.getElementById(
+            "rolId"
+        );
+
+    const sucursal =
+        document.getElementById(
+            "sucursalId"
+        );
+
+    const especialidad =
+        document.getElementById(
+            "especialidadId"
+        );
+
+    const estado =
+        document.getElementById(
+            "activo"
+        );
+
+    const dpi =
+        document.getElementById(
+            "dpi"
+        );
+
+    const nit =
+        document.getElementById(
+            "nit"
+        );
+
+    const telefono =
+        document.getElementById(
+            "telefono"
+        );
+
+    const seguro =
+        document.getElementById(
+            "numeroSeguro"
+        );
+
+    const contenedorEspecialidad =
+        document.getElementById(
+            "contenedorEspecialidad"
+        );
+
+
+    function mostrarError(
+        campo,
+        elementoError,
+        mensaje
+    ) {
+
+        campo.classList.add(
+            "input-error"
+        );
+
+        elementoError.textContent =
+            mensaje;
+
+        elementoError.style.display =
+            "block";
+    }
+
+
+    function limpiarError(
+        campo,
+        elementoError
+    ) {
+
+        campo.classList.remove(
+            "input-error"
+        );
+
+        elementoError.textContent =
+            "";
+
+        elementoError.style.display =
+            "none";
+    }
+
+
+    function limpiarErrores() {
+
+        const pares = [
+            [nombre, errorNombre],
+            [usuario, errorUsuario],
+            [password, errorPassword],
+            [rol, errorRol],
+            [sucursal, errorSucursal],
+            [especialidad, errorEspecialidad],
+            [estado, errorEstado],
+            [dpi, errorDpi],
+            [nit, errorNit],
+            [telefono, errorTelefono],
+            [seguro, errorSeguro]
+        ];
+
+        pares.forEach(
+            function (par) {
+
+                limpiarError(
+                    par[0],
+                    par[1]
+                );
+            }
+        );
+    }
+
+
+    function rolEsMedico() {
+
+        if (rol.selectedIndex < 0) {
+            return false;
+        }
 
         const opcion =
-            rolSelect.options[
-                rolSelect.selectedIndex
+            rol.options[
+                rol.selectedIndex
                 ];
 
-        const codigo =
-            opcion.getAttribute("data-codigo");
+        return opcion.getAttribute(
+            "data-codigo"
+        ) === "MEDICO";
+    }
 
-        if (codigo === "MEDICO") {
 
-            contenedor.style.display = "block";
+    function actualizarEspecialidad() {
 
-            especialidad.required = true;
+        if (rolEsMedico()) {
+
+            contenedorEspecialidad
+                .style.display =
+                "flex";
 
         } else {
 
-            contenedor.style.display = "none";
+            contenedorEspecialidad
+                .style.display =
+                "none";
 
-            especialidad.required = false;
-            especialidad.value = "";
+            especialidad.value =
+                "";
+
+            limpiarError(
+                especialidad,
+                errorEspecialidad
+            );
         }
     }
+
+
+    rol.addEventListener(
+        "change",
+        actualizarEspecialidad
+    );
+
+
+    form.addEventListener(
+        "submit",
+        function (event) {
+
+            limpiarErrores();
+
+            let valido = true;
+
+            const valorNombre =
+                nombre.value.trim();
+
+            const valorUsuario =
+                usuario.value.trim();
+
+            const valorDpi =
+                dpi.value.trim();
+
+            const valorNit =
+                nit.value.trim();
+
+            const valorTelefono =
+                telefono.value.trim();
+
+            const valorSeguro =
+                seguro.value.trim();
+
+
+            // =============================================
+            // NOMBRE
+            // =============================================
+
+            if (valorNombre.length === 0) {
+
+                mostrarError(
+                    nombre,
+                    errorNombre,
+                    "El campo Nombre es obligatorio."
+                );
+
+                valido = false;
+
+            } else if (
+                valorNombre.length < 10
+                || valorNombre.length > 100
+            ) {
+
+                mostrarError(
+                    nombre,
+                    errorNombre,
+                    "El nombre debe contener entre 10 y 100 caracteres. Usted ingresó "
+                    + valorNombre.length
+                    + " caracteres."
+                );
+
+                valido = false;
+            }
+
+
+            // =============================================
+            // USUARIO
+            // =============================================
+
+            if (valorUsuario.length === 0) {
+
+                mostrarError(
+                    usuario,
+                    errorUsuario,
+                    "El campo Usuario es obligatorio."
+                );
+
+                valido = false;
+
+            } else if (
+                valorUsuario.length > 9
+            ) {
+
+                mostrarError(
+                    usuario,
+                    errorUsuario,
+                    "El usuario no puede exceder los 9 caracteres."
+                );
+
+                valido = false;
+
+            } else if (
+                valorUsuario.length < 8
+            ) {
+
+                mostrarError(
+                    usuario,
+                    errorUsuario,
+                    "El usuario debe contener al menos 8 caracteres."
+                );
+
+                valido = false;
+
+            } else if (
+                !/^[A-Za-z0-9]+$/
+                    .test(valorUsuario)
+            ) {
+
+                mostrarError(
+                    usuario,
+                    errorUsuario,
+                    "El usuario debe contener únicamente caracteres alfanuméricos."
+                );
+
+                valido = false;
+            }
+
+
+            // =============================================
+            // PASSWORD
+            // =============================================
+
+            if (
+                password.value.length < 12
+            ) {
+
+                mostrarError(
+                    password,
+                    errorPassword,
+                    "La contraseña debe tener mínimo 12 caracteres"
+                );
+
+                valido = false;
+            }
+
+
+            // =============================================
+            // ROL
+            // =============================================
+
+            if (rol.value === "") {
+
+                mostrarError(
+                    rol,
+                    errorRol,
+                    "Debe seleccionar un rol para el usuario."
+                );
+
+                valido = false;
+            }
+
+
+            // =============================================
+            // SUCURSAL
+            // =============================================
+
+            if (sucursal.value === "") {
+
+                mostrarError(
+                    sucursal,
+                    errorSucursal,
+                    "Debe seleccionar una sucursal para el usuario."
+                );
+
+                valido = false;
+            }
+
+
+            // =============================================
+            // ESPECIALIDAD
+            // =============================================
+
+            if (
+                rolEsMedico()
+                && especialidad.value === ""
+            ) {
+
+                mostrarError(
+                    especialidad,
+                    errorEspecialidad,
+                    "Debe seleccionar una especialidad para el médico."
+                );
+
+                valido = false;
+            }
+
+
+            // =============================================
+            // ESTADO
+            // =============================================
+
+            if (estado.value === "") {
+
+                mostrarError(
+                    estado,
+                    errorEstado,
+                    "Debe seleccionar un estado para el usuario."
+                );
+
+                valido = false;
+            }
+
+
+            // =============================================
+            // DPI OPCIONAL
+            // =============================================
+
+            if (valorDpi.length > 0) {
+
+                if (
+                    !/^[0-9]+$/
+                        .test(valorDpi)
+                ) {
+
+                    mostrarError(
+                        dpi,
+                        errorDpi,
+                        "El DPI debe contener únicamente números. No se permiten letras ni caracteres especiales."
+                    );
+
+                    valido = false;
+
+                } else if (
+                    valorDpi.length !== 13
+                ) {
+
+                    mostrarError(
+                        dpi,
+                        errorDpi,
+                        "El DPI debe contener exactamente 13 dígitos. Usted ingresó "
+                        + valorDpi.length
+                        + " dígitos."
+                    );
+
+                    valido = false;
+                }
+            }
+
+
+            // =============================================
+            // NIT OPCIONAL
+            // =============================================
+
+            if (valorNit.length > 0) {
+
+                if (
+                    valorNit.length < 8
+                    || valorNit.length > 9
+                ) {
+
+                    mostrarError(
+                        nit,
+                        errorNit,
+                        "El NIT debe contener entre 8 y 9 caracteres. Usted ingresó "
+                        + valorNit.length
+                        + " caracteres."
+                    );
+
+                    valido = false;
+
+                } else if (
+                    !/^[A-Za-z0-9]+$/
+                        .test(valorNit)
+                ) {
+
+                    mostrarError(
+                        nit,
+                        errorNit,
+                        "El NIT debe contener únicamente caracteres alfanuméricos."
+                    );
+
+                    valido = false;
+                }
+            }
+
+
+            // =============================================
+            // TELEFONO
+            // =============================================
+
+            if (
+                valorTelefono.length > 0
+                && !/^[0-9]{8}$/
+                    .test(valorTelefono)
+            ) {
+
+                mostrarError(
+                    telefono,
+                    errorTelefono,
+                    "El teléfono debe contener exactamente 8 dígitos."
+                );
+
+                valido = false;
+            }
+
+
+            // =============================================
+            // SEGURO
+            // =============================================
+
+            if (
+                valorSeguro.length > 0
+                && (
+                    valorSeguro.length < 5
+                    || valorSeguro.length > 50
+                )
+            ) {
+
+                mostrarError(
+                    seguro,
+                    errorSeguro,
+                    "El número de seguro debe contener entre 5 y 50 caracteres."
+                );
+
+                valido = false;
+            }
+
+
+            if (!valido) {
+
+                event.preventDefault();
+
+                const primerError =
+                    document.querySelector(
+                        ".input-error"
+                    );
+
+                if (primerError) {
+
+                    primerError.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center"
+                    });
+
+                    primerError.focus();
+                }
+            }
+        }
+    );
+
 
     document.addEventListener(
         "DOMContentLoaded",
         actualizarEspecialidad
     );
+
 </script>
 
 </body>

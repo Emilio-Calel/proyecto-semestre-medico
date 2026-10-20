@@ -1,290 +1,1208 @@
 <!DOCTYPE html>
 <html lang="es"
-      xmlns:th="http://www.thymeleaf.org">
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <head>
+
     <meta charset="UTF-8">
-    <title>Usuarios internos</title>
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Listado de Usuarios</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f8f9;
+            color: #1f2933;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            background:
+                    linear-gradient(
+                            135deg,
+                            #0f6f7a,
+                            #1596a3
+                    );
+            color: #ffffff;
+            min-height: 74px;
+            padding: 0 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow:
+                    0 3px 12px
+                    rgba(15, 80, 90, 0.15);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background:
+                    rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 23px;
+        }
+
+        .brand h1 {
+            font-size: 20px;
+        }
+
+        .top-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .top-link {
+            color: #ffffff;
+            text-decoration: none;
+            border:
+                    1px solid
+                    rgba(255, 255, 255, 0.3);
+            background:
+                    rgba(255, 255, 255, 0.12);
+            padding: 10px 14px;
+            border-radius: 9px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns:
+                    230px 1fr;
+            min-height:
+                    calc(100vh - 74px);
+        }
+
+        .sidebar {
+            background: #ffffff;
+            border-right:
+                    1px solid #dfe9eb;
+            padding: 28px 18px;
+        }
+
+        .sidebar-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            color: #8a989d;
+            margin-bottom: 12px;
+        }
+
+        .nav-link {
+            display: block;
+            text-decoration: none;
+            color: #45565c;
+            padding: 12px 14px;
+            border-radius: 9px;
+            margin-bottom: 7px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .nav-link:hover {
+            background: #eef7f8;
+            color: #0f6f7a;
+        }
+
+        .nav-link.active {
+            background: #dff2f4;
+            color: #0f6f7a;
+        }
+
+        .content {
+            padding: 34px;
+            min-width: 0;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 26px;
+        }
+
+        .page-header h2 {
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+
+        .page-header p {
+            color: #738188;
+            font-size: 14px;
+        }
+
+        .primary-button {
+            display: inline-block;
+            text-decoration: none;
+            background:
+                    linear-gradient(
+                            135deg,
+                            #0f6f7a,
+                            #1596a3
+                    );
+            color: #ffffff;
+            padding: 12px 17px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .alert {
+            padding: 13px 15px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: #edf9f2;
+            border: 1px solid #b8dfc7;
+            color: #23633a;
+        }
+
+        .alert-error {
+            background: #fff1f1;
+            border: 1px solid #efb6b6;
+            color: #9b1c1c;
+        }
+
+        .filter-card,
+        .table-card {
+            background: #ffffff;
+            border:
+                    1px solid #e0e9eb;
+            border-radius: 16px;
+            box-shadow:
+                    0 6px 18px
+                    rgba(30, 70, 80, 0.06);
+        }
+
+        .filter-card {
+            padding: 22px;
+            margin-bottom: 24px;
+        }
+
+        .filter-card h3 {
+            font-size: 18px;
+            margin-bottom: 18px;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns:
+                    repeat(
+                            5,
+                            minmax(150px, 1fr)
+                    );
+            gap: 14px;
+        }
+
+        .form-group {
+            display: grid;
+            gap: 7px;
+        }
+
+        label {
+            font-size: 13px;
+            font-weight: bold;
+            color: #48585e;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 11px 12px;
+            border:
+                    1px solid #cbd8db;
+            border-radius: 9px;
+            font-size: 14px;
+            background: #ffffff;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #1596a3;
+            box-shadow:
+                    0 0 0 3px
+                    rgba(21, 150, 163, 0.12);
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .search-button {
+            border: none;
+            background: #0f6f7a;
+            color: #ffffff;
+            padding: 11px 17px;
+            border-radius: 9px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .clear-button {
+            text-decoration: none;
+            border:
+                    1px solid #cbd8db;
+            color: #526168;
+            padding: 10px 16px;
+            border-radius: 9px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .table-card {
+            overflow: hidden;
+        }
+
+        .table-header {
+            padding: 18px 20px;
+            border-bottom:
+                    1px solid #e5edef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-header h3 {
+            font-size: 18px;
+        }
+
+        .table-header span {
+            color: #78868c;
+            font-size: 13px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 850px;
+        }
+
+        th,
+        td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom:
+                    1px solid #edf1f2;
+            font-size: 13px;
+        }
+
+        th {
+            background: #f7fafb;
+            color: #59686e;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        tbody tr:hover {
+            background: #f9fcfc;
+        }
+
+        .estado {
+            display: inline-block;
+            padding: 5px 9px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .estado-activo {
+            background: #e8f7ee;
+            color: #287344;
+        }
+
+        .estado-inactivo {
+            background: #f4eeee;
+            color: #8a3e3e;
+        }
+
+        .action-link {
+            color: #0f6f7a;
+            text-decoration: none;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .action-danger {
+            color: #c06a14;
+        }
+
+        .empty-message {
+            color: #b3261e;
+            font-weight: bold;
+            text-align: center;
+            padding: 28px;
+        }
+
+        .pagination {
+            padding: 18px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .pagination-info {
+            color: #75848a;
+            font-size: 13px;
+        }
+
+        .pagination-nav {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .page-link {
+            text-decoration: none;
+            color: #0f6f7a;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .page-current {
+            font-size: 13px;
+            color: #536269;
+        }
+
+        @media (max-width: 1100px) {
+
+            .filters-grid {
+                grid-template-columns:
+                        repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 760px) {
+
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                border-right: none;
+                border-bottom:
+                        1px solid #dfe9eb;
+            }
+
+            .content {
+                padding: 22px 14px;
+            }
+
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .page-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .topbar {
+                padding: 14px 18px;
+            }
+        }
+
+        .btn-delete {
+            border: none;
+            background: #c62828;
+            color: #ffffff;
+            padding: 8px 13px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-delete:hover {
+            background: #a91f1f;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: rgba(17, 35, 40, 0.55);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.visible {
+            display: flex;
+        }
+
+        .modal-box {
+            width: 100%;
+            max-width: 470px;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow:
+                    0 20px 45px
+                    rgba(0, 0, 0, 0.22);
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 22px 24px 15px;
+            border-bottom: 1px solid #e6ecee;
+        }
+
+        .modal-header h3 {
+            font-size: 20px;
+            color: #26353a;
+        }
+
+        .modal-body {
+            padding: 24px;
+            color: #55656b;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 17px 24px 22px;
+        }
+
+        .btn-modal-cancel {
+            border: none;
+            background: #1976d2;
+            color: #ffffff;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-modal-delete {
+            border: none;
+            background: #c62828;
+            color: #ffffff;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-modal-cancel:hover {
+            background: #1565c0;
+        }
+
+        .btn-modal-delete:hover {
+            background: #a91f1f;
+        }
+
+        @media (max-width: 520px) {
+
+            .modal-actions {
+                flex-direction: column-reverse;
+            }
+
+            .btn-modal-cancel,
+            .btn-modal-delete {
+                width: 100%;
+            }
+        }
+
+        .sort-link {
+            color: inherit;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .sort-link:hover {
+            color: #0f6f7a;
+        }
+
+    </style>
+
 </head>
 
 <body>
 
-<h1>Administración de Usuarios Internos</h1>
-<div th:if="${mensaje}">
-    <strong th:text="${mensaje}"></strong>
-</div>
-<div th:if="${error}">
-    <strong th:text="${error}"></strong>
-</div>
-<p>
-    <a th:href="@{/}">
-        Volver al inicio
-    </a>
-</p>
+<header class="topbar">
 
-<hr>
+    <div class="brand">
 
-<div>
-    <a th:href="@{/admin/usuarios/nuevo}">
-        Crear nuevo usuario
-    </a>
-</div>
+        <div class="brand-icon">
+            ⚙
+        </div>
 
-<br>
+        <div>
+            <h1>Administración de Usuarios</h1>
+        </div>
 
-<h3>Buscar usuarios</h3>
-
-<form
-        th:action="@{/admin/usuarios}"
-        th:object="${filtro}"
-        method="get">
-
-    <div>
-        <label for="usuario">
-            Usuario
-        </label>
-
-        <input
-                type="text"
-                id="usuario"
-                th:field="*{usuario}"
-                maxlength="25">
     </div>
 
-    <div>
-        <label for="nombre">
-            Nombre
-        </label>
+    <div class="top-actions">
 
-        <input
-                type="text"
-                id="nombre"
-                th:field="*{nombre}"
-                maxlength="25">
+        <a
+                class="top-link"
+                th:href="@{/dashboard}">
+            Panel principal
+        </a>
+
     </div>
 
-    <div>
-        <label for="nit">
-            NIT
-        </label>
+</header>
 
-        <input
-                type="text"
-                id="nit"
-                th:field="*{nit}"
-                maxlength="9">
-    </div>
+<div class="layout">
 
-    <div>
-        <label for="rolId">
-            Rol
-        </label>
+    <aside class="sidebar">
 
-        <select
-                id="rolId"
-                th:field="*{rolId}">
+        <div class="sidebar-title">
+            Módulo User
+        </div>
 
-            <option value="">
-                Todos
-            </option>
+        <a
+                class="nav-link active"
+                th:href="@{/admin/usuarios}">
+            👥 Listar Usuarios
+        </a>
 
-            <option
-                    th:each="rol : ${roles}"
-                    th:value="${rol.id}"
-                    th:text="${rol.nombre}">
-            </option>
+        <a
+                class="nav-link"
+                th:href="@{/admin/usuarios/nuevo}"
+                sec:authorize="hasAuthority('USER_CREATE')">
+            ➕ Crear Usuario
+        </a>
 
-        </select>
-    </div>
+    </aside>
 
-    <div>
-        <label for="sucursalId">
-            Sucursal
-        </label>
+    <main class="content">
 
-        <select
-                id="sucursalId"
-                th:field="*{sucursalId}">
+        <div class="page-header">
 
-            <option value="">
-                Todas
-            </option>
+            <div>
 
-            <option
-                    th:each="sucursal : ${sucursales}"
-                    th:value="${sucursal.id}"
-                    th:text="${sucursal.nombre}">
-            </option>
+                <h2>
+                    Listado de Usuarios
+                </h2>
 
-        </select>
-    </div>
+                <p>
+                    Consulte y administre las cuentas
+                    de usuarios internos del sistema.
+                </p>
 
-    <br>
+            </div>
 
-    <button type="submit">
-        Buscar
-    </button>
-
-    <a th:href="@{/admin/usuarios}">
-        Limpiar filtros
-    </a>
-
-</form>
-
-<hr>
-
-<table border="1" cellpadding="8">
-
-    <thead>
-    <tr>
-        <th>ID</th>
-        <th>Usuario</th>
-        <th>Nombre</th>
-        <th>Rol</th>
-        <th>Sucursal</th>
-        <th>Estado</th>
-        <th>Acciones</th>
-    </tr>
-    </thead>
-
-    <tbody>
-
-    <tr th:if="${#lists.isEmpty(usuarios)}">
-        <td colspan="7">
-            No hay usuarios internos registrados.
-        </td>
-    </tr>
-
-    <tr th:each="usuario : ${usuarios}">
-
-        <td th:text="${usuario.usuarioId}">
-            1
-        </td>
-
-        <td th:text="${usuario.nombreUsuario}">
-            admin001
-        </td>
-
-        <td th:text="${usuario.nombreCompleto}">
-            Administrador General
-        </td>
-
-        <td th:text="${usuario.rol}">
-            Administrador
-        </td>
-
-        <td th:text="${usuario.sucursal}">
-            Hospital Central
-        </td>
-
-        <td>
-            <span th:if="${usuario.activo}">
-                Activo
-            </span>
-
-            <span th:unless="${usuario.activo}">
-                Inactivo
-            </span>
-        </td>
-
-        <td>
-
-            <a th:href="@{/admin/usuarios/editar/{id}(id=${usuario.usuarioId})}">
-                Editar
+            <a
+                    class="primary-button"
+                    th:href="@{/admin/usuarios/nuevo}"
+                    sec:authorize="hasAuthority('USER_CREATE')">
+                + Crear Usuario
             </a>
 
-            <span th:if="${usuario.activo}">
+        </div>
 
-        |
+        <div
+                class="alert alert-success"
+                th:if="${mensaje}"
+                th:text="${mensaje}">
+        </div>
 
-        <form
-                th:action="@{/admin/usuarios/desactivar/{id}(id=${usuario.usuarioId})}"
-                method="post"
-                style="display:inline;">
+        <div
+                class="alert alert-error"
+                th:if="${error}"
+                th:text="${error}">
+        </div>
 
-            <button
-                    type="submit"
-                    onclick="return confirm('¿Desea desactivar este usuario?');">
-                Desactivar
-            </button>
+        <section class="filter-card">
 
-        </form>
+            <h3>
+                Buscar usuarios
+            </h3>
 
-    </span>
+            <form
+                    th:action="@{/admin/usuarios}"
+                    th:object="${filtro}"
+                    method="get">
 
-            <span th:unless="${usuario.activo}">
+                <div class="filters-grid">
 
-        |
+                    <div class="form-group">
 
-        <form
-                th:action="@{/admin/usuarios/reactivar/{id}(id=${usuario.usuarioId})}"
-                method="post"
-                style="display:inline;">
+                        <label for="usuario">
+                            Usuario
+                        </label>
 
-            <button
-                    type="submit"
-                    onclick="return confirm('¿Desea reactivar este usuario?');">
-                Reactivar
-            </button>
+                        <input
+                                type="text"
+                                id="usuario"
+                                th:field="*{usuario}"
+                                maxlength="25"
+                                placeholder="Buscar...">
 
-        </form>
+                    </div>
 
-    </span>
+                    <div class="form-group">
 
-        </td>
+                        <label for="nombre">
+                            Nombre
+                        </label>
 
-    </tr>
+                        <input
+                                type="text"
+                                id="nombre"
+                                th:field="*{nombre}"
+                                maxlength="25"
+                                placeholder="Buscar...">
 
-    </tbody>
+                    </div>
 
-</table>
-<p>
-    Total de usuarios encontrados:
-    <strong th:text="${totalElementos}">
-        0
-    </strong>
-</p>
+                    <div class="form-group">
 
-<div th:if="${totalPaginas > 1}">
+                        <label for="nit">
+                            NIT
+                        </label>
 
-    <a
-            th:if="${paginaActual > 0}"
-            th:href="@{/admin/usuarios(
-            page=${paginaActual - 1},
-            usuario=${filtro.usuario},
-            nombre=${filtro.nombre},
-            nit=${filtro.nit},
-            rolId=${filtro.rolId},
-            sucursalId=${filtro.sucursalId}
-        )}">
-        Anterior
-    </a>
+                        <input
+                                type="text"
+                                id="nit"
+                                th:field="*{nit}"
+                                maxlength="9"
+                                placeholder="Buscar...">
 
-    <span>
-        Página
-        <strong th:text="${paginaActual + 1}">
-            1
-        </strong>
-        de
-        <strong th:text="${totalPaginas}">
-            1
-        </strong>
-    </span>
+                    </div>
 
-    <a
-            th:if="${paginaActual + 1 < totalPaginas}"
-            th:href="@{/admin/usuarios(
-            page=${paginaActual + 1},
-            usuario=${filtro.usuario},
-            nombre=${filtro.nombre},
-            nit=${filtro.nit},
-            rolId=${filtro.rolId},
-            sucursalId=${filtro.sucursalId}
-        )}">
-        Siguiente
-    </a>
+                    <div class="form-group">
+
+                        <label for="rolId">
+                            Rol
+                        </label>
+
+                        <select
+                                id="rolId"
+                                th:field="*{rolId}">
+
+                            <option value="">
+                                Todos
+                            </option>
+
+                            <option
+                                    th:each="rol : ${roles}"
+                                    th:value="${rol.id}"
+                                    th:text="${rol.nombre}">
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label for="sucursalId">
+                            Sucursal
+                        </label>
+
+                        <select
+                                id="sucursalId"
+                                th:field="*{sucursalId}">
+
+                            <option value="">
+                                Todas
+                            </option>
+
+                            <option
+                                    th:each="sucursal : ${sucursales}"
+                                    th:value="${sucursal.id}"
+                                    th:text="${sucursal.nombre}">
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+                <div class="filter-actions">
+
+                    <button
+                            class="search-button"
+                            type="submit">
+                        🔍 Buscar
+                    </button>
+
+                    <a
+                            class="clear-button"
+                            th:href="@{/admin/usuarios}">
+                        Limpiar filtros
+                    </a>
+
+                </div>
+                <input
+                        type="hidden"
+                        th:field="*{ordenCampo}">
+
+                <input
+                        type="hidden"
+                        th:field="*{ordenDireccion}">
+
+            </form>
+
+        </section>
+
+        <section class="table-card">
+
+            <div class="table-header">
+
+                <h3>
+                    Usuarios registrados
+                </h3>
+
+                <span>
+                    20 registros por página
+                </span>
+
+            </div>
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                    <tr>
+
+                        <th>
+                            <a
+                                    class="sort-link"
+                                    th:href="@{/admin/usuarios(
+                page=0,
+                usuario=${filtro.usuario},
+                nombre=${filtro.nombre},
+                nit=${filtro.nit},
+                rolId=${filtro.rolId},
+                sucursalId=${filtro.sucursalId},
+                ordenCampo='usuario',
+                ordenDireccion=${filtro.ordenCampo == 'usuario'
+                    and filtro.ordenDireccion == 'asc'
+                    ? 'desc'
+                    : 'asc'}
+            )}">
+
+                                Usuario
+
+                                <span
+                                        th:if="${filtro.ordenCampo == 'usuario'
+                        and filtro.ordenDireccion == 'asc'}">
+            ▲
+        </span>
+
+                                <span
+                                        th:if="${filtro.ordenCampo == 'usuario'
+                        and filtro.ordenDireccion == 'desc'}">
+            ▼
+        </span>
+
+                            </a>
+                        </th>
+                        <th>
+                            <a
+                                    class="sort-link"
+                                    th:href="@{/admin/usuarios(
+                page=0,
+                usuario=${filtro.usuario},
+                nombre=${filtro.nombre},
+                nit=${filtro.nit},
+                rolId=${filtro.rolId},
+                sucursalId=${filtro.sucursalId},
+                ordenCampo='nombre',
+                ordenDireccion=${filtro.ordenCampo == 'nombre'
+                    and filtro.ordenDireccion == 'asc'
+                    ? 'desc'
+                    : 'asc'}
+            )}">
+
+                                Nombre
+
+                                <span
+                                        th:if="${filtro.ordenCampo == 'nombre'
+                        and filtro.ordenDireccion == 'asc'}">
+            ▲
+        </span>
+
+                                <span
+                                        th:if="${filtro.ordenCampo == 'nombre'
+                        and filtro.ordenDireccion == 'desc'}">
+            ▼
+        </span>
+
+                            </a>
+                        </th>
+                        <th>Rol</th>
+                        <th>NIT</th>
+                        <th>Estado</th>
+                        <th>Sucursal</th>
+                        <th>Acciones</th>
+                    </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                    <tr th:if="${#lists.isEmpty(usuarios)}">
+
+                        <td
+                                colspan="7"
+                                class="empty-message">
+                            No se encontraron resultados para los criterios de búsqueda ingresados. Por favor, modifique los filtros e intente nuevamente.
+                        </td>
+
+                    </tr>
+
+                    <tr
+                            th:each="usuario : ${usuarios}">
+
+                        <td
+                                th:text="${usuario.nombreUsuario}">
+                        </td>
+
+                        <td
+                                th:text="${usuario.nombreCompleto}">
+                        </td>
+
+                        <td
+                                th:text="${usuario.rol}">
+                        </td>
+
+                        <td
+                                th:text="${usuario.nit}">
+                        </td>
+
+                        <td>
+
+                            <span
+                                    class="estado estado-activo"
+                                    th:if="${usuario.activo}">
+                                Activo
+                            </span>
+
+                            <span
+                                    class="estado estado-inactivo"
+                                    th:unless="${usuario.activo}">
+                                Inactivo
+                            </span>
+
+                        </td>
+
+                        <td
+                                th:text="${usuario.sucursal}">
+                        </td>
+
+                        <td>
+
+                            <a
+                                    class="action-link"
+                                    th:href="@{/admin/usuarios/editar/{id}(id=${usuario.usuarioId})}">
+                                Editar
+                            </a>
+
+                            <button
+                                    th:if="${usuario.activo}"
+                                    type="button"
+                                    class="btn-delete"
+                                    th:attr="
+            data-id=${usuario.usuarioId},
+            data-usuario=${usuario.nombreUsuario}"
+                                    onclick="abrirModalEliminar(this)">
+                                Eliminar
+                            </button>
+
+                            <form
+                                    th:unless="${usuario.activo}"
+                                    th:action="@{/admin/usuarios/reactivar/{id}(id=${usuario.usuarioId})}"
+                                    method="post"
+                                    style="display:inline;">
+
+                                <button
+                                        type="submit"
+                                        class="action-link"
+                                        style="border:none;background:none;cursor:pointer;">
+                                    Reactivar
+                                </button>
+
+                            </form>
+
+                        </td>
+
+                    </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <div class="pagination">
+
+                <div class="pagination-info">
+
+                    Total de registros:
+                    <strong th:text="${totalElementos}">
+                        0
+                    </strong>
+
+                </div>
+
+                <div
+                        class="pagination-nav"
+                        th:if="${totalPaginas > 1}">
+
+                    <a
+                            class="page-link"
+                            th:if="${paginaActual > 0}"
+                            th:href="@{/admin/usuarios(
+                                page=${paginaActual - 1},
+                                usuario=${filtro.usuario},
+                                nombre=${filtro.nombre},
+                                nit=${filtro.nit},
+                                rolId=${filtro.rolId},
+                                sucursalId=${filtro.sucursalId},
+                                ordenCampo=${filtro.ordenCampo},
+ordenDireccion=${filtro.ordenDireccion}
+                            )}">
+                        ← Anterior
+                    </a>
+
+                    <span class="page-current">
+                        Página
+                        <strong th:text="${paginaActual + 1}">
+                            1
+                        </strong>
+                        de
+                        <strong th:text="${totalPaginas}">
+                            1
+                        </strong>
+                    </span>
+
+                    <a
+                            class="page-link"
+                            th:if="${paginaActual + 1 < totalPaginas}"
+                            th:href="@{/admin/usuarios(
+    page=${paginaActual + 1},
+    usuario=${filtro.usuario},
+    nombre=${filtro.nombre},
+    nit=${filtro.nit},
+    rolId=${filtro.rolId},
+    sucursalId=${filtro.sucursalId},
+    ordenCampo=${filtro.ordenCampo},
+    ordenDireccion=${filtro.ordenDireccion}
+)}">
+                        Siguiente →
+                    </a>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
 
 </div>
 
+<div
+        id="modalEliminar"
+        class="modal-overlay"
+        aria-hidden="true">
+
+    <div
+            class="modal-box"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tituloModalEliminar">
+
+        <div class="modal-header">
+
+            <h3 id="tituloModalEliminar">
+                Confirmar eliminación
+            </h3>
+
+        </div>
+
+        <div class="modal-body">
+
+            <p id="mensajeEliminar"></p>
+
+        </div>
+
+        <div class="modal-actions">
+
+            <button
+                    type="button"
+                    class="btn-modal-cancel"
+                    onclick="cerrarModalEliminar()">
+                Cancelar
+            </button>
+
+            <form
+                    id="formEliminar"
+                    method="post">
+
+                <input
+                        type="hidden"
+                        th:name="${_csrf.parameterName}"
+                        th:value="${_csrf.token}">
+
+                <button
+                        type="submit"
+                        class="btn-modal-delete">
+                    Eliminar
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+<script>
+
+    const modalEliminar =
+        document.getElementById(
+            "modalEliminar"
+        );
+
+    const mensajeEliminar =
+        document.getElementById(
+            "mensajeEliminar"
+        );
+
+    const formEliminar =
+        document.getElementById(
+            "formEliminar"
+        );
+
+
+    function abrirModalEliminar(
+        boton
+    ) {
+
+        const id =
+            boton.getAttribute(
+                "data-id"
+            );
+
+        const usuario =
+            boton.getAttribute(
+                "data-usuario"
+            );
+
+
+        mensajeEliminar.textContent =
+            "¿Está seguro que desea eliminar el usuario “"
+            + usuario
+            + "”? Esta acción no se puede deshacer.";
+
+
+        formEliminar.action =
+            "/admin/usuarios/desactivar/"
+            + id;
+
+
+        modalEliminar.classList.add(
+            "visible"
+        );
+
+        modalEliminar.setAttribute(
+            "aria-hidden",
+            "false"
+        );
+    }
+
+
+    function cerrarModalEliminar() {
+
+        modalEliminar.classList.remove(
+            "visible"
+        );
+
+        modalEliminar.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+        formEliminar.action =
+            "";
+
+        mensajeEliminar.textContent =
+            "";
+    }
+
+
+    modalEliminar.addEventListener(
+        "click",
+        function (event) {
+
+            if (
+                event.target
+                === modalEliminar
+            ) {
+
+                cerrarModalEliminar();
+            }
+        }
+    );
+
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (
+                event.key === "Escape"
+                && modalEliminar
+                    .classList
+                    .contains("visible")
+            ) {
+
+                cerrarModalEliminar();
+            }
+        }
+    );
+
+</script>
 </body>
 </html>

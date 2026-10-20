@@ -9,6 +9,7 @@ public class UsuarioInternoFormDTO {
     private Long rolId;
     private Long sucursalId;
     private Long especialidadId;
+    private Boolean activo = true;
 
     private String dpi;
     private String nit;
@@ -96,5 +97,13 @@ public class UsuarioInternoFormDTO {
 
     public void setNumeroSeguro(String numeroSeguro) {
         this.numeroSeguro = numeroSeguro;
+    }
+
+    public Boolean getActivo() {
+        return activo;
+    }
+
+    public void setActivo(Boolean activo) {
+        this.activo = activo;
     }
 }

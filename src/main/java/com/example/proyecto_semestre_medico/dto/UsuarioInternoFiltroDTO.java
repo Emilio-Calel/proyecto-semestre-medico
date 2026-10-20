@@ -7,6 +7,8 @@ public class UsuarioInternoFiltroDTO {
     private String nit;
     private Long rolId;
     private Long sucursalId;
+    private String ordenCampo = "nombre";
+    private String ordenDireccion = "asc";
 
     public UsuarioInternoFiltroDTO() {
     }
@@ -49,5 +51,21 @@ public class UsuarioInternoFiltroDTO {
 
     public void setSucursalId(Long sucursalId) {
         this.sucursalId = sucursalId;
+    }
+
+    public String getOrdenCampo() {
+        return ordenCampo;
+    }
+
+    public void setOrdenCampo(String ordenCampo) {
+        this.ordenCampo = ordenCampo;
+    }
+
+    public String getOrdenDireccion() {
+        return ordenDireccion;
+    }
+
+    public void setOrdenDireccion(String ordenDireccion) {
+        this.ordenDireccion = ordenDireccion;
     }
 }

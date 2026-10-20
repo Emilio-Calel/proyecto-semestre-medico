@@ -167,7 +167,7 @@ public class UsuarioInternoController {
 
             redirectAttributes.addFlashAttribute(
                     "mensaje",
-                    "Usuario creado correctamente"
+                    "Usuario creado correctamente."
             );
 
             return "redirect:/admin/usuarios";
@@ -202,7 +202,7 @@ public class UsuarioInternoController {
 
             redirectAttributes.addFlashAttribute(
                     "mensaje",
-                    "Usuario actualizado correctamente"
+                    "Usuario actualizado correctamente."
             );
 
             return "redirect:/admin/usuarios";

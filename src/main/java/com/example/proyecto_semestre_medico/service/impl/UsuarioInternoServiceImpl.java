@@ -30,7 +30,7 @@ import com.example.proyecto_semestre_medico.dto.UsuarioInternoFiltroDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+
 
 import java.util.List;
 import java.util.Optional;
@@ -98,6 +98,14 @@ public class UsuarioInternoServiceImpl
             pagina = 0;
         }
 
+        validarLongitudFiltro(
+                filtro.getUsuario()
+        );
+
+        validarLongitudFiltro(
+                filtro.getNombre()
+        );
+
         String usuario =
                 normalizarFiltro(
                         filtro.getUsuario()
@@ -131,6 +139,32 @@ public class UsuarioInternoServiceImpl
                     datosSensiblesService
                             .generarHashBusqueda(nit);
         }
+        String ordenCampo =
+                normalizarFiltro(
+                        filtro.getOrdenCampo()
+                );
+
+        String ordenDireccion =
+                normalizarFiltro(
+                        filtro.getOrdenDireccion()
+                );
+
+        if (!"usuario".equalsIgnoreCase(ordenCampo)
+                && !"nombre".equalsIgnoreCase(ordenCampo)) {
+
+            ordenCampo = "nombre";
+        }
+
+        if (!"desc".equalsIgnoreCase(ordenDireccion)) {
+
+            ordenDireccion = "asc";
+        }
+
+        ordenCampo =
+                ordenCampo.toLowerCase();
+
+        ordenDireccion =
+                ordenDireccion.toLowerCase();
 
         Pageable pageable =
                 PageRequest.of(
@@ -138,15 +172,38 @@ public class UsuarioInternoServiceImpl
                         20
                 );
 
-        return personalRepository
-                .buscarUsuariosInternos(
-                        usuario,
-                        nombre,
-                        nitHash,
-                        filtro.getRolId(),
-                        filtro.getSucursalId(),
-                        pageable
+        Page<UsuarioInternoListadoDTO> resultado =
+                personalRepository
+                        .buscarUsuariosInternos(
+                                usuario,
+                                nombre,
+                                nitHash,
+                                filtro.getRolId(),
+                                filtro.getSucursalId(),
+                                ordenCampo,
+                                ordenDireccion,
+                                pageable
+                        );
+
+        for (UsuarioInternoListadoDTO item
+                : resultado.getContent()) {
+
+            if (item.getNitCifrado() != null
+                    && !item.getNitCifrado().isBlank()) {
+
+                item.setNit(
+                        datosSensiblesService.descifrar(
+                                item.getNitCifrado()
+                        )
                 );
+
+            } else {
+
+                item.setNit("-");
+            }
+        }
+
+        return resultado;
     }
 
     // =========================================================
@@ -168,7 +225,9 @@ public class UsuarioInternoServiceImpl
                 .existsByNombreUsuarioIgnoreCase(username)) {
 
             throw new IllegalArgumentException(
-                    "El nombre de usuario ya existe"
+                    "El nombre de usuario "
+                            + username
+                            + " ya se encuentra registrado. Por favor, elija otro."
             );
         }
 
@@ -196,7 +255,7 @@ public class UsuarioInternoServiceImpl
                 && dto.getEspecialidadId() == null) {
 
             throw new IllegalArgumentException(
-                    "Debe seleccionar una especialidad para el médico"
+                    "Debe seleccionar una especialidad para el médico."
             );
         }
 
@@ -292,7 +351,9 @@ public class UsuarioInternoServiceImpl
         );
 
         usuario.setRol(rol);
-        usuario.setActivo(true);
+        usuario.setActivo(
+                dto.getActivo()
+        );
         usuario.setIntentosFallidos(0);
 
         usuario = usuarioRepository.save(usuario);
@@ -327,7 +388,9 @@ public class UsuarioInternoServiceImpl
                 )
         );
 
-        personal.setActivo(true);
+        personal.setActivo(
+                dto.getActivo()
+        );
 
         personal =
                 personalRepository.save(personal);
@@ -456,6 +519,10 @@ public class UsuarioInternoServiceImpl
                 personal.getNitCifrado() != null
         );
 
+        dto.setActivo(
+                usuario.getActivo()
+        );
+
         Optional<Medico> medico =
                 medicoRepository
                         .findByPersonalId(
@@ -479,76 +546,64 @@ public class UsuarioInternoServiceImpl
 
     @Override
     @Transactional
-    public void desactivar(Long usuarioId) {
+    public String desactivar(Long usuarioId) {
 
-        Usuario usuario = usuarioRepository
-                .findById(usuarioId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Usuario no encontrado"
-                        )
-                );
+        Usuario usuario =
+                usuarioRepository
+                        .findById(usuarioId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Usuario no encontrado"
+                                )
+                        );
+
         Authentication auth =
                 SecurityContextHolder
                         .getContext()
                         .getAuthentication();
 
+        // -----------------------------------------------------
+        // NO PERMITIR ELIMINARSE A SÍ MISMO
+        // -----------------------------------------------------
+
         if (auth != null
                 && auth.isAuthenticated()
                 && auth.getName() != null
                 && usuario.getNombreUsuario()
-                .equalsIgnoreCase(auth.getName())) {
+                .equalsIgnoreCase(
+                        auth.getName()
+                )) {
 
             throw new IllegalArgumentException(
                     "No puede desactivar su propio usuario"
             );
         }
 
-        Personal personal = personalRepository
-                .findByUsuarioId(usuarioId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Personal no encontrado"
-                        )
-                );
+        Personal personal =
+                personalRepository
+                        .findByUsuarioId(usuarioId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Personal no encontrado"
+                                )
+                        );
 
-        if (!Boolean.TRUE.equals(usuario.getActivo())) {
+        // -----------------------------------------------------
+        // VERIFICAR QUE ESTÉ ACTIVO
+        // -----------------------------------------------------
+
+        if (!Boolean.TRUE.equals(
+                usuario.getActivo()
+        )) {
+
             throw new IllegalArgumentException(
                     "El usuario ya se encuentra inactivo"
             );
         }
 
-        usuario.setActivo(false);
-
-        /*
-         * Limpiamos cualquier bloqueo temporal.
-         * Ya no tiene sentido mantenerlo si la cuenta
-         * fue desactivada administrativamente.
-         */
-        usuario.setIntentosFallidos(0);
-        usuario.setBloqueadoHasta(null);
-
-        usuarioRepository.save(usuario);
-
-        personal.setActivo(false);
-
-        personalRepository.save(personal);
-
-        medicoRepository
-                .findByPersonalId(personal.getId())
-                .ifPresent(medico -> {
-
-                    medico.setActivo(false);
-
-                    medicoRepository.save(medico);
-                });
-
-        registrarAuditoriaEstado(
-                usuario,
-                "DESACTIVAR_USUARIO",
-                "Se desactivó el usuario interno: "
-                        + usuario.getNombreUsuario()
-        );
+        // -----------------------------------------------------
+        // PROTEGER AL ÚLTIMO ADMINISTRADOR
+        // -----------------------------------------------------
 
         if ("ADMINISTRADOR".equals(
                 usuario.getRol().getCodigo()
@@ -561,11 +616,65 @@ public class UsuarioInternoServiceImpl
                             );
 
             if (administradoresActivos <= 1) {
+
                 throw new IllegalArgumentException(
                         "No se puede desactivar el último administrador activo"
                 );
             }
         }
+
+        // -----------------------------------------------------
+        // BORRADO LÓGICO DEL USUARIO
+        // -----------------------------------------------------
+
+        usuario.setActivo(false);
+
+        usuario.setIntentosFallidos(0);
+        usuario.setBloqueadoHasta(null);
+
+        usuarioRepository.save(usuario);
+
+        // -----------------------------------------------------
+        // DESACTIVAR PERSONAL
+        // -----------------------------------------------------
+
+        personal.setActivo(false);
+
+        personalRepository.save(personal);
+
+        // -----------------------------------------------------
+        // DESACTIVAR MÉDICO SI EXISTE
+        // -----------------------------------------------------
+
+        medicoRepository
+                .findByPersonalId(
+                        personal.getId()
+                )
+                .ifPresent(medico -> {
+
+                    medico.setActivo(false);
+
+                    medicoRepository.save(
+                            medico
+                    );
+                });
+
+        // -----------------------------------------------------
+        // AUDITORÍA
+        // -----------------------------------------------------
+
+        registrarAuditoriaEstado(
+                usuario,
+                "ELIMINAR_USUARIO",
+                "Se eliminó lógicamente el usuario interno: "
+                        + usuario.getNombreUsuario()
+        );
+
+        // -----------------------------------------------------
+        // DEVOLVER NOMBRE PARA EL MENSAJE
+        // -----------------------------------------------------
+
+        return usuario.getNombreUsuario();
     }
 
     @Override
@@ -725,7 +834,9 @@ public class UsuarioInternoServiceImpl
                     )) {
 
                 throw new IllegalArgumentException(
-                        "El nombre de usuario ya existe"
+                        "El nombre de usuario "
+                                + username
+                                + " ya se encuentra registrado. Por favor, elija otro."
                 );
             }
         }
@@ -783,6 +894,9 @@ public class UsuarioInternoServiceImpl
 
         usuario.setNombreUsuario(username);
         usuario.setRol(rol);
+        usuario.setActivo(
+                dto.getActivo()
+        );
 
         /*
          * La contraseña solo cambia si el administrador
@@ -809,6 +923,10 @@ public class UsuarioInternoServiceImpl
         );
 
         personal.setSucursal(sucursal);
+
+        personal.setActivo(
+                dto.getActivo()
+        );
 
         personal.setTelefono(
                 normalizarOpcional(
@@ -923,7 +1041,7 @@ public class UsuarioInternoServiceImpl
             if (dto.getEspecialidadId() == null) {
 
                 throw new IllegalArgumentException(
-                        "Debe seleccionar una especialidad"
+                        "Debe seleccionar una especialidad para el médico."
                 );
             }
 
@@ -1037,120 +1155,184 @@ public class UsuarioInternoServiceImpl
     ) {
 
         if (dto == null) {
-
             throw new IllegalArgumentException(
                     "Datos requeridos"
             );
         }
 
-        // -----------------------------------------------------
-        // NOMBRE
-        // -----------------------------------------------------
+        // =====================================================
+        // RN-CU01-04 - NOMBRE
+        // =====================================================
 
         if (dto.getNombreCompleto() == null
                 || dto.getNombreCompleto()
                 .trim()
-                .length() < 10
-                || dto.getNombreCompleto()
-                .trim()
-                .length() > 100) {
+                .isEmpty()) {
 
             throw new IllegalArgumentException(
-                    "El nombre debe tener entre "
-                            + "10 y 100 caracteres"
+                    "El campo Nombre es obligatorio."
             );
         }
 
-        // -----------------------------------------------------
-        // USERNAME
-        // -----------------------------------------------------
+        int longitudNombre =
+                dto.getNombreCompleto()
+                        .trim()
+                        .length();
+
+        if (longitudNombre < 10
+                || longitudNombre > 100) {
+
+            throw new IllegalArgumentException(
+                    "El nombre debe contener entre 10 y 100 caracteres. Usted ingresó "
+                            + longitudNombre
+                            + " caracteres."
+            );
+        }
+
+        // =====================================================
+        // RN-CU01-05 - USUARIO
+        // =====================================================
 
         if (dto.getNombreUsuario() == null
-                || !dto.getNombreUsuario()
+                || dto.getNombreUsuario()
                 .trim()
-                .matches(
-                        "^[A-Za-z0-9]{8,9}$"
-                )) {
+                .isEmpty()) {
 
             throw new IllegalArgumentException(
-                    "El usuario debe contener "
-                            + "8 a 9 caracteres alfanuméricos"
+                    "El campo Usuario es obligatorio."
             );
         }
 
-        // -----------------------------------------------------
-        // PASSWORD
-        // -----------------------------------------------------
+        String usuario =
+                dto.getNombreUsuario().trim();
+
+        if (usuario.length() > 9) {
+
+            throw new IllegalArgumentException(
+                    "El usuario no puede exceder los 9 caracteres."
+            );
+        }
+
+        if (usuario.length() < 8) {
+
+            throw new IllegalArgumentException(
+                    "El usuario debe contener al menos 8 caracteres."
+            );
+        }
+
+        if (!usuario.matches("^[A-Za-z0-9]+$")) {
+
+            throw new IllegalArgumentException(
+                    "El usuario debe contener únicamente caracteres alfanuméricos."
+            );
+        }
+
+        // =====================================================
+        // CONTRASEÑA
+        // =====================================================
 
         if (dto.getPasswordTemporal() == null
                 || dto.getPasswordTemporal()
                 .length() < 12) {
 
             throw new IllegalArgumentException(
-                    "La contraseña debe tener "
-                            + "mínimo 12 caracteres"
+                    "La contraseña debe tener mínimo 12 caracteres"
             );
         }
 
-        // -----------------------------------------------------
-        // ROL
-        // -----------------------------------------------------
+        // =====================================================
+        // RN-CU01-03 / RN-CU01-09 - ROL
+        // =====================================================
 
         if (dto.getRolId() == null) {
 
             throw new IllegalArgumentException(
-                    "Debe seleccionar un rol"
+                    "Debe seleccionar un rol para el usuario."
             );
         }
 
-        // -----------------------------------------------------
-        // SUCURSAL
-        // -----------------------------------------------------
+        // =====================================================
+        // RN-CU01-06 / RN-CU01-13 - SUCURSAL
+        // =====================================================
 
         if (dto.getSucursalId() == null) {
 
             throw new IllegalArgumentException(
-                    "Debe seleccionar una sucursal"
+                    "Debe seleccionar una sucursal para el usuario."
             );
         }
 
-        // -----------------------------------------------------
-        // DPI
-        // -----------------------------------------------------
+        // =====================================================
+        // RN-CU01-10 - ESTADO
+        // =====================================================
+
+        if (dto.getActivo() == null) {
+
+            throw new IllegalArgumentException(
+                    "Debe seleccionar un estado para el usuario."
+            );
+        }
+
+        // =====================================================
+        // RN-CU01-07 / RN-GLOBAL-001 - DPI OPCIONAL
+        // =====================================================
 
         if (dto.getDpi() != null
-                && !dto.getDpi().isBlank()
-                && !dto.getDpi()
-                .trim()
-                .matches("^[0-9]{13}$")) {
+                && !dto.getDpi().isBlank()) {
 
-            throw new IllegalArgumentException(
-                    "El DPI debe contener "
-                            + "exactamente 13 dígitos"
-            );
+            String dpi =
+                    dto.getDpi().trim();
+
+            if (!dpi.matches("^[0-9]+$")) {
+
+                throw new IllegalArgumentException(
+                        "El DPI debe contener únicamente números. No se permiten letras ni caracteres especiales."
+                );
+            }
+
+            if (dpi.length() != 13) {
+
+                throw new IllegalArgumentException(
+                        "El DPI debe contener exactamente 13 dígitos. Usted ingresó "
+                                + dpi.length()
+                                + " dígitos."
+                );
+            }
         }
 
-        // -----------------------------------------------------
-        // NIT
-        // -----------------------------------------------------
+        // =====================================================
+        // RN-CU01-11 / RN-GLOBAL-002 - NIT OPCIONAL EN CU-01
+        // =====================================================
 
         if (dto.getNit() != null
-                && !dto.getNit().isBlank()
-                && !dto.getNit()
-                .trim()
-                .matches(
-                        "^[A-Za-z0-9]{8,9}$"
-                )) {
+                && !dto.getNit().isBlank()) {
 
-            throw new IllegalArgumentException(
-                    "El NIT debe contener "
-                            + "8 a 9 caracteres alfanuméricos"
-            );
+            String nit =
+                    dto.getNit()
+                            .trim()
+                            .toUpperCase();
+
+            if (nit.length() < 8
+                    || nit.length() > 9) {
+
+                throw new IllegalArgumentException(
+                        "El NIT debe contener entre 8 y 9 caracteres. Usted ingresó "
+                                + nit.length()
+                                + " caracteres."
+                );
+            }
+
+            if (!nit.matches("^[A-Za-z0-9]+$")) {
+
+                throw new IllegalArgumentException(
+                        "El NIT debe contener únicamente caracteres alfanuméricos."
+                );
+            }
         }
 
-        // -----------------------------------------------------
-        // TELEFONO
-        // -----------------------------------------------------
+        // =====================================================
+        // RN-CU01-08 - TELEFONO
+        // =====================================================
 
         if (dto.getTelefono() != null
                 && !dto.getTelefono().isBlank()
@@ -1159,13 +1341,13 @@ public class UsuarioInternoServiceImpl
                 .matches("^[0-9]{8}$")) {
 
             throw new IllegalArgumentException(
-                    "El teléfono debe contener 8 dígitos"
+                    "El teléfono debe contener exactamente 8 dígitos."
             );
         }
 
-        // -----------------------------------------------------
-        // NUMERO DE SEGURO
-        // -----------------------------------------------------
+        // =====================================================
+        // RN-CU01-12 - SEGURO
+        // =====================================================
 
         if (dto.getNumeroSeguro() != null
                 && !dto.getNumeroSeguro().isBlank()) {
@@ -1179,8 +1361,7 @@ public class UsuarioInternoServiceImpl
                     || longitud > 50) {
 
                 throw new IllegalArgumentException(
-                        "El número de seguro debe tener "
-                                + "entre 5 y 50 caracteres"
+                        "El número de seguro debe contener entre 5 y 50 caracteres."
                 );
             }
         }
@@ -1202,44 +1383,76 @@ public class UsuarioInternoServiceImpl
             );
         }
 
-        // -----------------------------------------------------
+        // =====================================================
         // NOMBRE
-        // -----------------------------------------------------
+        // =====================================================
 
         if (dto.getNombreCompleto() == null
                 || dto.getNombreCompleto()
                 .trim()
-                .length() < 10
-                || dto.getNombreCompleto()
-                .trim()
-                .length() > 100) {
+                .isEmpty()) {
 
             throw new IllegalArgumentException(
-                    "El nombre debe tener entre "
-                            + "10 y 100 caracteres"
+                    "El campo Nombre es obligatorio."
             );
         }
 
-        // -----------------------------------------------------
-        // USERNAME
-        // -----------------------------------------------------
+        int longitudNombre =
+                dto.getNombreCompleto()
+                        .trim()
+                        .length();
+
+        if (longitudNombre < 10
+                || longitudNombre > 100) {
+
+            throw new IllegalArgumentException(
+                    "El nombre debe contener entre 10 y 100 caracteres. Usted ingresó "
+                            + longitudNombre
+                            + " caracteres."
+            );
+        }
+
+        // =====================================================
+        // USUARIO
+        // =====================================================
 
         if (dto.getNombreUsuario() == null
-                || !dto.getNombreUsuario()
+                || dto.getNombreUsuario()
                 .trim()
-                .matches(
-                        "^[A-Za-z0-9]{8,9}$"
-                )) {
+                .isEmpty()) {
 
             throw new IllegalArgumentException(
-                    "El usuario debe contener "
-                            + "8 a 9 caracteres alfanuméricos"
+                    "El campo Usuario es obligatorio."
             );
         }
 
-        // -----------------------------------------------------
-        // NUEVA PASSWORD OPCIONAL
-        // -----------------------------------------------------
+        String usuario =
+                dto.getNombreUsuario().trim();
+
+        if (usuario.length() > 9) {
+
+            throw new IllegalArgumentException(
+                    "El usuario no puede exceder los 9 caracteres."
+            );
+        }
+
+        if (usuario.length() < 8) {
+
+            throw new IllegalArgumentException(
+                    "El usuario debe contener al menos 8 caracteres."
+            );
+        }
+
+        if (!usuario.matches("^[A-Za-z0-9]+$")) {
+
+            throw new IllegalArgumentException(
+                    "El usuario debe contener únicamente caracteres alfanuméricos."
+            );
+        }
+
+        // =====================================================
+        // NUEVA CONTRASEÑA OPCIONAL
+        // =====================================================
 
         if (dto.getNuevaPassword() != null
                 && !dto.getNuevaPassword().isBlank()
@@ -1247,70 +1460,103 @@ public class UsuarioInternoServiceImpl
                 .length() < 12) {
 
             throw new IllegalArgumentException(
-                    "La nueva contraseña debe tener "
-                            + "mínimo 12 caracteres"
+                    "La nueva contraseña debe tener mínimo 12 caracteres"
             );
         }
 
-        // -----------------------------------------------------
+        // =====================================================
         // ROL
-        // -----------------------------------------------------
+        // =====================================================
 
         if (dto.getRolId() == null) {
 
             throw new IllegalArgumentException(
-                    "Debe seleccionar un rol"
+                    "Debe seleccionar un rol para el usuario."
             );
         }
 
-        // -----------------------------------------------------
+        // =====================================================
         // SUCURSAL
-        // -----------------------------------------------------
+        // =====================================================
 
         if (dto.getSucursalId() == null) {
 
             throw new IllegalArgumentException(
-                    "Debe seleccionar una sucursal"
+                    "Debe seleccionar una sucursal para el usuario."
             );
         }
 
-        // -----------------------------------------------------
-        // NUEVO DPI
-        // -----------------------------------------------------
+        // =====================================================
+        // ESTADO
+        // =====================================================
+
+        if (dto.getActivo() == null) {
+
+            throw new IllegalArgumentException(
+                    "Debe seleccionar un estado para el usuario."
+            );
+        }
+
+        // =====================================================
+        // DPI OPCIONAL
+        // =====================================================
 
         if (dto.getNuevoDpi() != null
-                && !dto.getNuevoDpi().isBlank()
-                && !dto.getNuevoDpi()
-                .trim()
-                .matches("^[0-9]{13}$")) {
+                && !dto.getNuevoDpi().isBlank()) {
 
-            throw new IllegalArgumentException(
-                    "El DPI debe contener "
-                            + "exactamente 13 dígitos"
-            );
+            String dpi =
+                    dto.getNuevoDpi().trim();
+
+            if (!dpi.matches("^[0-9]+$")) {
+
+                throw new IllegalArgumentException(
+                        "El DPI debe contener únicamente números. No se permiten letras ni caracteres especiales."
+                );
+            }
+
+            if (dpi.length() != 13) {
+
+                throw new IllegalArgumentException(
+                        "El DPI debe contener exactamente 13 dígitos. Usted ingresó "
+                                + dpi.length()
+                                + " dígitos."
+                );
+            }
         }
 
-        // -----------------------------------------------------
-        // NUEVO NIT
-        // -----------------------------------------------------
+        // =====================================================
+        // NIT OPCIONAL
+        // =====================================================
 
         if (dto.getNuevoNit() != null
-                && !dto.getNuevoNit().isBlank()
-                && !dto.getNuevoNit()
-                .trim()
-                .matches(
-                        "^[A-Za-z0-9]{8,9}$"
-                )) {
+                && !dto.getNuevoNit().isBlank()) {
 
-            throw new IllegalArgumentException(
-                    "El NIT debe contener "
-                            + "8 a 9 caracteres alfanuméricos"
-            );
+            String nit =
+                    dto.getNuevoNit()
+                            .trim()
+                            .toUpperCase();
+
+            if (nit.length() < 8
+                    || nit.length() > 9) {
+
+                throw new IllegalArgumentException(
+                        "El NIT debe contener entre 8 y 9 caracteres. Usted ingresó "
+                                + nit.length()
+                                + " caracteres."
+                );
+            }
+
+            if (!nit.matches("^[A-Za-z0-9]+$")) {
+
+                throw new IllegalArgumentException(
+                        "El NIT debe contener únicamente caracteres alfanuméricos."
+                );
+            }
         }
 
-        // -----------------------------------------------------
+        // =====================================================
         // TELEFONO
-        // -----------------------------------------------------
+        // =====================================================
 
         if (dto.getTelefono() != null
                 && !dto.getTelefono().isBlank()
@@ -1319,13 +1565,13 @@ public class UsuarioInternoServiceImpl
                 .matches("^[0-9]{8}$")) {
 
             throw new IllegalArgumentException(
-                    "El teléfono debe contener 8 dígitos"
+                    "El teléfono debe contener exactamente 8 dígitos."
             );
         }
 
-        // -----------------------------------------------------
-        // NUMERO DE SEGURO
-        // -----------------------------------------------------
+        // =====================================================
+        // SEGURO
+        // =====================================================
 
         if (dto.getNumeroSeguro() != null
                 && !dto.getNumeroSeguro().isBlank()) {
@@ -1339,8 +1585,7 @@ public class UsuarioInternoServiceImpl
                     || longitud > 50) {
 
                 throw new IllegalArgumentException(
-                        "El número de seguro debe tener "
-                                + "entre 5 y 50 caracteres"
+                        "El número de seguro debe contener entre 5 y 50 caracteres."
                 );
             }
         }
@@ -1479,5 +1724,18 @@ public class UsuarioInternoServiceImpl
         }
 
         return valor.trim();
+    }
+
+    private void validarLongitudFiltro(
+            String valor
+    ) {
+
+        if (valor != null
+                && valor.length() > 25) {
+
+            throw new IllegalArgumentException(
+                    "El campo de búsqueda no puede exceder los 25 caracteres."
+            );
+        }
     }
 }

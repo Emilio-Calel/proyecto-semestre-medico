@@ -13,6 +13,8 @@ public class UsuarioInternoEditarDTO {
     private Long sucursalId;
     private Long especialidadId;
 
+    private Boolean activo;
+
     /*
      * Por seguridad NO cargaremos el DPI/NIT descifrado
      * automáticamente en pantalla.
@@ -142,5 +144,13 @@ public class UsuarioInternoEditarDTO {
 
     public void setTieneNit(Boolean tieneNit) {
         this.tieneNit = tieneNit;
+    }
+
+    public Boolean getActivo() {
+        return activo;
+    }
+
+    public void setActivo(Boolean activo) {
+        this.activo = activo;
     }
 }
