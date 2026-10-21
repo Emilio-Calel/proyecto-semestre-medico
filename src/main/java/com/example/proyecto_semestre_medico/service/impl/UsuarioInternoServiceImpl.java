@@ -30,6 +30,7 @@ import com.example.proyecto_semestre_medico.dto.UsuarioInternoFiltroDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.cache.annotation.CacheEvict;
 
 
 import java.util.List;
@@ -211,6 +212,10 @@ public class UsuarioInternoServiceImpl
     // =========================================================
 
     @Override
+    @CacheEvict(
+            value = "citaMedicosPorSucursalEspecialidad",
+            allEntries = true
+    )
     @Transactional
     public void crear(UsuarioInternoFormDTO dto) {
 
@@ -545,6 +550,10 @@ public class UsuarioInternoServiceImpl
     }
 
     @Override
+    @CacheEvict(
+            value = "citaMedicosPorSucursalEspecialidad",
+            allEntries = true
+    )
     @Transactional
     public String desactivar(Long usuarioId) {
 
@@ -678,6 +687,10 @@ public class UsuarioInternoServiceImpl
     }
 
     @Override
+    @CacheEvict(
+            value = "citaMedicosPorSucursalEspecialidad",
+            allEntries = true
+    )
     @Transactional
     public void reactivar(Long usuarioId) {
 
@@ -789,6 +802,10 @@ public class UsuarioInternoServiceImpl
     // =========================================================
 
     @Override
+    @CacheEvict(
+            value = "citaMedicosPorSucursalEspecialidad",
+            allEntries = true
+    )
     @Transactional
     public void actualizar(
             UsuarioInternoEditarDTO dto

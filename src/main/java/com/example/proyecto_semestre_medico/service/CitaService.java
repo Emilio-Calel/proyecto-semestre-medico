@@ -9,4 +9,9 @@ public interface CitaService {
             String nombreUsuarioPaciente,
             AgendarCitaDTO dto
     );
+
+    Cita obtenerParaReagendar(
+            Long citaId,
+            String nombreUsuarioPaciente
+    );
 }

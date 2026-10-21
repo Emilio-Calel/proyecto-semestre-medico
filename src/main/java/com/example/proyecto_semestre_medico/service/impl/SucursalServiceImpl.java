@@ -78,7 +78,12 @@ public class SucursalServiceImpl
     @Override
     @Transactional
     @CacheEvict(
-            value = "sucursalesActivas",
+            value = {
+                    "sucursalesActivas",
+                    "citaSucursalesActivas",
+                    "citaEspecialidadesPorSucursal",
+                    "citaMedicosPorSucursalEspecialidad"
+            },
             allEntries = true
     )
     public Sucursal guardar(
@@ -269,7 +274,12 @@ public class SucursalServiceImpl
     @Override
     @Transactional
     @CacheEvict(
-            value = "sucursalesActivas",
+            value = {
+                    "sucursalesActivas",
+                    "citaSucursalesActivas",
+                    "citaEspecialidadesPorSucursal",
+                    "citaMedicosPorSucursalEspecialidad"
+            },
             allEntries = true
     )
     public void desactivar(
@@ -304,9 +314,13 @@ public class SucursalServiceImpl
     }
 
     @Override
-    @Transactional
     @CacheEvict(
-            value = "sucursalesActivas",
+            value = {
+                    "sucursalesActivas",
+                    "citaSucursalesActivas",
+                    "citaEspecialidadesPorSucursal",
+                    "citaMedicosPorSucursalEspecialidad"
+            },
             allEntries = true
     )
     public void reactivar(

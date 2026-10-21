@@ -83,7 +83,11 @@ public class EspecialidadServiceImpl
     @Override
     @Transactional
     @CacheEvict(
-            value = "especialidadesActivas",
+            value = {
+                    "especialidadesActivas",
+                    "citaEspecialidadesPorSucursal",
+                    "citaMedicosPorSucursalEspecialidad"
+            },
             allEntries = true
     )
     public Especialidad guardar(
@@ -253,7 +257,11 @@ public class EspecialidadServiceImpl
     @Override
     @Transactional
     @CacheEvict(
-            value = "especialidadesActivas",
+            value = {
+                    "especialidadesActivas",
+                    "citaEspecialidadesPorSucursal",
+                    "citaMedicosPorSucursalEspecialidad"
+            },
             allEntries = true
     )
     public void desactivar(
@@ -290,7 +298,11 @@ public class EspecialidadServiceImpl
     @Override
     @Transactional
     @CacheEvict(
-            value = "especialidadesActivas",
+            value = {
+                    "especialidadesActivas",
+                    "citaEspecialidadesPorSucursal",
+                    "citaMedicosPorSucursalEspecialidad"
+            },
             allEntries = true
     )
     public void reactivar(

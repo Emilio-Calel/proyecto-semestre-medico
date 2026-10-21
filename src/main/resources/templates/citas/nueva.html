@@ -479,6 +479,33 @@
                 width: 100%;
             }
         }
+
+        .field-error {
+            display: none;
+            margin-top: 7px;
+            color: #c62828;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .field-error.visible {
+            display: block;
+        }
+
+        .input-error {
+            border-color: #c62828 !important;
+            background: #fff7f7 !important;
+        }
+
+        .alert-error {
+            background: #fff1f1;
+            border: 1px solid #efb6b6;
+            color: #9b1c1c;
+            padding: 14px 16px;
+            border-radius: 10px;
+            margin-bottom: 22px;
+            font-size: 14px;
+        }
     </style>
 </head>
 
@@ -593,12 +620,23 @@
 
     <section class="form-card">
 
+        <div
+                class="alert-error"
+                th:if="${mensajeExpiracion}">
+
+            <strong
+                    th:text="${mensajeExpiracion}">
+            </strong>
+
+        </div>
+
         <form
                 th:action="@{/citas/guardar}"
                 th:object="${citaForm}"
                 method="post"
                 enctype="multipart/form-data"
-                id="formCita">
+                id="formCita"
+                novalidate>
 
             <!-- PASO 1 -->
 
@@ -705,8 +743,8 @@
                     <button
                             class="btn btn-secondary"
                             type="button"
-                            onclick="mostrarPaso(1)">
-                        Anterior
+                            onclick="volverPaso(2)">
+                        Volver
                     </button>
 
                     <button
@@ -766,8 +804,8 @@
                     <button
                             class="btn btn-secondary"
                             type="button"
-                            onclick="mostrarPaso(2)">
-                        Anterior
+                            onclick="volverPaso(3)">
+                        Volver
                     </button>
 
                     <button
@@ -848,8 +886,8 @@
                     <button
                             class="btn btn-secondary"
                             type="button"
-                            onclick="mostrarPaso(3)">
-                        Anterior
+                            onclick="volverPaso(4)">
+                        Volver
                     </button>
 
                     <button
@@ -910,6 +948,11 @@
 
                     </div>
 
+                    <span
+                            id="errorMotivo"
+                            class="field-error">
+</span>
+
                 </div>
 
                 <div class="form-group">
@@ -930,6 +973,11 @@
                             Opcional. Solo archivos PDF,
                             máximo 2 MB.
                         </small>
+
+                        <span
+                                id="errorDocumento"
+                                class="field-error">
+</span>
 
                     </div>
 
@@ -1008,14 +1056,14 @@
                     <button
                             class="btn btn-secondary"
                             type="button"
-                            onclick="mostrarPaso(4)">
-                        Anterior
+                            onclick="volverPaso(5)">
+                        Volver
                     </button>
 
                     <button
                             class="btn btn-primary"
                             type="submit">
-                        Confirmar cita
+                        Confirmar Cita
                     </button>
 
                 </div>
@@ -1032,7 +1080,242 @@
     Sistema Informático Hospitalario
 </footer>
 
+<script th:inline="javascript">
+
+    const pasoInicial =
+        /*[[${pasoInicial}]]*/ 1;
+
+    const sucursalInicial =
+        /*[[${citaForm.sucursalId}]]*/ null;
+
+    const especialidadInicial =
+        /*[[${citaForm.especialidadId}]]*/ null;
+
+    const medicoInicial =
+        /*[[${citaForm.medicoId}]]*/ null;
+
+</script>
+
 <script>
+    function volverPaso(numeroActual) {
+
+        if (numeroActual === 2) {
+
+            document.getElementById(
+                "especialidadId"
+            ).value = "";
+
+            document.getElementById(
+                "medicoId"
+            ).innerHTML =
+                '<option value="">Seleccione un médico</option>';
+
+            document.getElementById(
+                "fecha"
+            ).value = "";
+
+            document.getElementById(
+                "horario"
+            ).innerHTML =
+                '<option value="">Seleccione primero una fecha</option>';
+
+            document.getElementById(
+                "fechaHoraInicio"
+            ).value = "";
+
+            mostrarPaso(1);
+
+            return;
+        }
+
+        if (numeroActual === 3) {
+
+            document.getElementById(
+                "medicoId"
+            ).value = "";
+
+            document.getElementById(
+                "fecha"
+            ).value = "";
+
+            document.getElementById(
+                "horario"
+            ).innerHTML =
+                '<option value="">Seleccione primero una fecha</option>';
+
+            document.getElementById(
+                "fechaHoraInicio"
+            ).value = "";
+
+            mostrarPaso(2);
+
+            return;
+        }
+
+        if (numeroActual === 4) {
+
+            document.getElementById(
+                "fecha"
+            ).value = "";
+
+            document.getElementById(
+                "horario"
+            ).innerHTML =
+                '<option value="">Seleccione primero una fecha</option>';
+
+            document.getElementById(
+                "fechaHoraInicio"
+            ).value = "";
+
+            mostrarPaso(3);
+
+            return;
+        }
+
+        if (numeroActual === 5) {
+
+            document.getElementById(
+                "fechaHoraInicio"
+            ).value = "";
+
+            mostrarPaso(4);
+        }
+    }
+
+    async function cargarPasoInicial() {
+
+        if (
+            pasoInicial !== 4
+            || !sucursalInicial
+            || !especialidadInicial
+            || !medicoInicial
+        ) {
+
+            mostrarPaso(1);
+            return;
+        }
+
+        // =============================================
+        // RESTAURAR SUCURSAL
+        // =============================================
+
+        const sucursal =
+            document.getElementById(
+                "sucursalId"
+            );
+
+        sucursal.value =
+            sucursalInicial;
+
+        // =============================================
+        // CARGAR ESPECIALIDADES
+        // =============================================
+
+        const responseEspecialidades =
+            await fetch(
+                "/api/citas/especialidades?sucursalId="
+                + sucursalInicial
+            );
+
+        const especialidades =
+            await responseEspecialidades.json();
+
+        const selectEspecialidad =
+            document.getElementById(
+                "especialidadId"
+            );
+
+        selectEspecialidad.innerHTML =
+            '<option value="">Seleccione una especialidad</option>';
+
+        especialidades.forEach(item => {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+            option.value =
+                item.id;
+
+            option.textContent =
+                item.nombre;
+
+            selectEspecialidad.appendChild(
+                option
+            );
+        });
+
+        selectEspecialidad.value =
+            especialidadInicial;
+
+        // =============================================
+        // CARGAR MÉDICOS
+        // =============================================
+
+        const responseMedicos =
+            await fetch(
+                "/api/citas/medicos?sucursalId="
+                + sucursalInicial
+                + "&especialidadId="
+                + especialidadInicial
+            );
+
+        const medicos =
+            await responseMedicos.json();
+
+        const selectMedico =
+            document.getElementById(
+                "medicoId"
+            );
+
+        selectMedico.innerHTML =
+            '<option value="">Seleccione un médico</option>';
+
+        medicos.forEach(item => {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+            option.value =
+                item.id;
+
+            option.textContent =
+                item.nombre;
+
+            selectMedico.appendChild(
+                option
+            );
+        });
+
+        selectMedico.value =
+            medicoInicial;
+
+        // =============================================
+        // LIMPIAR HORARIO ANTERIOR
+        // =============================================
+
+        document.getElementById(
+            "fecha"
+        ).value = "";
+
+        document.getElementById(
+            "horario"
+        ).innerHTML =
+            '<option value="">Seleccione primero una fecha</option>';
+
+        document.getElementById(
+            "fechaHoraInicio"
+        ).value = "";
+
+        // =============================================
+        // ABRIR DIRECTAMENTE PASO 4
+        // =============================================
+
+        mostrarPaso(4);
+    }
 
     function mostrarPaso(numero) {
 
@@ -1088,7 +1371,7 @@
         if (!sucursal.value) {
 
             alert(
-                "Seleccione una sucursal"
+                "Debe seleccionar una sucursal para continuar."
             );
 
             return;
@@ -1110,6 +1393,19 @@
 
         select.innerHTML =
             '<option value="">Seleccione una especialidad</option>';
+
+        if (datos.length === 0) {
+
+            alert(
+                "No hay especialidades disponibles para la sucursal "
+                + textoSeleccionado("sucursalId")
+                + ". Seleccione otra sucursal."
+            );
+
+            mostrarPaso(1);
+
+            return;
+        }
 
         datos.forEach(item => {
 
@@ -1147,7 +1443,7 @@
         if (!especialidad.value) {
 
             alert(
-                "Seleccione una especialidad"
+                "Debe seleccionar una especialidad médica para continuar."
             );
 
             return;
@@ -1171,6 +1467,19 @@
 
         select.innerHTML =
             '<option value="">Seleccione un médico</option>';
+
+        if (datos.length === 0) {
+
+            alert(
+                "No se encontraron horarios disponibles para la especialidad "
+                + textoSeleccionado("especialidadId")
+                + " en la Sede "
+                + textoSeleccionado("sucursalId")
+                + ". Por favor, seleccione otra especialidad o sede."
+            );
+
+            return;
+        }
 
         datos.forEach(item => {
 
@@ -1203,7 +1512,7 @@
         if (!medico.value) {
 
             alert(
-                "Seleccione un médico"
+                "Debe seleccionar un médico para continuar."
             );
 
             return;
@@ -1263,6 +1572,14 @@
             horario.innerHTML =
                 '<option value="">No hay horarios disponibles</option>';
 
+            alert(
+                "No se encontraron horarios disponibles para la especialidad "
+                + textoSeleccionado("especialidadId")
+                + " en la Sede "
+                + textoSeleccionado("sucursalId")
+                + ". Por favor, seleccione otra especialidad o sede."
+            );
+
             return;
         }
 
@@ -1287,26 +1604,40 @@
 
     function irPaso5() {
 
+        const fecha =
+            document.getElementById(
+                "fecha"
+            ).value;
+
         const horario =
             document.getElementById(
                 "horario"
             );
 
-        if (!document.getElementById(
-            "fecha"
-        ).value) {
+        if (!fecha
+            || !horario.value) {
 
             alert(
-                "Seleccione una fecha"
+                "Debe seleccionar una fecha y hora futuras. Las citas no pueden agendarse en fechas pasadas o presentes."
             );
 
             return;
         }
 
-        if (!horario.value) {
+        const fechaHora =
+            new Date(
+                horario.value
+            );
+
+        if (
+            Number.isNaN(
+                fechaHora.getTime()
+            )
+            || fechaHora <= new Date()
+        ) {
 
             alert(
-                "Seleccione un horario"
+                "Debe seleccionar una fecha y hora futuras. Las citas no pueden agendarse en fechas pasadas o presentes."
             );
 
             return;
@@ -1377,12 +1708,79 @@
             "contadorMotivo"
         );
 
+    const documento =
+        document.getElementById(
+            "documento"
+        );
+
+    const errorMotivo =
+        document.getElementById(
+            "errorMotivo"
+        );
+
+    const errorDocumento =
+        document.getElementById(
+            "errorDocumento"
+        );
+
+    function mostrarErrorCampo(
+        campo,
+        contenedor,
+        mensaje
+    ) {
+
+        campo.classList.add(
+            "input-error"
+        );
+
+        contenedor.textContent =
+            mensaje;
+
+        contenedor.classList.add(
+            "visible"
+        );
+    }
+
+
+    function limpiarErrorCampo(
+        campo,
+        contenedor
+    ) {
+
+        campo.classList.remove(
+            "input-error"
+        );
+
+        contenedor.textContent =
+            "";
+
+        contenedor.classList.remove(
+            "visible"
+        );
+    }
+
     motivo.addEventListener(
         "input",
         function () {
 
             contador.textContent =
                 motivo.value.length;
+
+            limpiarErrorCampo(
+                motivo,
+                errorMotivo
+            );
+        }
+    );
+
+    documento.addEventListener(
+        "change",
+        function () {
+
+            limpiarErrorCampo(
+                documento,
+                errorDocumento
+            );
         }
     );
 
@@ -1398,6 +1796,188 @@
     document.getElementById(
         "fecha"
     ).min = hoy;
+
+    document.getElementById(
+        "formCita"
+    ).addEventListener(
+        "submit",
+        async function (event) {
+
+            event.preventDefault();
+
+            limpiarErrorCampo(
+                motivo,
+                errorMotivo
+            );
+
+            limpiarErrorCampo(
+                documento,
+                errorDocumento
+            );
+
+            let valido = true;
+
+            // =============================================
+            // RN-CU03-03 MOTIVO DE VISITA
+            // =============================================
+
+            const valorMotivo =
+                motivo.value.trim();
+
+            const longitudMotivo =
+                valorMotivo.length;
+
+            if (
+                longitudMotivo < 10
+                || longitudMotivo > 2000
+            ) {
+
+                mostrarErrorCampo(
+                    motivo,
+                    errorMotivo,
+                    "El motivo debe contener entre 10 y 2000 caracteres. Usted ingresó "
+                    + longitudMotivo
+                    + " caracteres."
+                );
+
+                valido = false;
+            }
+
+            // =============================================
+            // RN-CU03-04 DOCUMENTO
+            // =============================================
+
+            if (
+                documento.files.length > 0
+            ) {
+
+                const archivo =
+                    documento.files[0];
+
+                const maximoBytes =
+                    2 * 1024 * 1024;
+
+                const nombre =
+                    archivo.name.toLowerCase();
+
+                if (
+                    archivo.size === 0
+                    || archivo.size > maximoBytes
+                    || archivo.type !== "application/pdf"
+                    || !nombre.endsWith(".pdf")
+                ) {
+
+                    mostrarErrorCampo(
+                        documento,
+                        errorDocumento,
+                        "El documento debe ser un archivo PDF válido, no encriptado y con tamaño máximo de 2 MB."
+                    );
+
+                    valido = false;
+
+                } else {
+
+                    /*
+                     * Validación preliminar del contenido.
+                     *
+                     * El backend hará después la validación
+                     * definitiva de PDF encriptado.
+                     */
+                    try {
+
+                        const buffer =
+                            await archivo.arrayBuffer();
+
+                        const bytes =
+                            new Uint8Array(buffer);
+
+                        const cabecera =
+                            new TextDecoder(
+                                "latin1"
+                            ).decode(
+                                bytes.slice(
+                                    0,
+                                    Math.min(
+                                        bytes.length,
+                                        8
+                                    )
+                                )
+                            );
+
+                        const contenidoPdf =
+                            new TextDecoder(
+                                "latin1"
+                            ).decode(bytes);
+
+                        const pdfValido =
+                            cabecera.startsWith(
+                                "%PDF-"
+                            );
+
+                        const aparentementeEncriptado =
+                            contenidoPdf.includes(
+                                "/Encrypt"
+                            );
+
+                        if (
+                            !pdfValido
+                            || aparentementeEncriptado
+                        ) {
+
+                            mostrarErrorCampo(
+                                documento,
+                                errorDocumento,
+                                "El documento debe ser un archivo PDF válido, no encriptado y con tamaño máximo de 2 MB."
+                            );
+
+                            valido = false;
+                        }
+
+                    } catch (error) {
+
+                        mostrarErrorCampo(
+                            documento,
+                            errorDocumento,
+                            "El documento debe ser un archivo PDF válido, no encriptado y con tamaño máximo de 2 MB."
+                        );
+
+                        valido = false;
+                    }
+                }
+            }
+
+            if (!valido) {
+
+                const primerError =
+                    document.querySelector(
+                        ".input-error"
+                    );
+
+                if (primerError) {
+
+                    primerError.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center"
+                    });
+
+                    primerError.focus();
+                }
+
+                return;
+            }
+
+            /*
+             * Todo válido:
+             * ahora sí enviamos el formulario.
+             */
+            this.submit();
+        }
+    );
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        cargarPasoInicial
+    );
 
 </script>
 

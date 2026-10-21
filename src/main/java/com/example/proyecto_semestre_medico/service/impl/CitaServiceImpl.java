@@ -157,8 +157,9 @@ public class CitaServiceImpl implements CitaService {
         if (!inicio.isAfter(
                 LocalDateTime.now()
         )) {
+
             throw new IllegalArgumentException(
-                    "La fecha y hora deben ser futuras"
+                    "Debe seleccionar una fecha y hora futuras. Las citas no pueden agendarse en fechas pasadas o presentes."
             );
         }
 
@@ -276,45 +277,78 @@ public class CitaServiceImpl implements CitaService {
     ) {
 
         if (dto == null) {
+
             throw new IllegalArgumentException(
                     "Datos de cita requeridos"
             );
         }
 
+        // =====================================================
+        // RN-CU03-02 SUCURSAL
+        // =====================================================
+
         if (dto.getSucursalId() == null) {
+
             throw new IllegalArgumentException(
-                    "Debe seleccionar una sucursal"
+                    "Debe seleccionar una sucursal para continuar."
             );
         }
+
+        // =====================================================
+        // RN-CU03-01 ESPECIALIDAD
+        // =====================================================
 
         if (dto.getEspecialidadId() == null) {
+
             throw new IllegalArgumentException(
-                    "Debe seleccionar una especialidad"
+                    "Debe seleccionar una especialidad médica para continuar."
             );
         }
+
+        // =====================================================
+        // MÉDICO
+        // =====================================================
 
         if (dto.getMedicoId() == null) {
+
             throw new IllegalArgumentException(
-                    "Debe seleccionar un médico"
+                    "Debe seleccionar un médico para continuar."
             );
         }
 
-        if (dto.getFechaHoraInicio() == null) {
+        // =====================================================
+        // RN-CU03-05 FECHA Y HORA
+        // =====================================================
+
+        if (dto.getFechaHoraInicio() == null
+                || !dto.getFechaHoraInicio()
+                .isAfter(
+                        LocalDateTime.now()
+                )) {
+
             throw new IllegalArgumentException(
-                    "Debe seleccionar fecha y hora"
+                    "Debe seleccionar una fecha y hora futuras. Las citas no pueden agendarse en fechas pasadas o presentes."
             );
         }
 
-        if (dto.getMotivoConsulta() == null
-                || dto.getMotivoConsulta()
-                .trim()
-                .length() < 10
-                || dto.getMotivoConsulta()
-                .trim()
-                .length() > 2000) {
+        // =====================================================
+        // RN-CU03-03 MOTIVO
+        // =====================================================
+
+        int longitudMotivo =
+                dto.getMotivoConsulta() == null
+                        ? 0
+                        : dto.getMotivoConsulta()
+                        .trim()
+                        .length();
+
+        if (longitudMotivo < 10
+                || longitudMotivo > 2000) {
 
             throw new IllegalArgumentException(
-                    "El motivo debe tener entre 10 y 2000 caracteres"
+                    "El motivo debe contener entre 10 y 2000 caracteres. Usted ingresó "
+                            + longitudMotivo
+                            + " caracteres."
             );
         }
     }
@@ -375,7 +409,7 @@ public class CitaServiceImpl implements CitaService {
         if (archivo.getSize() > 2 * 1024 * 1024) {
 
             throw new IllegalArgumentException(
-                    "El documento no puede superar 2 MB"
+                    "El documento debe ser un archivo PDF válido, no encriptado y con tamaño máximo de 2 MB."
             );
         }
 
@@ -384,7 +418,7 @@ public class CitaServiceImpl implements CitaService {
         )) {
 
             throw new IllegalArgumentException(
-                    "Solo se permiten archivos PDF"
+                    "El documento debe ser un archivo PDF válido, no encriptado y con tamaño máximo de 2 MB."
             );
         }
 
@@ -397,7 +431,7 @@ public class CitaServiceImpl implements CitaService {
                 .endsWith(".pdf")) {
 
             throw new IllegalArgumentException(
-                    "El archivo debe tener extensión PDF"
+                    "El documento debe ser un archivo PDF válido, no encriptado y con tamaño máximo de 2 MB."
             );
         }
 
@@ -433,5 +467,75 @@ public class CitaServiceImpl implements CitaService {
         documentoCitaRepository.save(
                 documento
         );
+    }
+
+    @Override
+    @Transactional
+    public Cita obtenerParaReagendar(
+            Long citaId,
+            String nombreUsuarioPaciente
+    ) {
+
+        Cita cita =
+                citaRepository
+                        .findById(citaId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Cita no encontrada"
+                                )
+                        );
+
+        if (!cita.getPaciente()
+                .getUsuario()
+                .getNombreUsuario()
+                .equalsIgnoreCase(
+                        nombreUsuarioPaciente
+                )) {
+
+            throw new IllegalArgumentException(
+                    "La cita no pertenece al paciente autenticado"
+            );
+        }
+
+        if ("PENDIENTE_PAGO".equals(
+                cita.getEstadoCita()
+                        .getCodigo()
+        )) {
+
+            boolean vencida =
+                    cita.getReservaExpiraEn() == null
+                            || !cita.getReservaExpiraEn()
+                            .isAfter(
+                                    LocalDateTime.now()
+                            );
+
+            if (vencida) {
+
+                EstadoCita estadoExpirada =
+                        estadoCitaRepository
+                                .findByCodigo(
+                                        "EXPIRADA"
+                                )
+                                .orElseThrow(() ->
+                                        new IllegalStateException(
+                                                "No existe el estado EXPIRADA"
+                                        )
+                                );
+
+                cita.setEstadoCita(
+                        estadoExpirada
+                );
+
+                cita.setReservaExpiraEn(
+                        null
+                );
+
+                citaRepository.save(
+                        cita
+                );
+            }
+        }
+
+        return cita;
     }
 }

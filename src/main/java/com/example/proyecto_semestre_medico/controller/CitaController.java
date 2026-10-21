@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @Controller
 public class CitaController {
@@ -32,18 +34,60 @@ public class CitaController {
     @GetMapping("/citas/nueva")
     @PreAuthorize("hasRole('PACIENTE')")
     public String nueva(
+            @RequestParam(
+                    required = false
+            )
+            Long sucursalId,
+
+            @RequestParam(
+                    required = false
+            )
+            Long especialidadId,
+
+            @RequestParam(
+                    required = false
+            )
+            Long medicoId,
+
+            @RequestParam(
+                    required = false
+            )
+            Integer paso,
+
             Model model
     ) {
 
+        AgendarCitaDTO dto =
+                new AgendarCitaDTO();
+
+        dto.setSucursalId(
+                sucursalId
+        );
+
+        dto.setEspecialidadId(
+                especialidadId
+        );
+
+        dto.setMedicoId(
+                medicoId
+        );
+
         model.addAttribute(
                 "citaForm",
-                new AgendarCitaDTO()
+                dto
         );
 
         model.addAttribute(
                 "sucursales",
                 citaCatalogoService
                         .listarSucursales()
+        );
+
+        model.addAttribute(
+                "pasoInicial",
+                paso == null
+                        ? 1
+                        : paso
         );
 
         return "citas/nueva";
@@ -68,24 +112,14 @@ public class CitaController {
                             dto
                     );
 
-            redirectAttributes
-                    .addFlashAttribute(
-                            "mensaje",
-                            "Cita reservada correctamente"
-                    );
-
-            redirectAttributes
-                    .addFlashAttribute(
-                            "numeroCita",
-                            cita.getNumeroCita()
-                    );
-
             redirectAttributes.addFlashAttribute(
-                    "citaId",
-                    cita.getId()
+                    "mensaje",
+                    "Su cita ha sido registrada exitosamente. "
+                            + "Será redirigido al proceso de pago para confirmar la reserva."
             );
 
-            return "redirect:/citas/confirmacion";
+            return "redirect:/pagos/online/"
+                    + cita.getId();
 
         } catch (IllegalArgumentException
                  | IllegalStateException e) {
@@ -109,6 +143,37 @@ public class CitaController {
     @PreAuthorize("hasRole('PACIENTE')")
     public String confirmacion() {
         return "citas/confirmacion";
+    }
+
+    @GetMapping("/citas/reagendar/{citaId}")
+    @PreAuthorize("hasRole('PACIENTE')")
+    public String reagendar(
+            @PathVariable Long citaId,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes
+    ) {
+
+        Cita cita =
+                citaService.obtenerParaReagendar(
+                        citaId,
+                        authentication.getName()
+                );
+
+        redirectAttributes.addFlashAttribute(
+                "mensajeExpiracion",
+                "El tiempo para confirmar su cita ha expirado. "
+                        + "El horario seleccionado ha sido liberado. "
+                        + "Por favor, seleccione un nuevo horario."
+        );
+
+        return "redirect:/citas/nueva"
+                + "?sucursalId="
+                + cita.getSucursal().getId()
+                + "&especialidadId="
+                + cita.getEspecialidad().getId()
+                + "&medicoId="
+                + cita.getMedico().getId()
+                + "&paso=4";
     }
 
 

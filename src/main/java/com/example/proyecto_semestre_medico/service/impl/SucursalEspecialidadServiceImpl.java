@@ -13,6 +13,7 @@ import com.example.proyecto_semestre_medico.repository.UsuarioRepository;
 import com.example.proyecto_semestre_medico.service.SucursalEspecialidadService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.annotation.CacheEvict;
 
 import java.util.List;
 import java.util.Optional;
@@ -93,6 +94,13 @@ public class SucursalEspecialidadServiceImpl
     }
 
     @Override
+    @CacheEvict(
+            value = {
+                    "citaEspecialidadesPorSucursal",
+                    "citaMedicosPorSucursalEspecialidad"
+            },
+            allEntries = true
+    )
     @Transactional
     public SucursalEspecialidad asignar(
             Long sucursalId,
@@ -216,6 +224,13 @@ public class SucursalEspecialidadServiceImpl
     }
 
     @Override
+    @CacheEvict(
+            value = {
+                    "citaEspecialidadesPorSucursal",
+                    "citaMedicosPorSucursalEspecialidad"
+            },
+            allEntries = true
+    )
     @Transactional
     public void desactivar(
             Long id,

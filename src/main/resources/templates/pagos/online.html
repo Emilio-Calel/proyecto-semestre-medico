@@ -407,6 +407,40 @@
                 text-align: left;
             }
         }
+
+        .reservation-timer {
+            margin-bottom: 22px;
+            padding: 16px 18px;
+            border-radius: 12px;
+            background: #fff8e8;
+            border: 1px solid #f0d58a;
+            color: #7a5a00;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .reservation-timer strong {
+            font-size: 22px;
+            color: #9a6700;
+        }
+
+        .reservation-timer.expired {
+            background: #fff1f1;
+            border-color: #efb6b6;
+            color: #9b1c1c;
+        }
+        .alert-success {
+            background: #edf9f3;
+            border: 1px solid #a9ddc0;
+            color: #176b42;
+            padding: 14px 16px;
+            border-radius: 10px;
+            margin-bottom: 22px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
     </style>
 </head>
 
@@ -452,10 +486,35 @@
     </section>
 
     <div
+            class="alert-success"
+            th:if="${mensaje}">
+
+        <strong
+                th:text="${mensaje}">
+        </strong>
+
+    </div>
+
+    <div
             class="alert-error"
             th:if="${error}">
 
         <strong th:text="${error}"></strong>
+
+    </div>
+
+    <div
+            class="reservation-timer"
+            id="reservationTimer"
+            th:attr="data-expira=${cita.reservaExpiraEn}">
+
+    <span>
+        Tiempo restante para completar el pago
+    </span>
+
+        <strong id="contadorReserva">
+            05:00
+        </strong>
 
     </div>
 
@@ -705,8 +764,8 @@
 
                 <a
                         class="cancel-link"
-                        th:href="@{/}">
-                    Cancelar y volver al panel
+                        th:href="@{/dashboard}">
+                    Volver al panel
                 </a>
 
             </div>
@@ -721,7 +780,7 @@
     Sistema Informático Hospitalario
 </footer>
 
-<script>
+<script th:inline="javascript">
 
     const tarjeta =
         document.getElementById(
@@ -781,6 +840,119 @@
                     .slice(0, 4);
         }
     );
+
+    const timerReserva =
+        document.getElementById(
+            "reservationTimer"
+        );
+
+    const contadorReserva =
+        document.getElementById(
+            "contadorReserva"
+        );
+
+    function actualizarTemporizador() {
+
+        if (!timerReserva
+            || !contadorReserva) {
+            return;
+        }
+
+        const valorExpiracion =
+            timerReserva.dataset.expira;
+
+        if (!valorExpiracion) {
+            return;
+        }
+
+        const expiracion =
+            new Date(
+                valorExpiracion
+            );
+
+        const ahora =
+            new Date();
+
+        let diferencia =
+            expiracion.getTime()
+            - ahora.getTime();
+
+        if (diferencia <= 0) {
+
+            contadorReserva.textContent =
+                "00:00";
+
+            timerReserva.classList.add(
+                "expired"
+            );
+
+            timerReserva.querySelector(
+                "span"
+            ).textContent =
+                "El tiempo para confirmar su cita ha expirado. "
+                + "El horario seleccionado ha sido liberado. "
+                + "Por favor, seleccione un nuevo horario.";
+
+            const botonPagar =
+                document.querySelector(
+                    ".pay-button"
+                );
+
+            if (botonPagar) {
+
+                botonPagar.disabled =
+                    true;
+
+                botonPagar.textContent =
+                    "Reserva expirada";
+            }
+
+            clearInterval(
+                intervaloReserva
+            );
+
+            setTimeout(
+                function () {
+
+                    window.location.href =
+                        "/citas/reagendar/"
+                        + /*[[${cita.id}]]*/ 0;
+
+                },
+                2500
+            );
+
+            return;
+        }
+
+        const segundosTotales =
+            Math.floor(
+                diferencia / 1000
+            );
+
+        const minutos =
+            Math.floor(
+                segundosTotales / 60
+            );
+
+        const segundos =
+            segundosTotales % 60;
+
+        contadorReserva.textContent =
+            String(minutos)
+                .padStart(2, "0")
+            + ":"
+            + String(segundos)
+                .padStart(2, "0");
+    }
+
+    actualizarTemporizador();
+
+    const intervaloReserva =
+        setInterval(
+            actualizarTemporizador,
+            1000
+        );
 
 </script>
 

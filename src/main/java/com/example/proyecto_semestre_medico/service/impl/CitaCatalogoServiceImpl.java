@@ -9,6 +9,7 @@ import com.example.proyecto_semestre_medico.repository.SucursalRepository;
 import com.example.proyecto_semestre_medico.service.CitaCatalogoService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.annotation.Cacheable;
 
 import java.util.List;
 
@@ -32,6 +33,7 @@ public class CitaCatalogoServiceImpl
     }
 
     @Override
+    @Cacheable("citaSucursalesActivas")
     @Transactional(readOnly = true)
     public List<Sucursal> listarSucursales() {
 
@@ -40,12 +42,17 @@ public class CitaCatalogoServiceImpl
     }
 
     @Override
+    @Cacheable(
+            value = "citaEspecialidadesPorSucursal",
+            key = "#sucursalId"
+    )
     @Transactional(readOnly = true)
     public List<Especialidad> listarEspecialidades(
             Long sucursalId
     ) {
 
         if (sucursalId == null) {
+
             throw new IllegalArgumentException(
                     "Sucursal requerida"
             );
@@ -58,6 +65,10 @@ public class CitaCatalogoServiceImpl
     }
 
     @Override
+    @Cacheable(
+            value = "citaMedicosPorSucursalEspecialidad",
+            key = "#sucursalId + '-' + #especialidadId"
+    )
     @Transactional(readOnly = true)
     public List<MedicoOpcionDTO> listarMedicos(
             Long sucursalId,
@@ -80,6 +91,7 @@ public class CitaCatalogoServiceImpl
                         );
 
         if (!relacionValida) {
+
             throw new IllegalArgumentException(
                     "La especialidad no está disponible en la sucursal"
             );
