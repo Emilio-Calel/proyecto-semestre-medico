@@ -176,6 +176,37 @@
             align-items: end;
         }
 
+        .search-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .toggle-option {
+            border: 1px solid #cfd9dc;
+            background: #ffffff;
+            padding: 9px 14px;
+            border-radius: 9px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            color: #536268;
+            transition:
+                    background 0.2s ease,
+                    border-color 0.2s ease,
+                    color 0.2s ease;
+        }
+
+        .toggle-option input {
+            display: none;
+        }
+
+        .toggle-option.active {
+            background: #e7f5f6;
+            border-color: #1596a3;
+            color: #0f6f7a;
+        }
+
         .form-group {
             display: grid;
             gap: 8px;
@@ -397,6 +428,43 @@
             white-space: nowrap;
         }
 
+        .state-message {
+            max-width: 290px;
+            padding: 10px 12px;
+            border-radius: 9px;
+            font-size: 12px;
+            line-height: 1.5;
+            font-weight: 600;
+        }
+
+        .state-warning {
+            background: #fff5df;
+            border: 1px solid #f0d79c;
+            color: #8a5a12;
+        }
+
+        .state-danger {
+            background: #fde8e8;
+            border: 1px solid #efb8b8;
+            color: #a12525;
+        }
+
+        .state-action {
+            display: inline-flex;
+            margin-top: 9px;
+            padding: 8px 11px;
+            border-radius: 7px;
+            background: #b42318;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .state-action:hover {
+            background: #8f1c14;
+        }
+
         .footer {
             text-align: center;
             color: #9aa5a9;
@@ -429,6 +497,83 @@
             .search-button {
                 width: 100%;
             }
+        }
+
+        .emergency-badge {
+            background: #fde8e8;
+            color: #b42318;
+        }
+
+        .priority-normal {
+            background: #eef1f2;
+            color: #606d72;
+        }
+
+        .status-cancelled {
+            background: #fde8e8;
+            color: #b42318;
+        }
+
+        .action-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            background: #0f6f7a;
+            color: #ffffff;
+            padding: 10px 15px;
+            border-radius: 9px;
+            font-size: 13px;
+            font-weight: bold;
+            transition:
+                    background 0.2s ease,
+                    transform 0.2s ease;
+        }
+
+        .action-link:hover {
+            background: #0b5962;
+            transform: translateY(-1px);
+        }
+
+        .page-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 18px;
+        }
+
+        .emergency-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+
+            padding: 11px 16px;
+
+            border-radius: 10px;
+
+            background:
+                    linear-gradient(
+                            135deg,
+                            #b42318,
+                            #d64536
+                    );
+
+            color: #ffffff;
+            text-decoration: none;
+
+            font-size: 13px;
+            font-weight: bold;
+
+            box-shadow:
+                    0 5px 14px
+                    rgba(180, 35, 24, 0.18);
+        }
+
+        .emergency-action:hover {
+            transform: translateY(-1px);
+
+            box-shadow:
+                    0 7px 17px
+                    rgba(180, 35, 24, 0.24);
         }
     </style>
 </head>
@@ -490,6 +635,54 @@
 
         <strong th:text="${error}"></strong>
 
+        <p
+                th:if="${subtexto}"
+                th:text="${subtexto}"
+                style="
+                margin-top: 6px;
+                font-size: 13px;
+                font-weight: normal;
+            ">
+        </p>
+
+        <div
+                th:if="${fa03PacienteNoRegistrado}"
+                style="margin-top: 14px;">
+
+            <a
+                    class="action-link"
+                    th:href="@{/registro(
+            origen='recepcion',
+            dpi=${dpiBuscado}
+        )}">
+                Registrar Paciente
+            </a>
+
+        </div>
+
+        <div
+                th:if="${fa04PacienteSinCitas}"
+                style="margin-top: 14px;">
+
+            <a
+                    class="action-link"
+                    th:href="@{/citas/nueva(
+            origen='recepcion',
+            pacienteId=${pacienteId}
+        )}">
+                Nueva Cita (Walk-in)
+            </a>
+
+        </div>
+
+    </div>
+
+    <div class="page-actions">
+        <a
+                class="emergency-action"
+                th:href="@{/recepcion/emergencia}">
+            🚨 Registrar Emergencia
+        </a>
     </div>
 
     <section class="search-card">
@@ -506,6 +699,42 @@
                 th:action="@{/recepcion}"
                 method="get">
 
+            <div class="search-toggle">
+
+                <label
+                        class="toggle-option"
+                        th:classappend="${tipoBusqueda == 'DPI'} ? ' active' : ''">
+
+                    <input
+                            type="radio"
+                            name="tipoBusqueda"
+                            value="DPI"
+                            th:checked="${tipoBusqueda == 'DPI'}">
+
+                    <span>
+            Por DPI
+        </span>
+
+                </label>
+
+                <label
+                        class="toggle-option"
+                        th:classappend="${tipoBusqueda == 'CITA'} ? ' active' : ''">
+
+                    <input
+                            type="radio"
+                            name="tipoBusqueda"
+                            value="CITA"
+                            th:checked="${tipoBusqueda == 'CITA'}">
+
+                    <span>
+            Por No. Cita
+        </span>
+
+                </label>
+
+            </div>
+
             <div class="form-group">
 
                 <label for="criterio">
@@ -518,8 +747,7 @@
                         name="criterio"
                         th:value="${criterio}"
                         maxlength="30"
-                        placeholder="Ej. CIT-A1B2C3D4 o DPI"
-                        required>
+                        placeholder="Ej. CIT-A1B2C3D4 o DPI">
 
             </div>
 
@@ -572,12 +800,13 @@
                 <tr>
                     <th>Cita</th>
                     <th>Paciente</th>
-                    <th>Teléfono</th>
-                    <th>Correo</th>
+                    <th>Prioridad</th>
                     <th>Sucursal</th>
                     <th>Especialidad</th>
                     <th>Médico</th>
                     <th>Fecha/Hora</th>
+                    <th>Motivo</th>
+                    <th>Hora llegada</th>
                     <th>Estado</th>
                     <th>Pago</th>
                     <th>Método</th>
@@ -597,14 +826,32 @@
                         </span>
                     </td>
 
-                    <td th:text="${cita.paciente}">
+                    <td>
+                        <span th:text="${cita.paciente}"></span>
+
+                        <span
+                                class="emergency-badge"
+                                th:if="${cita.prioridadEmergencia}">
+        EMERGENCIA
+    </span>
+                    </td>
+                    <td>
+
+    <span
+            class="status-badge emergency-badge"
+            th:if="${cita.prioridadEmergencia}">
+        EMERGENCIA
+    </span>
+
+                        <span
+                                class="status-badge priority-normal"
+                                th:unless="${cita.prioridadEmergencia}">
+        NORMAL
+    </span>
+
                     </td>
 
-                    <td th:text="${cita.telefono}">
-                    </td>
 
-                    <td th:text="${cita.correo}">
-                    </td>
 
                     <td th:text="${cita.sucursal}">
                     </td>
@@ -618,19 +865,44 @@
                     <td th:text="${cita.fechaHora}">
                     </td>
 
+                    <td th:text="${cita.motivoConsulta}">
+                    </td>
+
+                    <td>
+
+    <span
+            th:if="${cita.fechaHoraLlegada != null}"
+            th:text="${cita.fechaHoraLlegada}">
+    </span>
+
+                        <span
+                                class="unavailable"
+                                th:if="${cita.fechaHoraLlegada == null}">
+        No registrada
+    </span>
+
+                    </td>
+
                     <td>
 
                         <span
                                 class="status-badge status-confirmada"
                                 th:if="${cita.estado == 'CONFIRMADA'}"
                                 th:text="${cita.estado}">
-                        </span>
+</span>
+
+                        <span
+                                class="status-badge status-cancelled"
+                                th:if="${cita.estado == 'CANCELADA'}"
+                                th:text="${cita.estado}">
+</span>
 
                         <span
                                 class="status-badge status-other"
-                                th:unless="${cita.estado == 'CONFIRMADA'}"
+                                th:if="${cita.estado != 'CONFIRMADA'
+                and cita.estado != 'CANCELADA'}"
                                 th:text="${cita.estado}">
-                        </span>
+</span>
 
                     </td>
 
@@ -663,7 +935,8 @@
 
                         <form
                                 class="action-form"
-                                th:if="${cita.estado == 'CONFIRMADA'}"
+                                th:if="${cita.estado == 'CONFIRMADA'
+                and cita.estadoPago == 'PAGADO'}"
                                 th:action="@{/recepcion/citas/{id}/llegada(id=${cita.citaId})}"
                                 method="post">
 
@@ -675,13 +948,75 @@
 
                         </form>
 
+                        <div
+                                class="state-message state-warning"
+                                th:if="${cita.estado == 'PENDIENTE_PAGO'}">
+
+                            La cita del paciente tiene estado
+                            'Pendiente de pago'. Debe realizar el pago
+                            en caja antes de ser atendido.
+
+                        </div>
+
+                        <div
+                                class="state-message state-danger"
+                                th:if="${cita.estado == 'CANCELADA'}">
+
+                            <div>
+                                La cita fue cancelada.
+                                El paciente debe agendar una nueva cita.
+                            </div>
+
+                            <a
+                                    class="state-action"
+                                    th:href="@{/citas/nueva(
+            origen='recepcion',
+            pacienteId=${cita.pacienteId}
+        )}">
+                                Nueva Cita
+                            </a>
+
+                        </div>
+
+                        <div
+                                class="state-message"
+                                th:if="${cita.estado == 'PACIENTE_PRESENTE'}">
+
+                            <div>
+                                Llegada registrada — esperando llamado de enfermería
+                            </div>
+
+                            <a
+                                    class="state-action"
+                                    th:if="${cita.prioridadEmergencia}"
+                                    th:href="@{/recepcion/citas/{id}/signos-urgente(
+                id=${cita.citaId}
+            )}">
+                                Signos Vitales (Urgente)
+                            </a>
+
+                        </div>
+
+                        <a
+                                class="state-action"
+                                th:if="${cita.estado == 'CONFIRMADA'
+                or cita.estado == 'PACIENTE_PRESENTE'}"
+                                th:href="@{/recepcion/citas/{id}/reasignar(
+            id=${cita.citaId}
+        )}">
+                            Reasignar Médico
+                        </a>
+
                         <span
                                 class="unavailable"
-                                th:unless="${cita.estado == 'CONFIRMADA'}">
+                                th:if="${cita.estado != 'CONFIRMADA'
+                and cita.estado != 'PENDIENTE_PAGO'
+                and cita.estado != 'CANCELADA'
+        and cita.estado != 'PACIENTE_PRESENTE'}">
 
-                            No disponible
+    No disponible
 
-                        </span>
+</span>
 
                     </td>
 
@@ -700,6 +1035,44 @@
 <footer class="footer">
     Sistema Informático Hospitalario
 </footer>
+
+<script>
+    const opcionesBusqueda =
+        document.querySelectorAll(
+            'input[name="tipoBusqueda"]'
+        );
+
+    opcionesBusqueda.forEach(
+        function (opcion) {
+
+            opcion.addEventListener(
+                "change",
+                function () {
+
+                    document
+                        .querySelectorAll(
+                            ".toggle-option"
+                        )
+                        .forEach(
+                            function (label) {
+                                label.classList.remove(
+                                    "active"
+                                );
+                            }
+                        );
+
+                    opcion
+                        .closest(
+                            ".toggle-option"
+                        )
+                        .classList.add(
+                        "active"
+                    );
+                }
+            );
+        }
+    );
+</script>
 
 </body>
 </html>

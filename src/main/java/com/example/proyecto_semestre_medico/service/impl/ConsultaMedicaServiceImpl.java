@@ -55,9 +55,12 @@ public class ConsultaMedicaServiceImpl
                 );
 
         return citaRepository
-                .findByMedicoIdAndEstadoCitaCodigoOrderByFechaHoraInicioAsc(
+                .listarEnEsperaParaMedico(
                         medico.getId(),
-                        "EN_ESPERA"
+
+                        medico.getPersonal()
+                                .getSucursal()
+                                .getId()
                 )
                 .stream()
                 .map(this::convertirPanel)
@@ -124,22 +127,86 @@ public class ConsultaMedicaServiceImpl
             String nombreUsuario
     ) {
 
-        Cita cita =
-                obtenerCitaDelMedico(
-                        citaId,
+        Medico medico =
+                obtenerMedicoAutenticado(
                         nombreUsuario
                 );
 
+        Cita cita =
+                citaRepository
+                        .buscarParaIniciarConsulta(
+                                citaId
+                        )
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "La cita no existe."
+                                )
+                        );
+
         if (!"EN_ESPERA".equals(
-                cita.getEstadoCita().getCodigo()
+                cita.getEstadoCita()
+                        .getCodigo()
         )) {
+
             throw new IllegalArgumentException(
                     "Solo se puede iniciar una consulta para una cita en espera."
             );
         }
 
+        /*
+         * Emergencia todavía sin médico:
+         * el médico que la toma queda asignado.
+         */
+        if (cita.getMedico() == null) {
+
+            if (!Boolean.TRUE.equals(
+                    cita.getPrioridadEmergencia()
+            )) {
+
+                throw new IllegalArgumentException(
+                        "La cita no tiene un médico asignado."
+                );
+            }
+
+            if (!cita.getSucursal()
+                    .getId()
+                    .equals(
+                            medico.getPersonal()
+                                    .getSucursal()
+                                    .getId()
+                    )) {
+
+                throw new IllegalArgumentException(
+                        "La emergencia pertenece a otra sucursal."
+                );
+            }
+
+            cita.setMedico(
+                    medico
+            );
+
+            cita.setEspecialidad(
+                    medico.getEspecialidad()
+            );
+
+        } else {
+
+            if (!cita.getMedico()
+                    .getId()
+                    .equals(
+                            medico.getId()
+                    )) {
+
+                throw new IllegalArgumentException(
+                        "La cita no está asignada al médico autenticado."
+                );
+            }
+        }
+
         if (consultaMedicaRepository
-                .existsByCitaId(citaId)) {
+                .existsByCitaId(
+                        citaId
+                )) {
 
             throw new IllegalArgumentException(
                     "La consulta médica ya fue iniciada."
@@ -149,10 +216,12 @@ public class ConsultaMedicaServiceImpl
         ConsultaMedica consulta =
                 new ConsultaMedica();
 
-        consulta.setCita(cita);
+        consulta.setCita(
+                cita
+        );
 
         consulta.setMedico(
-                cita.getMedico()
+                medico
         );
 
         consulta.setMotivoVisita(
@@ -177,7 +246,9 @@ public class ConsultaMedicaServiceImpl
                 )
         );
 
-        citaRepository.save(cita);
+        citaRepository.save(
+                cita
+        );
     }
 
     @Override
@@ -587,8 +658,10 @@ public class ConsultaMedicaServiceImpl
         );
 
         dto.setEspecialidad(
-                cita.getEspecialidad()
+                cita.getEspecialidad() != null
+                        ? cita.getEspecialidad()
                         .getNombre()
+                        : "Emergencia - pendiente de asignación"
         );
 
         dto.setFechaHora(

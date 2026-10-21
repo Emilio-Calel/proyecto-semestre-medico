@@ -505,10 +505,16 @@
                     <td th:text="${cita.sucursal.nombre}">
                     </td>
 
-                    <td th:text="${cita.especialidad.nombre}">
+                    <td
+                            th:text="${cita.especialidad != null
+                ? cita.especialidad.nombre
+                : 'Pendiente de asignación'}">
                     </td>
 
-                    <td th:text="${cita.medico.personal.nombreCompleto}">
+                    <td
+                            th:text="${cita.medico != null
+                ? cita.medico.personal.nombreCompleto
+                : 'Pendiente de asignación'}">
                     </td>
 
                     <td th:text="${cita.fechaHoraInicio}">

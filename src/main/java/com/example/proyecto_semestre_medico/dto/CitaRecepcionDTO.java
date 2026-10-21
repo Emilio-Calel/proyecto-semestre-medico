@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 public class CitaRecepcionDTO {
 
     private Long citaId;
+    private Long pacienteId;
     private String numeroCita;
 
     private String paciente;
@@ -22,8 +23,15 @@ public class CitaRecepcionDTO {
     private String estadoPago;
     private String metodoPago;
 
+    private LocalDateTime fechaHoraLlegada;
+
+    private String motivoConsulta;
+
+    private Boolean prioridadEmergencia;
+
     public CitaRecepcionDTO(
             Long citaId,
+            Long pacienteId,
             String numeroCita,
             String paciente,
             String telefono,
@@ -32,6 +40,9 @@ public class CitaRecepcionDTO {
             String especialidad,
             String medico,
             LocalDateTime fechaHora,
+            LocalDateTime fechaHoraLlegada,
+            String motivoConsulta,
+            Boolean prioridadEmergencia,
             String estado,
             String estadoPago,
             String metodoPago
@@ -48,6 +59,16 @@ public class CitaRecepcionDTO {
         this.estado = estado;
         this.estadoPago = estadoPago;
         this.metodoPago = metodoPago;
+        this.fechaHoraLlegada =
+                fechaHoraLlegada;
+
+        this.motivoConsulta =
+                motivoConsulta;
+
+        this.prioridadEmergencia =
+                prioridadEmergencia;
+        this.pacienteId =
+                pacienteId;
     }
 
     public Long getCitaId() {
@@ -96,5 +117,20 @@ public class CitaRecepcionDTO {
 
     public String getMetodoPago() {
         return metodoPago;
+    }
+
+    public LocalDateTime getFechaHoraLlegada() {
+        return fechaHoraLlegada;
+    }
+
+    public String getMotivoConsulta() {
+        return motivoConsulta;
+    }
+
+    public Boolean getPrioridadEmergencia() {
+        return prioridadEmergencia;
+    }
+    public Long getPacienteId() {
+        return pacienteId;
     }
 }

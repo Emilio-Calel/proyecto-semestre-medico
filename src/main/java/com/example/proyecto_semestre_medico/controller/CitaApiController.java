@@ -17,7 +17,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/citas")
-@PreAuthorize("hasRole('PACIENTE')")
+@PreAuthorize(
+        "hasRole('PACIENTE') "
+                + "or hasAuthority('APPOINTMENT_VIEW')"
+)
 public class CitaApiController {
 
     private final CitaCatalogoService citaCatalogoService;

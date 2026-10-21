@@ -43,18 +43,17 @@ public class Paciente {
 
     @Column(
             name = "nit_cifrado",
-            nullable = false,
             columnDefinition = "TEXT"
     )
     private String nitCifrado;
 
-    @Column(nullable = false, length = 8)
+    @Column(length = 8)
     private String telefono;
 
     @Column(name = "numero_seguro", length = 50)
     private String numeroSeguro;
 
-    @Column(nullable = false, length = 254)
+    @Column(length = 254)
     private String correo;
 
     @Column(

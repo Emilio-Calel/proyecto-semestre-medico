@@ -19,4 +19,9 @@ public interface CitaService {
     List<Cita> listarMisCitas(
             String nombreUsuarioPaciente
     );
+
+    Cita agendarParaPaciente(
+            Long pacienteId,
+            AgendarCitaDTO dto
+    );
 }

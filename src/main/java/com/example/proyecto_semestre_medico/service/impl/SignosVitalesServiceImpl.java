@@ -250,7 +250,12 @@ public class SignosVitalesServiceImpl
 
         citaRepository.save(cita);
 
-        notificarMedico(cita);
+        if (cita.getMedico() != null) {
+
+            notificarMedico(
+                    cita
+            );
+        }
 
         registrarAuditoria(
                 cita,

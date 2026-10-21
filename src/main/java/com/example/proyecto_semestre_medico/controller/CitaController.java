@@ -32,7 +32,10 @@ public class CitaController {
     }
 
     @GetMapping("/citas/nueva")
-    @PreAuthorize("hasRole('PACIENTE')")
+    @PreAuthorize(
+            "hasRole('PACIENTE') "
+                    + "or hasAuthority('APPOINTMENT_VIEW')"
+    )
     public String nueva(
             @RequestParam(
                     required = false
@@ -54,6 +57,16 @@ public class CitaController {
             )
             Integer paso,
 
+            @RequestParam(
+                    required = false
+            )
+            String origen,
+
+            @RequestParam(
+                    required = false
+            )
+            Long pacienteId,
+
             Model model
     ) {
 
@@ -70,6 +83,10 @@ public class CitaController {
 
         dto.setMedicoId(
                 medicoId
+        );
+
+        dto.setPacienteId(
+                pacienteId
         );
 
         model.addAttribute(
@@ -90,11 +107,19 @@ public class CitaController {
                         : paso
         );
 
+        model.addAttribute(
+                "origenCita",
+                origen
+        );
+
         return "citas/nueva";
     }
 
     @PostMapping("/citas/guardar")
-    @PreAuthorize("hasRole('PACIENTE')")
+    @PreAuthorize(
+            "hasRole('PACIENTE') "
+                    + "or hasAuthority('APPOINTMENT_VIEW')"
+    )
     public String guardar(
             @ModelAttribute("citaForm")
             AgendarCitaDTO dto,
@@ -105,18 +130,59 @@ public class CitaController {
 
         try {
 
-            Cita cita =
-                    citaService.agendar(
-                            authentication
-                                    .getName(),
-                            dto
-                    );
+            Cita cita;
+
+            boolean esRecepcion =
+                    authentication
+                            .getAuthorities()
+                            .stream()
+                            .anyMatch(
+                                    authority ->
+                                            "APPOINTMENT_VIEW"
+                                                    .equals(
+                                                            authority.getAuthority()
+                                                    )
+                            );
+
+            if (esRecepcion) {
+
+                cita =
+                        citaService
+                                .agendarParaPaciente(
+                                        dto.getPacienteId(),
+                                        dto
+                                );
+
+            } else {
+
+                cita =
+                        citaService
+                                .agendar(
+                                        authentication
+                                                .getName(),
+                                        dto
+                                );
+            }
 
             redirectAttributes.addFlashAttribute(
                     "mensaje",
                     "Su cita ha sido registrada exitosamente. "
                             + "Será redirigido al proceso de pago para confirmar la reserva."
             );
+
+            if (esRecepcion) {
+
+                redirectAttributes
+                        .addFlashAttribute(
+                                "mensaje",
+                                "Cita creada correctamente para el paciente. Debe realizar el pago en caja antes de ser atendido."
+                        );
+
+                return "redirect:/recepcion"
+                        + "?tipoBusqueda=CITA"
+                        + "&criterio="
+                        + cita.getNumeroCita();
+            }
 
             return "redirect:/pagos/online/"
                     + cita.getId();

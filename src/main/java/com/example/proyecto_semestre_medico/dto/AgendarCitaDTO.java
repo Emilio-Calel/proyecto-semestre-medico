@@ -8,6 +8,7 @@ public class AgendarCitaDTO {
     private Long sucursalId;
     private Long especialidadId;
     private Long medicoId;
+    private Long pacienteId;
 
     private LocalDateTime fechaHoraInicio;
 
@@ -64,5 +65,16 @@ public class AgendarCitaDTO {
             MultipartFile documento
     ) {
         this.documento = documento;
+    }
+
+    public Long getPacienteId() {
+        return pacienteId;
+    }
+
+    public void setPacienteId(
+            Long pacienteId
+    ) {
+        this.pacienteId =
+                pacienteId;
     }
 }

@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Reasignar Médico</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f8f9;
+            color: #1f2933;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            min-height: 74px;
+            padding: 0 34px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            background:
+                    linear-gradient(
+                            135deg,
+                            #0f6f7a,
+                            #1596a3
+                    );
+
+            color: #ffffff;
+
+            box-shadow:
+                    0 3px 12px
+                    rgba(15, 80, 90, 0.15);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 12px;
+
+            background:
+                    rgba(255, 255, 255, 0.15);
+
+            font-size: 22px;
+        }
+
+        .brand-text h1 {
+            font-size: 20px;
+            margin-bottom: 3px;
+        }
+
+        .brand-text span {
+            font-size: 12px;
+
+            color:
+                    rgba(255, 255, 255, 0.8);
+        }
+
+        .back-link {
+            color: #ffffff;
+            text-decoration: none;
+
+            border:
+                    1px solid
+                    rgba(255, 255, 255, 0.3);
+
+            background:
+                    rgba(255, 255, 255, 0.12);
+
+            padding: 10px 15px;
+            border-radius: 9px;
+
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .back-link:hover {
+            background:
+                    rgba(255, 255, 255, 0.22);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 980px;
+
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        .page-header {
+            margin-bottom: 25px;
+        }
+
+        .page-label {
+            display: inline-block;
+
+            background: #e7f5f6;
+            color: #0f6f7a;
+
+            padding: 7px 11px;
+            border-radius: 20px;
+
+            font-size: 12px;
+            font-weight: bold;
+
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+
+            margin-bottom: 12px;
+        }
+
+        .page-header h2 {
+            font-size: 29px;
+            margin-bottom: 8px;
+        }
+
+        .page-header p {
+            color: #718087;
+            line-height: 1.6;
+        }
+
+        .alert-error {
+            padding: 14px 16px;
+
+            border-radius: 10px;
+            margin-bottom: 20px;
+
+            background: #fff1f1;
+            border: 1px solid #efb6b6;
+
+            color: #9b1c1c;
+
+            font-size: 14px;
+        }
+
+        .summary-card,
+        .form-card {
+            background: #ffffff;
+
+            border:
+                    1px solid
+                    #e1eaec;
+
+            border-radius: 17px;
+
+            box-shadow:
+                    0 7px 22px
+                    rgba(30, 70, 80, 0.06);
+
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            padding: 22px 24px;
+
+            border-bottom:
+                    1px solid
+                    #e7eef0;
+        }
+
+        .card-header h3 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .card-header p {
+            font-size: 13px;
+            color: #7d8b91;
+        }
+
+        .summary-content {
+            padding: 8px 24px 22px;
+        }
+
+        .summary-grid {
+            display: grid;
+
+            grid-template-columns:
+                    repeat(2, 1fr);
+
+            gap: 0 30px;
+        }
+
+        .summary-item {
+            padding: 15px 0;
+
+            border-bottom:
+                    1px solid
+                    #edf2f3;
+        }
+
+        .summary-label {
+            display: block;
+
+            font-size: 11px;
+            font-weight: bold;
+
+            color: #859298;
+
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+
+            margin-bottom: 6px;
+        }
+
+        .summary-value {
+            font-size: 14px;
+            font-weight: bold;
+            color: #314047;
+        }
+
+        .status-badge {
+            display: inline-block;
+
+            padding: 6px 10px;
+            border-radius: 20px;
+
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .status-confirmed {
+            background: #e5f6ee;
+            color: #197447;
+        }
+
+        .status-present {
+            background: #e7f5f6;
+            color: #0f6f7a;
+        }
+
+        .form-content {
+            padding: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 22px;
+        }
+
+        label {
+            display: block;
+
+            font-size: 14px;
+            font-weight: bold;
+
+            margin-bottom: 8px;
+
+            color: #35434a;
+        }
+
+        select,
+        textarea {
+            width: 100%;
+
+            border:
+                    1px solid
+                    #cad7da;
+
+            border-radius: 10px;
+
+            padding: 13px 14px;
+
+            font-size: 14px;
+            font-family: Arial, Helvetica, sans-serif;
+
+            background: #ffffff;
+
+            outline: none;
+        }
+
+        select:focus,
+        textarea:focus {
+            border-color: #1596a3;
+
+            box-shadow:
+                    0 0 0 3px
+                    rgba(21, 150, 163, 0.12);
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .helper {
+            margin-top: 7px;
+
+            color: #87949a;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .empty-doctors {
+            padding: 15px;
+
+            border-radius: 10px;
+
+            background: #fff8e8;
+
+            border:
+                    1px solid
+                    #ecd7a5;
+
+            color: #775d23;
+
+            font-size: 13px;
+
+            margin-bottom: 20px;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+
+            padding-top: 8px;
+        }
+
+        .btn {
+            border: none;
+
+            border-radius: 10px;
+
+            padding: 12px 18px;
+
+            font-size: 14px;
+            font-weight: bold;
+
+            cursor: pointer;
+            text-decoration: none;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-secondary {
+            background: #edf2f3;
+            color: #47575d;
+
+            border:
+                    1px solid
+                    #d7e0e2;
+        }
+
+        .btn-secondary:hover {
+            background: #e3eaec;
+        }
+
+        .btn-primary {
+            color: #ffffff;
+
+            background:
+                    linear-gradient(
+                            135deg,
+                            #0f6f7a,
+                            #1596a3
+                    );
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+
+            box-shadow:
+                    0 7px 16px
+                    rgba(15, 111, 122, 0.23);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        @media (max-width: 700px) {
+
+            .topbar {
+                padding: 14px 18px;
+            }
+
+            .brand-text span {
+                display: none;
+            }
+
+            .container {
+                padding: 30px 14px;
+            }
+
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .actions {
+                flex-direction: column-reverse;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <div class="brand">
+
+        <div class="brand-icon">
+            👨‍⚕️
+        </div>
+
+        <div class="brand-text">
+
+            <h1>
+                Reasignar Médico
+            </h1>
+
+            <span>
+                Gestión de recepción
+            </span>
+
+        </div>
+
+    </div>
+
+    <a
+            class="back-link"
+            th:href="@{/recepcion}">
+        Volver a Recepción
+    </a>
+
+</header>
+
+<main class="container">
+
+    <section class="page-header">
+
+        <span class="page-label">
+            Reasignación
+        </span>
+
+        <h2>
+            Reasignación de médico
+        </h2>
+
+        <p>
+            Seleccione un nuevo médico disponible
+            para la cita del paciente.
+        </p>
+
+    </section>
+
+    <div
+            class="alert-error"
+            th:if="${error}">
+
+        <strong
+                th:text="${error}">
+        </strong>
+
+    </div>
+
+    <section class="summary-card">
+
+        <div class="card-header">
+
+            <h3>
+                Información de la cita
+            </h3>
+
+            <p>
+                Verifique los datos antes de realizar
+                la reasignación.
+            </p>
+
+        </div>
+
+        <div class="summary-content">
+
+            <div class="summary-grid">
+
+                <div class="summary-item">
+
+                    <span class="summary-label">
+                        Número de cita
+                    </span>
+
+                    <span
+                            class="summary-value"
+                            th:text="${cita.numeroCita}">
+                    </span>
+
+                </div>
+
+                <div class="summary-item">
+
+                    <span class="summary-label">
+                        Paciente
+                    </span>
+
+                    <span
+                            class="summary-value"
+                            th:text="${cita.paciente}">
+                    </span>
+
+                </div>
+
+                <div class="summary-item">
+
+                    <span class="summary-label">
+                        Sucursal
+                    </span>
+
+                    <span
+                            class="summary-value"
+                            th:text="${cita.sucursal}">
+                    </span>
+
+                </div>
+
+                <div class="summary-item">
+
+                    <span class="summary-label">
+                        Especialidad
+                    </span>
+
+                    <span
+                            class="summary-value"
+                            th:text="${cita.especialidad}">
+                    </span>
+
+                </div>
+
+                <div class="summary-item">
+
+                    <span class="summary-label">
+                        Médico actual
+                    </span>
+
+                    <span
+                            class="summary-value"
+                            th:text="${cita.medico}">
+                    </span>
+
+                </div>
+
+                <div class="summary-item">
+
+                    <span class="summary-label">
+                        Fecha y hora
+                    </span>
+
+                    <span
+                            class="summary-value"
+                            th:text="${#temporals.format(
+                                cita.fechaHora,
+                                'dd/MM/yyyy HH:mm'
+                            )}">
+                    </span>
+
+                </div>
+
+                <div class="summary-item">
+
+                    <span class="summary-label">
+                        Estado
+                    </span>
+
+                    <span
+                            class="status-badge status-confirmed"
+                            th:if="${cita.estado == 'CONFIRMADA'}">
+                        CONFIRMADA
+                    </span>
+
+                    <span
+                            class="status-badge status-present"
+                            th:if="${cita.estado == 'PACIENTE_PRESENTE'}">
+                        PACIENTE PRESENTE
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <section class="form-card">
+
+        <div class="card-header">
+
+            <h3>
+                Nuevo médico
+            </h3>
+
+            <p>
+                Solo se muestran médicos de la misma
+                sucursal y especialidad que estén disponibles
+                en el horario de la cita.
+            </p>
+
+        </div>
+
+        <div class="form-content">
+
+            <div
+                    class="empty-doctors"
+                    th:if="${#lists.isEmpty(medicos)}">
+
+                No hay médicos disponibles para reasignar
+                esta cita en el horario seleccionado.
+
+            </div>
+
+            <form
+                    th:action="@{/recepcion/citas/{id}/reasignar(
+                        id=${cita.citaId}
+                    )}"
+                    method="post">
+
+                <div
+                        class="form-group"
+                        th:if="${!#lists.isEmpty(medicos)}">
+
+                    <label for="medicoId">
+                        Médico disponible
+                    </label>
+
+                    <select
+                            id="medicoId"
+                            name="medicoId"
+                            required>
+
+                        <option value="">
+                            Seleccione un médico
+                        </option>
+
+                        <option
+                                th:each="medico : ${medicos}"
+                                th:value="${medico.id}"
+                                th:text="${medico.nombre}">
+                        </option>
+
+                    </select>
+
+                    <div class="helper">
+                        La lista ya considera sucursal,
+                        especialidad, horario y disponibilidad.
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="motivo">
+                        Motivo de la reasignación
+                        (opcional)
+                    </label>
+
+                    <textarea
+                            id="motivo"
+                            name="motivo"
+                            maxlength="500"
+                            placeholder="Ejemplo: médico no disponible por cambio de turno.">
+                    </textarea>
+
+                    <div class="helper">
+                        Puede dejar este campo vacío.
+                        Si se proporciona, quedará registrado
+                        en auditoría.
+                    </div>
+
+                </div>
+
+                <div class="actions">
+
+                    <a
+                            class="btn btn-secondary"
+                            th:href="@{/recepcion(
+                                tipoBusqueda='CITA',
+                                criterio=${cita.numeroCita}
+                            )}">
+                        Cancelar
+                    </a>
+
+                    <button
+                            class="btn btn-primary"
+                            type="submit"
+                            th:disabled="${#lists.isEmpty(medicos)}">
+                        Confirmar Reasignación
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </section>
+
+</main>
+
+</body>
+
+</html>

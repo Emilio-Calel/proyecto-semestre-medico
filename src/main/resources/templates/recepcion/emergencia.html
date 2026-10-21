@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Registrar Emergencia</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f8f9;
+            color: #1f2933;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            min-height: 74px;
+            padding: 0 34px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            background:
+                    linear-gradient(
+                            135deg,
+                            #0f6f7a,
+                            #1596a3
+                    );
+
+            color: #ffffff;
+
+            box-shadow:
+                    0 3px 12px
+                    rgba(15, 80, 90, 0.15);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 12px;
+
+            background:
+                    rgba(255, 255, 255, 0.15);
+
+            font-size: 22px;
+        }
+
+        .brand-text h1 {
+            font-size: 20px;
+            margin-bottom: 3px;
+        }
+
+        .brand-text span {
+            font-size: 12px;
+
+            color:
+                    rgba(255, 255, 255, 0.8);
+        }
+
+        .back-link {
+            color: #ffffff;
+            text-decoration: none;
+
+            border:
+                    1px solid
+                    rgba(255, 255, 255, 0.3);
+
+            background:
+                    rgba(255, 255, 255, 0.12);
+
+            padding: 10px 15px;
+            border-radius: 9px;
+
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 720px;
+
+            margin: 0 auto;
+            padding: 42px 24px;
+        }
+
+        .page-header {
+            margin-bottom: 24px;
+        }
+
+        .page-label {
+            display: inline-block;
+
+            background: #fde8e8;
+            color: #b42318;
+
+            padding: 7px 11px;
+            border-radius: 20px;
+
+            font-size: 12px;
+            font-weight: bold;
+
+            margin-bottom: 12px;
+        }
+
+        .page-header h2 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .page-header p {
+            color: #718087;
+            line-height: 1.6;
+        }
+
+        .alert-error {
+            padding: 14px 16px;
+
+            border-radius: 10px;
+            margin-bottom: 20px;
+
+            background: #fff1f1;
+            border: 1px solid #efb6b6;
+
+            color: #9b1c1c;
+        }
+
+        .form-card {
+            background: #ffffff;
+
+            border:
+                    1px solid
+                    #e1eaec;
+
+            border-radius: 18px;
+
+            box-shadow:
+                    0 8px 24px
+                    rgba(30, 70, 80, 0.07);
+
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 22px 24px;
+
+            border-bottom:
+                    1px solid
+                    #e7eef0;
+        }
+
+        .card-header h3 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .card-header p {
+            color: #7d8b91;
+            font-size: 13px;
+        }
+
+        .form-content {
+            padding: 26px 24px;
+        }
+
+        .form-group {
+            margin-bottom: 22px;
+        }
+
+        label {
+            display: block;
+
+            font-size: 14px;
+            font-weight: bold;
+
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+
+            padding: 13px 14px;
+
+            border:
+                    1px solid
+                    #cad7da;
+
+            border-radius: 10px;
+
+            font-size: 14px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #1596a3;
+
+            box-shadow:
+                    0 0 0 3px
+                    rgba(21, 150, 163, 0.12);
+        }
+
+        .helper {
+            margin-top: 7px;
+
+            color: #87949a;
+            font-size: 12px;
+        }
+
+        .emergency-note {
+            background: #fff5f4;
+
+            border:
+                    1px solid
+                    #f0c6c2;
+
+            color: #8a2d24;
+
+            padding: 14px 16px;
+
+            border-radius: 10px;
+
+            margin-bottom: 22px;
+
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn {
+            border: none;
+
+            border-radius: 10px;
+
+            padding: 12px 18px;
+
+            font-size: 14px;
+            font-weight: bold;
+
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .btn-secondary {
+            background: #edf2f3;
+            color: #47575d;
+
+            border:
+                    1px solid
+                    #d7e0e2;
+        }
+
+        .btn-danger {
+            color: #ffffff;
+
+            background:
+                    linear-gradient(
+                            135deg,
+                            #b42318,
+                            #d64536
+                    );
+        }
+
+        @media (max-width: 600px) {
+
+            .topbar {
+                padding: 14px 18px;
+            }
+
+            .container {
+                padding: 30px 14px;
+            }
+
+            .actions {
+                flex-direction: column-reverse;
+            }
+
+            .btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <div class="brand">
+
+        <div class="brand-icon">
+            🚨
+        </div>
+
+        <div class="brand-text">
+
+            <h1>
+                Registrar Emergencia
+            </h1>
+
+            <span>
+                Atención prioritaria
+            </span>
+
+        </div>
+
+    </div>
+
+    <a
+            class="back-link"
+            th:href="@{/recepcion}">
+        Volver a Recepción
+    </a>
+
+</header>
+
+<main class="container">
+
+    <section class="page-header">
+
+        <span class="page-label">
+            EMERGENCIA
+        </span>
+
+        <h2>
+            Registro de paciente de emergencia
+        </h2>
+
+        <p>
+            Ingrese los datos básicos del paciente.
+            La atención continuará directamente hacia
+            toma de signos vitales.
+        </p>
+
+    </section>
+
+    <div
+            class="alert-error"
+            th:if="${error}">
+
+        <strong
+                th:text="${error}">
+        </strong>
+
+    </div>
+
+    <section class="form-card">
+
+        <div class="card-header">
+
+            <h3>
+                Datos del paciente
+            </h3>
+
+            <p>
+                Para una emergencia únicamente se requieren
+                nombre y DPI.
+            </p>
+
+        </div>
+
+        <div class="form-content">
+
+            <div class="emergency-note">
+
+                Este registro será clasificado con prioridad
+                de EMERGENCIA y quedará disponible
+                inmediatamente para toma de signos vitales.
+
+            </div>
+
+            <form
+                    th:action="@{/recepcion/emergencia}"
+                    th:object="${emergenciaForm}"
+                    method="post">
+
+                <div class="form-group">
+
+                    <label for="nombreCompleto">
+                        Nombre completo
+                    </label>
+
+                    <input
+                            id="nombreCompleto"
+                            type="text"
+                            th:field="*{nombreCompleto}"
+                            maxlength="100"
+                            autocomplete="off">
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="dpi">
+                        DPI
+                    </label>
+
+                    <input
+                            id="dpi"
+                            type="text"
+                            th:field="*{dpi}"
+                            maxlength="13"
+                            inputmode="numeric"
+                            autocomplete="off">
+
+                    <div class="helper">
+                        Ingrese exactamente 13 dígitos numéricos.
+                    </div>
+
+                </div>
+
+                <div class="actions">
+
+                    <a
+                            class="btn btn-secondary"
+                            th:href="@{/recepcion}">
+                        Cancelar
+                    </a>
+
+                    <button
+                            class="btn btn-danger"
+                            type="submit">
+                        Registrar Emergencia
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </section>
+
+</main>
+
+</body>
+
+</html>

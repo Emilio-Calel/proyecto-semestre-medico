@@ -1,6 +1,8 @@
 package com.example.proyecto_semestre_medico.repository;
 
 import com.example.proyecto_semestre_medico.model.Cita;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -87,33 +89,34 @@ public interface CitaRepository
     List<Cita> listarPacientesPresentes();
 
     @Query("""
-    SELECT c
-    FROM Cita c
-    JOIN FETCH c.paciente
-    JOIN FETCH c.sucursal
-    JOIN FETCH c.especialidad
-    JOIN FETCH c.medico m
-    JOIN FETCH m.personal
-    JOIN FETCH c.estadoCita
-    WHERE c.estadoCita.codigo IN (
-        'PACIENTE_PRESENTE',
-        'SIGNOS_VITALES'
-    )
-    ORDER BY c.fechaHoraInicio ASC
+SELECT c
+FROM Cita c
+JOIN FETCH c.paciente
+JOIN FETCH c.sucursal
+LEFT JOIN FETCH c.especialidad
+LEFT JOIN FETCH c.medico m
+LEFT JOIN FETCH m.personal
+JOIN FETCH c.estadoCita
+WHERE c.estadoCita.codigo IN (
+    'PACIENTE_PRESENTE',
+    'SIGNOS_VITALES'
+)
+ORDER BY c.prioridadEmergencia DESC,
+         c.fechaHoraInicio ASC
 """)
     List<Cita> listarPacientesParaEnfermeria();
 
 
     @Query("""
-    SELECT c
-    FROM Cita c
-    JOIN FETCH c.paciente
-    JOIN FETCH c.sucursal
-    JOIN FETCH c.especialidad
-    JOIN FETCH c.medico m
-    JOIN FETCH m.personal p
-    JOIN FETCH c.estadoCita
-    WHERE c.id = :citaId
+SELECT c
+FROM Cita c
+JOIN FETCH c.paciente
+JOIN FETCH c.sucursal
+LEFT JOIN FETCH c.especialidad
+LEFT JOIN FETCH c.medico m
+LEFT JOIN FETCH m.personal
+JOIN FETCH c.estadoCita
+WHERE c.id = :citaId
 """)
     Optional<Cita> buscarCitaCompletaPorId(
             @Param("citaId") Long citaId
@@ -205,6 +208,48 @@ public interface CitaRepository
     List<Cita> listarCitasPaciente(
             @Param("nombreUsuario")
             String nombreUsuario
+    );
+
+    @Query("""
+    SELECT c
+    FROM Cita c
+    JOIN FETCH c.paciente
+    JOIN FETCH c.sucursal s
+    LEFT JOIN FETCH c.especialidad
+    LEFT JOIN FETCH c.medico m
+    LEFT JOIN FETCH m.personal
+    JOIN FETCH c.estadoCita
+    WHERE c.estadoCita.codigo = 'EN_ESPERA'
+      AND (
+          c.medico.id = :medicoId
+          OR (
+              c.prioridadEmergencia = true
+              AND c.medico IS NULL
+              AND s.id = :sucursalId
+          )
+      )
+    ORDER BY c.prioridadEmergencia DESC,
+             c.fechaHoraInicio ASC
+""")
+    List<Cita> listarEnEsperaParaMedico(
+            @Param("medicoId") Long medicoId,
+            @Param("sucursalId") Long sucursalId
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+    SELECT c
+    FROM Cita c
+    JOIN FETCH c.paciente
+    JOIN FETCH c.sucursal
+    LEFT JOIN FETCH c.especialidad
+    LEFT JOIN FETCH c.medico m
+    LEFT JOIN FETCH m.personal
+    JOIN FETCH c.estadoCita
+    WHERE c.id = :citaId
+""")
+    Optional<Cita> buscarParaIniciarConsulta(
+            @Param("citaId") Long citaId
     );
 }
 

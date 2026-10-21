@@ -505,8 +505,10 @@
 
                 <span
                         class="patient-value"
-                        th:text="${cita.especialidad.nombre}">
-                </span>
+                        th:text="${cita.especialidad != null
+                ? cita.especialidad.nombre
+                : 'Pendiente de asignación'}">
+</span>
 
             </div>
 
@@ -518,9 +520,10 @@
 
                 <span
                         class="patient-value"
-                        th:text="${cita.medico.personal.nombreCompleto}">
-                </span>
-
+                        th:text="${cita.medico != null
+                ? cita.medico.personal.nombreCompleto
+                : 'Pendiente de asignación'}">
+</span>
             </div>
 
             <div class="patient-item">

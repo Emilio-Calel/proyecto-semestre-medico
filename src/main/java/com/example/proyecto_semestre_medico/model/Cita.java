@@ -28,12 +28,16 @@ public class Cita {
     @JoinColumn(name = "sucursal_id", nullable = false)
     private Sucursal sucursal;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "especialidad_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "especialidad_id"
+    )
     private Especialidad especialidad;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "medico_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "medico_id"
+    )
     private Medico medico;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -79,6 +83,11 @@ public class Cita {
             nullable = false
     )
     private Boolean prioridadEmergencia = false;
+
+    @Column(
+            name = "fecha_hora_llegada"
+    )
+    private LocalDateTime fechaHoraLlegada;
 
     /*
      * =========================================================
@@ -325,5 +334,16 @@ public class Cita {
     ) {
         this.fechaRecordatorioSeguimiento =
                 fechaRecordatorioSeguimiento;
+    }
+
+    public LocalDateTime getFechaHoraLlegada() {
+        return fechaHoraLlegada;
+    }
+
+    public void setFechaHoraLlegada(
+            LocalDateTime fechaHoraLlegada
+    ) {
+        this.fechaHoraLlegada =
+                fechaHoraLlegada;
     }
 }

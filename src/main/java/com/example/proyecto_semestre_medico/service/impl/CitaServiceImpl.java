@@ -79,18 +79,63 @@ public class CitaServiceImpl implements CitaService {
             AgendarCitaDTO dto
     ) {
 
-        validar(dto);
-
-        Paciente paciente = pacienteRepository
-                .findByUsuarioNombreUsuarioIgnoreCase(
-                        nombreUsuarioPaciente
-                )
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El usuario autenticado no corresponde a un paciente"
+        Paciente paciente =
+                pacienteRepository
+                        .findByUsuarioNombreUsuarioIgnoreCase(
+                                nombreUsuarioPaciente
                         )
-                );
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "El usuario autenticado no corresponde a un paciente"
+                                )
+                        );
 
+        return agendarInternamente(
+                paciente,
+                dto,
+                "PORTAL"
+        );
+    }
+
+    @Override
+    @Transactional
+    public Cita agendarParaPaciente(
+            Long pacienteId,
+            AgendarCitaDTO dto
+    ) {
+
+        if (pacienteId == null) {
+
+            throw new IllegalArgumentException(
+                    "Paciente requerido para crear la cita."
+            );
+        }
+
+        Paciente paciente =
+                pacienteRepository
+                        .findById(
+                                pacienteId
+                        )
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Paciente no encontrado."
+                                )
+                        );
+
+        return agendarInternamente(
+                paciente,
+                dto,
+                "WALK_IN"
+        );
+    }
+
+    private Cita agendarInternamente(
+            Paciente paciente,
+            AgendarCitaDTO dto,
+            String origen
+    ) {
+
+        validar(dto);
         Sucursal sucursal = sucursalRepository
                 .findById(dto.getSucursalId())
                 .orElseThrow(() ->
@@ -253,7 +298,9 @@ public class CitaServiceImpl implements CitaService {
                         .trim()
         );
 
-        cita.setOrigen("PORTAL");
+        cita.setOrigen(
+                origen
+        );
 
         cita.setReservaExpiraEn(
                 LocalDateTime.now()
