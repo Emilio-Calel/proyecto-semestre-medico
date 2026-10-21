@@ -125,12 +125,19 @@ public class PagoController {
                         pago.getCita()
                 );
 
+                model.addAttribute(
+                        "mensajeExito",
+                        "¡Pago realizado exitosamente! Número de transacción: "
+                                + pago.getNumeroTransaccion()
+                                + ". Su cita ha sido confirmada."
+                );
+
                 return "pagos/comprobante";
             }
 
             model.addAttribute(
                     "error",
-                    "El pago fue rechazado por la pasarela."
+                    pago.getMensajePasarela()
             );
 
             Cita cita = citaRepository

@@ -210,7 +210,8 @@
         .actions {
             padding: 0 30px 30px;
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns:
+        repeat(3, 1fr);
             gap: 14px;
         }
 
@@ -376,7 +377,12 @@
                 ✓
             </div>
 
-            <h2>Pago aprobado</h2>
+            <h2>¡Pago Exitoso!</h2>
+
+            <p
+                    th:if="${mensajeExito}"
+                    th:text="${mensajeExito}">
+            </p>
 
             <p>
                 Su cita ha sido confirmada correctamente.
@@ -423,6 +429,58 @@
                             class="receipt-value"
                             th:text="${cita.numeroCita}">
                     </span>
+
+                </div>
+
+                <div class="receipt-item">
+
+    <span class="receipt-label">
+        Médico
+    </span>
+
+                    <span
+                            class="receipt-value"
+                            th:text="${cita.medico.personal.nombreCompleto}">
+    </span>
+
+                </div>
+
+                <div class="receipt-item">
+
+    <span class="receipt-label">
+        Especialidad
+    </span>
+
+                    <span
+                            class="receipt-value"
+                            th:text="${cita.especialidad.nombre}">
+    </span>
+
+                </div>
+
+                <div class="receipt-item">
+
+    <span class="receipt-label">
+        Fecha y hora de la cita
+    </span>
+
+                    <span
+                            class="receipt-value"
+                            th:text="${cita.fechaHoraInicio}">
+    </span>
+
+                </div>
+
+                <div class="receipt-item">
+
+    <span class="receipt-label">
+        Fecha y hora de la transacción
+    </span>
+
+                    <span
+                            class="receipt-value"
+                            th:text="${pago.fechaPago}">
+    </span>
 
                 </div>
 
@@ -535,8 +593,8 @@
         </div>
 
         <div class="notice">
-            Conserve este comprobante como referencia
-            de su pago y confirmación de cita.
+            Se ha enviado un comprobante de pago
+            al correo electrónico registrado del paciente.
         </div>
 
         <div class="actions">
@@ -550,8 +608,14 @@
 
             <a
                     class="btn btn-secondary"
-                    th:href="@{/}">
-                Volver al inicio
+                    th:href="@{/dashboard}">
+                Volver al Portal
+            </a>
+
+            <a
+                    class="btn btn-secondary"
+                    th:href="@{/citas/mis-citas}">
+                Ver Mis Citas
             </a>
 
         </div>

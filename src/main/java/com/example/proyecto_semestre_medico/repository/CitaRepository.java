@@ -187,6 +187,25 @@ public interface CitaRepository
             @Param("desde") LocalDateTime desde,
             @Param("hasta") LocalDateTime hasta
     );
+
+    @Query("""
+    SELECT c
+    FROM Cita c
+    JOIN FETCH c.paciente p
+    JOIN FETCH p.usuario u
+    JOIN FETCH c.sucursal
+    JOIN FETCH c.especialidad
+    JOIN FETCH c.medico m
+    JOIN FETCH m.personal
+    JOIN FETCH c.estadoCita
+    WHERE LOWER(u.nombreUsuario) =
+          LOWER(:nombreUsuario)
+    ORDER BY c.fechaHoraInicio DESC
+""")
+    List<Cita> listarCitasPaciente(
+            @Param("nombreUsuario")
+            String nombreUsuario
+    );
 }
 
 

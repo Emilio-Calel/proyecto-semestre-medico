@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.proyecto_semestre_medico.service.AlmacenamientoDocumentoService;
 import com.example.proyecto_semestre_medico.service.AntivirusService;
+import java.util.List;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -537,5 +538,25 @@ public class CitaServiceImpl implements CitaService {
         }
 
         return cita;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Cita> listarMisCitas(
+            String nombreUsuarioPaciente
+    ) {
+
+        if (nombreUsuarioPaciente == null
+                || nombreUsuarioPaciente.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Paciente autenticado requerido"
+            );
+        }
+
+        return citaRepository
+                .listarCitasPaciente(
+                        nombreUsuarioPaciente
+                );
     }
 }

@@ -81,6 +81,9 @@ public class Pago {
         }
     }
 
+    @Transient
+    private String mensajePasarela;
+
     @Column(
             nullable = false,
             length = 20
@@ -174,5 +177,16 @@ public class Pago {
 
     public void setCanal(String canal) {
         this.canal = canal;
+    }
+
+    public String getMensajePasarela() {
+        return mensajePasarela;
+    }
+
+    public void setMensajePasarela(
+            String mensajePasarela
+    ) {
+        this.mensajePasarela =
+                mensajePasarela;
     }
 }

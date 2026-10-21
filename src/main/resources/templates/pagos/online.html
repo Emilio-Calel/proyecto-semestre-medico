@@ -441,6 +441,30 @@
             font-size: 14px;
             line-height: 1.5;
         }
+
+        .field-error {
+            display: none;
+            margin-top: 7px;
+            color: #c62828;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .field-error.visible {
+            display: block;
+        }
+
+        .input-error {
+            border-color: #c62828 !important;
+            background: #fff7f7 !important;
+        }
+
+        .pay-button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
     </style>
 </head>
 
@@ -636,9 +660,11 @@
             </p>
 
             <form
+                    id="formPago"
                     th:action="@{/pagos/online/procesar}"
                     th:object="${pagoForm}"
-                    method="post">
+                    method="post"
+                    novalidate>
 
                 <input
                         type="hidden"
@@ -674,8 +700,14 @@
                     </div>
 
                     <small class="helper-text">
+
                         Ingrese entre 13 y 19 dígitos.
                     </small>
+
+                    <span
+                            id="errorNumeroTarjeta"
+                            class="field-error">
+</span>
 
                 </div>
 
@@ -684,6 +716,10 @@
                     <label for="nombreTitular">
                         Nombre del titular *
                     </label>
+                    <span
+                            id="errorNombreTitular"
+                            class="field-error">
+</span>
 
                     <input
                             type="text"
@@ -704,6 +740,10 @@
                         <label for="expiracion">
                             Expiración *
                         </label>
+                        <span
+                                id="errorExpiracion"
+                                class="field-error">
+</span>
 
                         <input
                                 type="text"
@@ -721,6 +761,10 @@
                         <label for="cvv">
                             CVV *
                         </label>
+                        <span
+                                id="errorCvv"
+                                class="field-error">
+</span>
 
                         <input
                                 type="password"
@@ -739,14 +783,14 @@
 
                 <div class="security-info">
 
-                    <span class="security-icon">
-                        🔒
-                    </span>
+    <span class="security-icon">
+        🔒
+    </span>
 
                     <span>
-                        Los datos completos de la tarjeta y el CVV
-                        no se almacenan en el sistema.
-                    </span>
+        Tu información de pago está protegida.
+        El CVV nunca se almacena ni se envía.
+    </span>
 
                 </div>
 
@@ -787,14 +831,144 @@
             "numeroTarjeta"
         );
 
+    const formPago =
+        document.getElementById(
+            "formPago"
+        );
+
+    const titular =
+        document.getElementById(
+            "nombreTitular"
+        );
+
+    const botonPagar =
+        document.querySelector(
+            ".pay-button"
+        );
+
+    function mostrarError(
+        input,
+        errorId,
+        mensaje
+    ) {
+
+        input.classList.add(
+            "input-error"
+        );
+
+        const error =
+            document.getElementById(
+                errorId
+            );
+
+        error.textContent =
+            mensaje;
+
+        error.classList.add(
+            "visible"
+        );
+    }
+
+    function limpiarError(
+        input,
+        errorId
+    ) {
+
+        input.classList.remove(
+            "input-error"
+        );
+
+        const error =
+            document.getElementById(
+                errorId
+            );
+
+        error.textContent = "";
+
+        error.classList.remove(
+            "visible"
+        );
+    }
+
     tarjeta.addEventListener(
         "input",
         function () {
 
-            tarjeta.value =
+            const numero =
                 tarjeta.value
                     .replace(/\D/g, "")
                     .slice(0, 19);
+
+            tarjeta.value =
+                numero;
+
+            /*
+             * Actualizamos siempre el número real.
+             * Así no queda guardada una tarjeta
+             * utilizada en una prueba anterior.
+             */
+            tarjeta.dataset.numeroReal =
+                numero;
+
+            limpiarError(
+                tarjeta,
+                "errorNumeroTarjeta"
+            );
+        }
+    );
+
+    tarjeta.addEventListener(
+        "blur",
+        function () {
+
+            const numeroReal =
+                tarjeta.dataset.numeroReal
+                || tarjeta.value.replace(/\D/g, "");
+
+            if (numeroReal.length >= 4) {
+
+                tarjeta.dataset.numeroReal =
+                    numeroReal;
+
+                tarjeta.value =
+                    "•••• •••• •••• "
+                    + numeroReal.slice(-4);
+            }
+        }
+    );
+
+    tarjeta.addEventListener(
+        "focus",
+        function () {
+
+            const numeroReal =
+                tarjeta.dataset.numeroReal;
+
+            if (numeroReal) {
+
+                tarjeta.value =
+                    numeroReal;
+
+                /*
+                 * Seleccionamos todo para que sea
+                 * fácil sustituir una tarjeta por otra.
+                 */
+                tarjeta.select();
+            }
+        }
+    );
+
+    titular.addEventListener(
+        "input",
+        function () {
+
+            titular.value =
+                titular.value.toUpperCase();
+
+            limpiarError(
+                titular,
+                "errorNombreTitular"
+            );
         }
     );
 
@@ -819,10 +993,16 @@
                     + "/"
                     + valor.substring(2);
             }
+            limpiarError(
+                expiracion,
+                "errorExpiracion"
+            );
 
             expiracion.value =
                 valor;
         }
+
+
     );
 
     const cvv =
@@ -838,6 +1018,176 @@
                 cvv.value
                     .replace(/\D/g, "")
                     .slice(0, 4);
+
+            limpiarError(
+                cvv,
+                "errorCvv"
+            );
+        }
+    );
+
+    function luhnValido(numero) {
+
+        let suma = 0;
+        let duplicar = false;
+
+        for (
+            let i = numero.length - 1;
+            i >= 0;
+            i--
+        ) {
+
+            let digito =
+                Number(
+                    numero.charAt(i)
+                );
+
+            if (duplicar) {
+
+                digito *= 2;
+
+                if (digito > 9) {
+                    digito -= 9;
+                }
+            }
+
+            suma += digito;
+            duplicar = !duplicar;
+        }
+
+        return suma % 10 === 0;
+    }
+
+    function expiracionValida(valor) {
+
+        if (!/^(0[1-9]|1[0-2])\/[0-9]{2}$/.test(valor)) {
+            return false;
+        }
+
+        const partes =
+            valor.split("/");
+
+        const mes =
+            Number(partes[0]);
+
+        const anio =
+            2000
+            + Number(partes[1]);
+
+        const ahora =
+            new Date();
+
+        const mesActual =
+            ahora.getMonth() + 1;
+
+        const anioActual =
+            ahora.getFullYear();
+
+        return anio > anioActual
+            || (
+                anio === anioActual
+                && mes >= mesActual
+            );
+    }
+
+    formPago.addEventListener(
+        "submit",
+        function (event) {
+
+            let formularioValido = true;
+
+            const numeroReal =
+                tarjeta.dataset.numeroReal
+                || tarjeta.value.replace(/\D/g, "");
+
+            tarjeta.dataset.numeroReal =
+                numeroReal;
+
+            if (
+                !/^[0-9]{13,19}$/.test(
+                    numeroReal
+                )
+                || !luhnValido(
+                    numeroReal
+                )
+            ) {
+
+                mostrarError(
+                    tarjeta,
+                    "errorNumeroTarjeta",
+                    "El número de tarjeta debe contener entre 13 y 19 dígitos y ser válido."
+                );
+
+                formularioValido = false;
+            }
+
+            const nombre =
+                titular.value.trim();
+
+            if (
+                !/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]{5,100}$/.test(
+                    nombre
+                )
+            ) {
+
+                mostrarError(
+                    titular,
+                    "errorNombreTitular",
+                    "El nombre del titular debe contener entre 5 y 100 caracteres alfabéticos sin especiales."
+                );
+
+                formularioValido = false;
+            }
+
+            if (
+                !expiracionValida(
+                    expiracion.value
+                )
+            ) {
+
+                mostrarError(
+                    expiracion,
+                    "errorExpiracion",
+                    "La fecha de vencimiento debe estar en formato MM/AA y la tarjeta no debe estar vencida."
+                );
+
+                formularioValido = false;
+            }
+
+            if (
+                !/^[0-9]{3,4}$/.test(
+                    cvv.value
+                )
+            ) {
+
+                mostrarError(
+                    cvv,
+                    "errorCvv",
+                    "El CVV debe contener 3 ó 4 dígitos numéricos."
+                );
+
+                formularioValido = false;
+            }
+
+            if (!formularioValido) {
+
+                event.preventDefault();
+
+                return;
+            }
+
+            /*
+             * Restauramos el número real antes
+             * de enviarlo al servidor.
+             */
+            tarjeta.value =
+                numeroReal;
+
+            botonPagar.disabled =
+                true;
+
+            botonPagar.textContent =
+                "Procesando pago...";
         }
     );
 
@@ -891,7 +1241,8 @@
             ).textContent =
                 "El tiempo para confirmar su cita ha expirado. "
                 + "El horario seleccionado ha sido liberado. "
-                + "Por favor, seleccione un nuevo horario.";
+                + "Por favor, seleccione un nuevo horario. "
+                + "Será redirigido en unos segundos..."
 
             const botonPagar =
                 document.querySelector(
@@ -922,7 +1273,7 @@
                         + /*[[${cita.id}]]*/ 0;
 
                 },
-                2500
+                4000
             );
 
             return;

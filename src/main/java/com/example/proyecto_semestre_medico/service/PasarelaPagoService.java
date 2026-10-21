@@ -14,7 +14,8 @@ public interface PasarelaPagoService {
 
     record ResultadoPago(
             boolean aprobado,
-            String referencia
+            String referencia,
+            String codigoResultado
     ) {
     }
 }

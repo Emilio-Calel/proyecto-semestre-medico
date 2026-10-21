@@ -19,20 +19,6 @@ public class PasarelaPagoSimuladaServiceImpl
             BigDecimal monto
     ) {
 
-        /*
-         * Simulación para proyecto académico.
-         *
-         * Regla:
-         * si la tarjeta termina en 0000,
-         * se rechaza.
-         *
-         * Cualquier otra tarjeta válida
-         * se aprueba.
-         */
-
-        boolean aprobado =
-                !numeroTarjeta.endsWith("0000");
-
         String referencia =
                 "SIM-"
                         + UUID.randomUUID()
@@ -40,9 +26,65 @@ public class PasarelaPagoSimuladaServiceImpl
                         .substring(0, 8)
                         .toUpperCase();
 
+        /*
+         * Tarjetas especiales de prueba
+         * para simular respuestas de la pasarela.
+         */
+
+        if ("4000000000009995".equals(
+                numeroTarjeta
+        )) {
+
+            return new ResultadoPago(
+                    false,
+                    referencia,
+                    "FONDOS_INSUFICIENTES"
+            );
+        }
+
+        if ("4000000000000002".equals(
+                numeroTarjeta
+        )) {
+
+            return new ResultadoPago(
+                    false,
+                    referencia,
+                    "TARJETA_INVALIDA"
+            );
+        }
+
+        if ("4000000000000069".equals(
+                numeroTarjeta
+        )) {
+
+            return new ResultadoPago(
+                    false,
+                    referencia,
+                    "TARJETA_VENCIDA"
+            );
+        }
+
+        if ("4000000000000119".equals(
+                numeroTarjeta
+        )) {
+
+            return new ResultadoPago(
+                    false,
+                    referencia,
+                    "ERROR_COMUNICACION"
+            );
+        }
+
+        /*
+         * Cualquier otra tarjeta que haya
+         * superado las validaciones del sistema
+         * se considera aprobada.
+         */
+
         return new ResultadoPago(
-                aprobado,
-                referencia
+                true,
+                referencia,
+                "APROBADO"
         );
     }
 }

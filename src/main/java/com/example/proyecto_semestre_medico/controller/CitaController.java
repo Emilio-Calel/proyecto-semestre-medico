@@ -176,5 +176,22 @@ public class CitaController {
                 + "&paso=4";
     }
 
+    @GetMapping("/citas/mis-citas")
+    @PreAuthorize("hasRole('PACIENTE')")
+    public String misCitas(
+            Authentication authentication,
+            Model model
+    ) {
+
+        model.addAttribute(
+                "citas",
+                citaService.listarMisCitas(
+                        authentication.getName()
+                )
+        );
+
+        return "citas/mis-citas";
+    }
+
 
 }

@@ -417,6 +417,36 @@
 
         <article
                 class="module-card"
+                sec:authorize="hasRole('PACIENTE')">
+
+            <div class="module-icon">
+                📋
+            </div>
+
+            <h2>Mis Citas</h2>
+
+            <p>
+                Consulte sus citas médicas registradas,
+                próximos encuentros y el estado actual
+                de cada cita.
+            </p>
+
+            <a
+                    class="module-link"
+                    th:href="@{/citas/mis-citas}">
+
+                <span>Ver Mis Citas</span>
+
+                <span class="arrow">
+            →
+        </span>
+
+            </a>
+
+        </article>
+
+        <article
+                class="module-card"
                 sec:authorize="hasAuthority('USER_VIEW')">
 
             <div class="module-icon">
