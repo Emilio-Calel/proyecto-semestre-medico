@@ -314,6 +314,7 @@ public class SucursalServiceImpl
     }
 
     @Override
+    @Transactional
     @CacheEvict(
             value = {
                     "sucursalesActivas",

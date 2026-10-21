@@ -907,9 +907,12 @@
                     "Reserva expirada";
             }
 
-            clearInterval(
-                intervaloReserva
-            );
+            if (intervaloReserva !== null) {
+
+                clearInterval(
+                    intervaloReserva
+                );
+            }
 
             setTimeout(
                 function () {
@@ -946,9 +949,11 @@
                 .padStart(2, "0");
     }
 
+    let intervaloReserva = null;
+
     actualizarTemporizador();
 
-    const intervaloReserva =
+    intervaloReserva =
         setInterval(
             actualizarTemporizador,
             1000
