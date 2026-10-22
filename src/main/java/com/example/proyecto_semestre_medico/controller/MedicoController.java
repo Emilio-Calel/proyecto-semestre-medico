@@ -98,6 +98,21 @@ public class MedicoController {
      * =========================================================
      */
 
+    @GetMapping("/resultados-laboratorio")
+    public String resultadosLaboratorio(Authentication authentication, Model model) {
+        model.addAttribute("ordenes", ordenLaboratorioService
+                .listarOrdenesDelMedico(authentication.getName()));
+        return "medico/resultados-laboratorio";
+    }
+
+    @GetMapping("/resultados-laboratorio/{ordenId}")
+    public String resultadosLaboratorioOrden(@PathVariable Long ordenId,
+                                             Authentication authentication, Model model) {
+        model.addAttribute("orden", ordenLaboratorioService
+                .obtenerResultadosPublicados(ordenId, authentication.getName()));
+        return "medico/resultados-laboratorio";
+    }
+
     @PostMapping("/consulta/iniciar/{citaId}")
     public String iniciarConsulta(
             @PathVariable Long citaId,

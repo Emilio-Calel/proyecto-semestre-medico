@@ -590,6 +590,15 @@
 
         </article>
 
+        <article class="module-card" sec:authorize="hasRole('LABORATORISTA')">
+            <div class="module-icon">⚗</div>
+            <h2>Órdenes de Laboratorio</h2>
+            <p>Consulte las órdenes y registre y publique los resultados de laboratorio.</p>
+            <a class="module-link" th:href="@{/laboratorio}">
+                <span>Ir a Laboratorio</span>
+                <span class="arrow">→</span>
+            </a>
+        </article>
     </section>
 
 </main>

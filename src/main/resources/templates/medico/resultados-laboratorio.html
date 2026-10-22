@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados de laboratorio | Panel Médico</title>
+    <style>
+        body { font-family: "Segoe UI", Arial, sans-serif; margin: 0; color: #203438; background: #f4f8f9; }
+        header { padding: 20px 30px; background: #0f6f7a; color: white; }
+        header a { color: white; }
+        main { max-width: 1100px; margin: 24px auto; padding: 0 20px; }
+        article { background: white; border: 1px solid #dbe8ea; border-radius: 10px; padding: 20px; margin: 16px 0; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; border-bottom: 1px solid #dbe8ea; text-align: left; }
+        a { color: #0f6f7a; }
+        .publicado { color: #146c43; font-weight: bold; }
+        .fuera-rango { color: #a33227; background: #fff0ee; padding: 12px; border-radius: 8px; }
+        .notas { white-space: pre-wrap; overflow-wrap: anywhere; }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Resultados de laboratorio</h1>
+    <a th:href="@{/medico}">Volver al Panel Médico</a>
+</header>
+<main>
+    <section th:if="${ordenes != null}">
+        <h2>Órdenes del médico tratante</h2>
+        <p>Consulte los resultados publicados de sus órdenes de laboratorio.</p>
+        <p th:if="${#lists.isEmpty(ordenes)}">No tiene órdenes de laboratorio registradas.</p>
+        <table th:unless="${#lists.isEmpty(ordenes)}">
+            <thead><tr><th>Orden</th><th>Paciente</th><th>Estado</th><th>Resultados</th></tr></thead>
+            <tbody>
+            <tr th:each="item : ${ordenes}">
+                <td><span th:text="${item.numeroOrden}"></span>
+                    <span th:if="${item.externa}">Externa</span></td>
+                <td th:text="${item.paciente}"></td>
+                <td th:text="${item.estado}"></td>
+                <td><a th:href="@{/medico/resultados-laboratorio/{id}(id=${item.id})}">Ver resultados publicados</a></td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+    <section th:if="${orden != null}">
+        <a th:href="@{/medico/resultados-laboratorio}">Volver a mis órdenes</a>
+        <h2>Orden <span th:text="${orden.numeroOrden}"></span></h2>
+        <p>Paciente: <strong th:text="${orden.paciente}"></strong></p>
+        <p th:if="${orden.externa}">Externa</p>
+        <p th:if="${orden.notas != null}" class="notas">Notas de la orden: <span th:text="${orden.notas}"></span></p>
+        <p th:if="${#lists.isEmpty(orden.examenes)}">Esta orden todavía no tiene resultados publicados disponibles.</p>
+        <article th:each="examen : ${orden.examenes}">
+            <h3 th:text="${examen.nombre}"></h3>
+            <span class="publicado">Publicado</span>
+            <p>Valor del Resultado: <strong th:text="${examen.valorResultado}"></strong></p>
+            <p>Unidad: <span th:text="${examen.unidad}"></span></p>
+            <p>Fecha del Resultado: <span th:text="${#temporals.format(examen.fechaResultado, 'dd/MM/yyyy HH:mm')}"></span></p>
+            <p th:if="${examen.rangoReferencia != null}">Rango de referencia: <span th:text="${examen.rangoReferencia}"></span></p>
+            <div th:if="${examen.fueraRango}" class="fuera-rango">
+                <strong th:text="${'Fuera de rango' + (examen.rangoReferencia != null
+                    ? ' (' + examen.rangoReferencia + ')' : '')}">Fuera de rango</strong>
+                <p>Los resultados están fuera del rango de referencia normal. Requiere revisión.</p>
+            </div>
+            <p th:if="${examen.notasResultado != null}" class="notas">Notas del Resultado: <span th:text="${examen.notasResultado}"></span></p>
+        </article>
+    </section>
+</main>
+</body>
+</html>

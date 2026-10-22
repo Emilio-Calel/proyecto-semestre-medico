@@ -5,6 +5,7 @@ import com.example.proyecto_semestre_medico.model.*;
 import com.example.proyecto_semestre_medico.repository.*;
 import com.example.proyecto_semestre_medico.service.OrdenLaboratorioService;
 import org.springframework.stereotype.Service;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -283,6 +284,7 @@ public class OrdenLaboratorioServiceImpl
 
     @Override
     @Transactional(readOnly = true)
+    @PreAuthorize("hasRole('LABORATORISTA')")
     public List<OrdenLaboratorioListaDTO> listarOrdenes(
             String estado,
             String paciente,
@@ -306,12 +308,47 @@ public class OrdenLaboratorioServiceImpl
 
     @Override
     @Transactional(readOnly = true)
+    @PreAuthorize("hasRole('LABORATORISTA')")
     public OrdenLaboratorioDetalleDTO obtenerDetalle(
             Long ordenId
     ) {
 
-        OrdenLaboratorio orden =
-                obtenerOrden(ordenId);
+        return construirDetalle(obtenerOrden(ordenId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasRole('MEDICO') and #nombreUsuario == authentication.name")
+    public List<OrdenLaboratorioListaDTO> listarOrdenesDelMedico(String nombreUsuario) {
+        Medico medico = obtenerMedico(nombreUsuario);
+        return ordenLaboratorioRepository.findByMedicoIdOrderByFechaCreacionDesc(medico.getId())
+                .stream().map(this::convertirLista).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasRole('MEDICO') and #nombreUsuario == authentication.name")
+    public OrdenLaboratorioDetalleDTO obtenerResultadosPublicados(Long ordenId, String nombreUsuario) {
+        Medico medico = obtenerMedico(nombreUsuario);
+        OrdenLaboratorio orden = obtenerOrden(ordenId);
+        if (!medico.getId().equals(orden.getMedico().getId())) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "La orden no pertenece al médico autenticado.");
+        }
+        OrdenLaboratorioDetalleDTO dto = construirDetalle(orden);
+        // Los borradores no salen del servicio hacia el modelo de la vista médica.
+        dto.setExamenes(dto.getExamenes().stream()
+                .filter(examen -> Boolean.TRUE.equals(examen.getPublicado())).toList());
+        return dto;
+    }
+
+    private Medico obtenerMedico(String nombreUsuario) {
+        return medicoRepository.findByPersonalUsuarioNombreUsuario(nombreUsuario)
+                .orElseThrow(() -> new org.springframework.security.access.AccessDeniedException(
+                        "El usuario autenticado no está registrado como médico."));
+    }
+
+    private OrdenLaboratorioDetalleDTO construirDetalle(OrdenLaboratorio orden) {
 
         OrdenLaboratorioDetalleDTO dto =
                 new OrdenLaboratorioDetalleDTO();
@@ -360,7 +397,7 @@ public class OrdenLaboratorioServiceImpl
         List<OrdenLaboratorioDetalle> detalles =
                 ordenLaboratorioDetalleRepository
                         .findByOrdenLaboratorioId(
-                                ordenId
+                                orden.getId()
                         );
 
         List<ExamenOrdenDetalleDTO> examenes =
@@ -406,6 +443,8 @@ public class OrdenLaboratorioServiceImpl
                             .orElse(null);
 
             if (resultado != null) {
+
+                examenDto.setRangoReferencia(resultado.getRangoReferencia());
 
                 examenDto.setValorResultado(
                         resultado.getValorResultado()
@@ -460,6 +499,7 @@ public class OrdenLaboratorioServiceImpl
 
     @Override
     @Transactional
+    @PreAuthorize("hasRole('LABORATORISTA') and #nombreUsuario == authentication.name")
     public void guardarResultado(
             ResultadoLaboratorioFormDTO dto,
             String nombreUsuario
@@ -473,36 +513,7 @@ public class OrdenLaboratorioServiceImpl
             );
         }
 
-        OrdenLaboratorioDetalle detalle =
-                ordenLaboratorioDetalleRepository
-                        .findById(
-                                dto.getDetalleId()
-                        )
-                        .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "El examen de la orden no existe."
-                                )
-                        );
-
-        OrdenLaboratorio orden =
-                detalle.getOrdenLaboratorio();
-
-        /*
-         * Regla CU-09:
-         * no se pueden registrar resultados
-         * hasta que la orden haya sido pagada.
-         *
-         * CU-10 será quien cambie:
-         * PENDIENTE -> EN_PROCESO
-         */
-        if (!"EN_PROCESO".equals(
-                orden.getEstado()
-        )) {
-
-            throw new IllegalArgumentException(
-                    "La orden debe estar en estado EN_PROCESO para registrar resultados."
-            );
-        }
+        OrdenLaboratorioDetalle detalle = obtenerDetalleParaProcesar(dto.getOrdenId(), dto.getDetalleId());
 
         String valor =
                 limpiar(
@@ -527,6 +538,8 @@ public class OrdenLaboratorioServiceImpl
                     "La unidad del resultado es obligatoria."
             );
         }
+
+        validarCamposResultado(valor, unidad, dto.getFechaResultado(), dto.getNotas());
 
         Usuario usuario =
                 obtenerUsuario(
@@ -584,9 +597,7 @@ public class OrdenLaboratorioServiceImpl
         );
 
         resultado.setFechaResultado(
-                dto.getFechaResultado() != null
-                        ? dto.getFechaResultado()
-                        : LocalDateTime.now()
+                dto.getFechaResultado()
         );
 
         resultado.setFueraRango(
@@ -618,31 +629,16 @@ public class OrdenLaboratorioServiceImpl
 
     @Override
     @Transactional
+    @PreAuthorize("hasRole('LABORATORISTA') and #nombreUsuario == authentication.name")
     public void publicarResultado(
+            Long ordenId,
             Long detalleId,
             String nombreUsuario
     ) {
 
-        OrdenLaboratorioDetalle detalle =
-                ordenLaboratorioDetalleRepository
-                        .findById(detalleId)
-                        .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "El examen de la orden no existe."
-                                )
-                        );
-
+        OrdenLaboratorioDetalle detalle = obtenerDetalleParaProcesar(ordenId, detalleId);
         OrdenLaboratorio orden =
                 detalle.getOrdenLaboratorio();
-
-        if (!"EN_PROCESO".equals(
-                orden.getEstado()
-        )) {
-
-            throw new IllegalArgumentException(
-                    "Solo pueden publicarse resultados de órdenes EN_PROCESO."
-            );
-        }
 
         ResultadoLaboratorio resultado =
                 resultadoLaboratorioRepository
@@ -663,6 +659,9 @@ public class OrdenLaboratorioServiceImpl
                     "El resultado ya fue publicado."
             );
         }
+
+        validarCamposResultado(resultado.getValorResultado(), resultado.getUnidad(),
+                resultado.getFechaResultado(), resultado.getNotas());
 
         Usuario usuario =
                 obtenerUsuario(
@@ -729,6 +728,8 @@ public class OrdenLaboratorioServiceImpl
 
                 return;
             }
+            validarCamposResultado(resultado.getValorResultado(), resultado.getUnidad(),
+                    resultado.getFechaResultado(), resultado.getNotas());
         }
 
         orden.setEstado(
@@ -794,6 +795,45 @@ public class OrdenLaboratorioServiceImpl
     // =====================================================
     // HELPERS
     // =====================================================
+
+    private OrdenLaboratorioDetalle obtenerDetalleParaProcesar(Long ordenId, Long detalleId) {
+        if (ordenId == null || detalleId == null) {
+            throw new IllegalArgumentException("La orden y el examen son obligatorios.");
+        }
+        OrdenLaboratorio orden = ordenLaboratorioRepository.buscarParaProcesar(ordenId)
+                .orElseThrow(() -> new IllegalArgumentException("La orden de laboratorio no existe."));
+        OrdenLaboratorioDetalle detalle = ordenLaboratorioDetalleRepository.findById(detalleId)
+                .orElseThrow(() -> new IllegalArgumentException("El examen de la orden no existe."));
+        if (!ordenId.equals(detalle.getOrdenLaboratorio().getId())) {
+            throw new IllegalArgumentException("El examen no pertenece a la orden de laboratorio.");
+        }
+        if (Boolean.TRUE.equals(orden.getExterna())) {
+            throw new IllegalArgumentException("Las órdenes externas no se procesan en el laboratorio interno.");
+        }
+        if ("PENDIENTE".equals(orden.getEstado())) {
+            throw new IllegalArgumentException(
+                    "El pago debe estar completado antes de proceder con la toma de muestras.");
+        }
+        if (!"EN_PROCESO".equals(orden.getEstado())) {
+            throw new IllegalArgumentException("La orden debe estar en estado EN_PROCESO para procesar resultados.");
+        }
+        return detalle;
+    }
+
+    private void validarCamposResultado(String valor, String unidad, LocalDateTime fecha, String notas) {
+        if (limpiar(valor) == null || valor.length() > 500) {
+            throw new IllegalArgumentException("El valor del resultado es obligatorio y no debe superar 500 caracteres.");
+        }
+        if (limpiar(unidad) == null || unidad.length() > 50) {
+            throw new IllegalArgumentException("La unidad del resultado es obligatoria y no debe superar 50 caracteres.");
+        }
+        if (fecha == null) {
+            throw new IllegalArgumentException("La fecha del resultado es obligatoria.");
+        }
+        if (notas != null && notas.length() > 2000) {
+            throw new IllegalArgumentException("Las notas del resultado no deben superar 2000 caracteres.");
+        }
+    }
 
     private OrdenLaboratorio obtenerOrden(
             Long ordenId

@@ -28,12 +28,17 @@ public interface OrdenLaboratorioService {
             Long ordenId
     );
 
+    List<OrdenLaboratorioListaDTO> listarOrdenesDelMedico(String nombreUsuario);
+
+    OrdenLaboratorioDetalleDTO obtenerResultadosPublicados(Long ordenId, String nombreUsuario);
+
     void guardarResultado(
             ResultadoLaboratorioFormDTO dto,
             String nombreUsuario
     );
 
     void publicarResultado(
+            Long ordenId,
             Long detalleId,
             String nombreUsuario
     );

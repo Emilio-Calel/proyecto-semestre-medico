@@ -10,6 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 
 import org.springframework.web.bind.annotation.*;
 
@@ -140,6 +141,7 @@ public class LaboratorioController {
     public String guardarResultado(
             @ModelAttribute
             ResultadoLaboratorioFormDTO resultadoForm,
+            BindingResult bindingResult,
 
             Authentication authentication,
 
@@ -147,6 +149,10 @@ public class LaboratorioController {
     ) {
 
         try {
+
+            if (bindingResult.hasErrors()) {
+                throw new IllegalArgumentException("Los datos del resultado no son válidos. Revise la fecha y los campos ingresados.");
+            }
 
             ordenLaboratorioService
                     .guardarResultado(
@@ -157,7 +163,7 @@ public class LaboratorioController {
             redirectAttributes
                     .addFlashAttribute(
                             "mensaje",
-                            "Resultado guardado correctamente."
+                            "Resultado guardado exitosamente."
                     );
 
         } catch (IllegalArgumentException e) {
@@ -197,6 +203,7 @@ public class LaboratorioController {
 
             ordenLaboratorioService
                     .publicarResultado(
+                            ordenId,
                             detalleId,
                             authentication.getName()
                     );
@@ -204,7 +211,7 @@ public class LaboratorioController {
             redirectAttributes
                     .addFlashAttribute(
                             "mensaje",
-                            "Resultado publicado correctamente."
+                            "Resultado publicado exitosamente."
                     );
 
         } catch (IllegalArgumentException e) {

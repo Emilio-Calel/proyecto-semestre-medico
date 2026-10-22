@@ -772,7 +772,7 @@
 
                     <span th:if="${orden.externa}"
                           class="external-badge">
-                        EXTERNA
+                        Externa
                     </span>
 
                 </h2>
@@ -878,10 +878,7 @@
             </strong>
 
             <p>
-                El paciente debe realizar el pago en caja
-                antes de que laboratorio pueda registrar
-                resultados. CU-10 cambiará esta orden a
-                EN_PROCESO cuando el pago sea aprobado.
+                El pago debe estar completado antes de proceder con la toma de muestras.
             </p>
 
         </div>
@@ -984,7 +981,7 @@
 
             <span th:if="${examen.publicado}"
                   class="published-badge">
-                ✓ Publicado
+                Publicado
             </span>
 
 
@@ -1053,6 +1050,13 @@
 
             <!-- RESULTADO PUBLICADO -->
 
+            <div class="outside-warning range-warning"
+                 th:style="${examen.fueraRango} ? '' : 'display: none;'">
+                <span th:text="${'Fuera de rango' + (examen.rangoReferencia != null
+                    ? ' (' + examen.rangoReferencia + ')' : '')}">Fuera de rango</span>
+                <p>Los resultados están fuera del rango de referencia normal. Requiere revisión.</p>
+            </div>
+
             <div th:if="${examen.publicado}"
                  class="result-readonly">
 
@@ -1105,15 +1109,6 @@
                 </div>
 
 
-                <div th:if="${examen.fueraRango}"
-                     class="outside-warning">
-
-                    ⚠ Resultado marcado fuera del
-                    rango de referencia.
-
-                </div>
-
-
                 <div th:if="${examen.notasResultado != null}"
                      class="notes">
 
@@ -1132,6 +1127,7 @@
             <!-- FORMULARIO PARA EN_PROCESO -->
 
             <form th:if="${orden.estado == 'EN_PROCESO'
+                          and !orden.externa
                           and !examen.publicado}"
                   th:action="@{/laboratorio/resultado/guardar}"
                   method="post">
@@ -1153,7 +1149,7 @@
                     <div class="field">
 
                         <label>
-                            Valor del resultado *
+                            Valor del Resultado *
                         </label>
 
                         <input type="text"
@@ -1187,11 +1183,12 @@
                     <div class="field">
 
                         <label>
-                            Fecha del resultado
+                            Fecha del Resultado *
                         </label>
 
                         <input type="datetime-local"
                                name="fechaResultado"
+                               required
                                th:value="${examen.fechaResultado != null
                                     ? #temporals.format(
                                         examen.fechaResultado,
@@ -1214,8 +1211,7 @@
                                    value="true"
                                    th:checked="${examen.fueraRango}">
 
-                            Marcar resultado como
-                            fuera del rango de referencia
+                            Fuera de Rango
 
                         </label>
 
@@ -1225,7 +1221,7 @@
                     <div class="field full">
 
                         <label>
-                            Observaciones
+                            Notas del Resultado
                         </label>
 
                         <textarea name="notas"
@@ -1235,15 +1231,6 @@
                         </textarea>
 
                     </div>
-
-                </div>
-
-
-                <div th:if="${examen.fueraRango}"
-                     class="outside-warning">
-
-                    ⚠ Resultado marcado como
-                    fuera de rango.
 
                 </div>
 
@@ -1263,6 +1250,7 @@
             <!-- PUBLICACIÓN -->
 
             <form th:if="${orden.estado == 'EN_PROCESO'
+                          and !orden.externa
                           and examen.valorResultado != null
                           and !examen.publicado}"
                   th:action="@{
@@ -1284,7 +1272,7 @@
                 <button type="submit"
                         class="button button-publish">
 
-                    ✓ Publicar resultado
+                    Publicar resultado
 
                 </button>
 
@@ -1309,8 +1297,7 @@
                     </strong>
 
                     <p>
-                        El paciente todavía no ha pagado
-                        esta orden.
+                        El pago debe estar completado antes de proceder con la toma de muestras.
                     </p>
 
                 </div>
@@ -1325,5 +1312,13 @@
 
 </main>
 
+<script>
+    document.querySelectorAll('input[name="fueraRango"]').forEach(casilla => {
+        casilla.addEventListener('change', () => {
+            casilla.closest('.exam-body').querySelector('.range-warning').style.display =
+                casilla.checked ? '' : 'none';
+        });
+    });
+</script>
 </body>
 </html>

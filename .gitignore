@@ -33,3 +33,16 @@ Thumbs.db
 
 .codex/
 
+# Automatización de demostraciones
+demo-automation/node_modules/
+demo-automation/.npm-cache/
+demo-automation/.browsers/
+demo-automation/test-results/
+demo-automation/playwright-report/
+
+# Automatización de demos
+demo-automation/
+
+# Documento auxiliar generado por Codex para CU-09
+docs/CU09-auditoria.md
+
