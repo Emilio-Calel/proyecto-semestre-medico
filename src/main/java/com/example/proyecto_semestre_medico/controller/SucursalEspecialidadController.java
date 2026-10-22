@@ -15,7 +15,7 @@ import java.security.Principal;
 
 @Controller
 @RequestMapping("/admin/sucursal-especialidad")
-
+@PreAuthorize("hasRole('ADMINISTRADOR')")
 public class SucursalEspecialidadController {
 
     private final SucursalEspecialidadService
@@ -30,21 +30,22 @@ public class SucursalEspecialidadController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('CATALOG_VIEW')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_VIEW')")
     public String listar(
             @RequestParam(
                     name = "id",
                     required = false
             )
             Long id,
+            @RequestParam(name = "page", defaultValue = "0") int pagina,
             Model model
     ) {
 
-        model.addAttribute(
-                "asignaciones",
-                sucursalEspecialidadService
-                        .listar(id)
-        );
+        var resultado = sucursalEspecialidadService.listar(id, pagina);
+        model.addAttribute("asignaciones", resultado.getContent());
+        model.addAttribute("paginaActual", resultado.getNumber());
+        model.addAttribute("totalPaginas", resultado.getTotalPages());
+        model.addAttribute("totalElementos", resultado.getTotalElements());
 
         model.addAttribute(
                 "idFiltro",
@@ -55,7 +56,7 @@ public class SucursalEspecialidadController {
     }
 
     @GetMapping("/nueva")
-    @PreAuthorize("hasAuthority('CATALOG_CREATE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_CREATE')")
     public String nueva(
             Model model
     ) {
@@ -66,7 +67,7 @@ public class SucursalEspecialidadController {
     }
 
     @PostMapping("/guardar")
-    @PreAuthorize("hasAuthority('CATALOG_CREATE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_CREATE')")
     public String guardar(
             @RequestParam(
                     name = "sucursalId",
@@ -105,7 +106,7 @@ public class SucursalEspecialidadController {
             redirectAttributes
                     .addFlashAttribute(
                             "mensaje",
-                            "Especialidad asignada a la sede correctamente."
+                            "Especialidad asignada a la sede correctamente"
                     );
 
             return "redirect:/admin/sucursal-especialidad";
@@ -134,7 +135,7 @@ public class SucursalEspecialidadController {
     }
 
     @PostMapping("/desactivar/{id}")
-    @PreAuthorize("hasAuthority('CATALOG_DISABLE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_DISABLE')")
     public String desactivar(
             @PathVariable Long id,
             Principal principal,

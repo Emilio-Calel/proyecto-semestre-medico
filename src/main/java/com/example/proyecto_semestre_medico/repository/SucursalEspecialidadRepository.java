@@ -5,6 +5,10 @@ import com.example.proyecto_semestre_medico.model.SucursalEspecialidad;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,6 +21,7 @@ public interface SucursalEspecialidadRepository
             Long especialidadId
     );
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<SucursalEspecialidad>
     findBySucursalIdAndEspecialidadId(
             Long sucursalId,
@@ -26,17 +31,21 @@ public interface SucursalEspecialidadRepository
     List<SucursalEspecialidad>
     findAllByOrderByIdDesc();
 
-    @Query("""
+    @Query(value = """
         SELECT se
         FROM SucursalEspecialidad se
         JOIN FETCH se.sucursal s
         JOIN FETCH se.especialidad e
         WHERE (:id IS NULL OR se.id = :id)
         ORDER BY se.id DESC
-    """)
-    List<SucursalEspecialidad> buscar(
-            @Param("id") Long id
+    """, countQuery = "SELECT COUNT(se) FROM SucursalEspecialidad se WHERE (:id IS NULL OR se.id = :id)")
+    Page<SucursalEspecialidad> buscar(
+            @Param("id") Long id, Pageable pagina
     );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT se FROM SucursalEspecialidad se WHERE se.id = :id")
+    Optional<SucursalEspecialidad> buscarParaDesactivar(@Param("id") Long id);
 
     @Query("""
         SELECT se.especialidad

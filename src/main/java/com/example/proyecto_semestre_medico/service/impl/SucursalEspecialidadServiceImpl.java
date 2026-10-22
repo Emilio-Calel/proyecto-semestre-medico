@@ -13,12 +13,18 @@ import com.example.proyecto_semestre_medico.repository.UsuarioRepository;
 import com.example.proyecto_semestre_medico.service.SucursalEspecialidadService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.CacheManager;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@PreAuthorize("hasRole('ADMINISTRADOR')")
 public class SucursalEspecialidadServiceImpl
         implements SucursalEspecialidadService {
 
@@ -36,6 +42,7 @@ public class SucursalEspecialidadServiceImpl
 
     private final AuditoriaRepository
             auditoriaRepository;
+    private final CacheManager cacheManager;
 
     public SucursalEspecialidadServiceImpl(
             SucursalEspecialidadRepository
@@ -47,7 +54,8 @@ public class SucursalEspecialidadServiceImpl
             UsuarioRepository
                     usuarioRepository,
             AuditoriaRepository
-                    auditoriaRepository
+                    auditoriaRepository,
+            CacheManager cacheManager
     ) {
         this.sucursalEspecialidadRepository =
                 sucursalEspecialidadRepository;
@@ -63,16 +71,17 @@ public class SucursalEspecialidadServiceImpl
 
         this.auditoriaRepository =
                 auditoriaRepository;
+        this.cacheManager = cacheManager;
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<SucursalEspecialidad> listar(
-            Long id
+    public Page<SucursalEspecialidad> listar(
+            Long id, int pagina
     ) {
 
         return sucursalEspecialidadRepository
-                .buscar(id);
+                .buscar(id, PageRequest.of(Math.max(0, pagina), 10));
     }
 
     @Override
@@ -94,13 +103,7 @@ public class SucursalEspecialidadServiceImpl
     }
 
     @Override
-    @CacheEvict(
-            value = {
-                    "citaEspecialidadesPorSucursal",
-                    "citaMedicosPorSucursalEspecialidad"
-            },
-            allEntries = true
-    )
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_CREATE') and #nombreUsuario == authentication.name")
     @Transactional
     public SucursalEspecialidad asignar(
             Long sucursalId,
@@ -124,7 +127,7 @@ public class SucursalEspecialidadServiceImpl
 
         Sucursal sucursal =
                 sucursalRepository
-                        .findById(sucursalId)
+                        .buscarParaAsignarEspecialidad(sucursalId)
                         .orElseThrow(() ->
                                 new IllegalArgumentException(
                                         "La sede seleccionada no existe."
@@ -196,6 +199,8 @@ public class SucursalEspecialidadServiceImpl
                             + especialidad.getNombre()
             );
 
+            invalidarCatalogosAlConfirmar();
+
             return relacion;
         }
 
@@ -220,17 +225,13 @@ public class SucursalEspecialidadServiceImpl
                         + sucursal.getNombre()
         );
 
+        invalidarCatalogosAlConfirmar();
+
         return nueva;
     }
 
     @Override
-    @CacheEvict(
-            value = {
-                    "citaEspecialidadesPorSucursal",
-                    "citaMedicosPorSucursalEspecialidad"
-            },
-            allEntries = true
-    )
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_DISABLE') and #nombreUsuario == authentication.name")
     @Transactional
     public void desactivar(
             Long id,
@@ -246,7 +247,7 @@ public class SucursalEspecialidadServiceImpl
 
         SucursalEspecialidad relacion =
                 sucursalEspecialidadRepository
-                        .findById(id)
+                        .buscarParaDesactivar(id)
                         .orElseThrow(() ->
                                 new IllegalArgumentException(
                                         "La asignación no existe."
@@ -278,6 +279,19 @@ public class SucursalEspecialidadServiceImpl
                         + relacion.getEspecialidad()
                         .getNombre()
         );
+        invalidarCatalogosAlConfirmar();
+    }
+
+    private void invalidarCatalogosAlConfirmar() {
+        // Evitar que CU-03 repueble la caché con datos anteriores al commit.
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override public void afterCommit() {
+                for (String nombre : List.of("citaEspecialidadesPorSucursal", "citaMedicosPorSucursalEspecialidad")) {
+                    var cache = cacheManager.getCache(nombre);
+                    if (cache != null) cache.clear();
+                }
+            }
+        });
     }
 
     private void registrarAuditoria(
@@ -287,19 +301,8 @@ public class SucursalEspecialidadServiceImpl
             String detalle
     ) {
 
-        Usuario usuario =
-                null;
-
-        if (nombreUsuario != null
-                && !nombreUsuario.isBlank()) {
-
-            usuario =
-                    usuarioRepository
-                            .findByNombreUsuarioIgnoreCase(
-                                    nombreUsuario
-                            )
-                            .orElse(null);
-        }
+        Usuario usuario = usuarioRepository.findByNombreUsuarioIgnoreCase(nombreUsuario)
+                .orElseThrow(() -> new IllegalArgumentException("Administrador autenticado no encontrado."));
 
         Auditoria auditoria =
                 new Auditoria();

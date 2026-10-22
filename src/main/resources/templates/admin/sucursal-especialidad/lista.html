@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es"
-      xmlns:th="http://www.thymeleaf.org">
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <head>
     <meta charset="UTF-8">
@@ -261,7 +262,8 @@
         <h2>Asignaciones registradas</h2>
 
         <a class="btn btn-primary"
-           th:href="@{/admin/sucursal-especialidad/nueva}">
+           th:href="@{/admin/sucursal-especialidad/nueva}"
+           sec:authorize="hasAuthority('CATALOG_CREATE')">
             + Asignar Especialidad
         </a>
 
@@ -350,13 +352,13 @@
                         <span
                                 class="badge badge-active"
                                 th:if="${asignacion.activo}">
-                            Activa
+                            Activo
                         </span>
 
                         <span
                                 class="badge badge-inactive"
                                 th:unless="${asignacion.activo}">
-                            Inactiva
+                            Inactivo
                         </span>
 
                     </td>
@@ -367,13 +369,14 @@
 
                             <form
                                     th:if="${asignacion.activo}"
+                                    sec:authorize="hasAuthority('CATALOG_DISABLE')"
                                     th:action="@{
                                         /admin/sucursal-especialidad/desactivar/{id}
                                         (id=${asignacion.id})
                                     }"
                                     method="post"
                                     onsubmit="return confirm(
-                                        '¿Confirmar eliminación de esta asignación?'
+                                        '¿Confirmar eliminación?'
                                     );">
 
                                 <button
@@ -411,10 +414,18 @@
 
     </section>
 
+    <nav th:if="${totalPaginas > 0}" aria-label="Paginación de asignaciones">
+        <a class="btn btn-secondary" th:if="${paginaActual > 0}"
+           th:href="@{/admin/sucursal-especialidad(page=${paginaActual - 1},id=${idFiltro})}">Anterior</a>
+        <span th:text="|Página ${paginaActual + 1} de ${totalPaginas} · ${totalElementos} asignaciones|"></span>
+        <a class="btn btn-secondary" th:if="${paginaActual + 1 < totalPaginas}"
+           th:href="@{/admin/sucursal-especialidad(page=${paginaActual + 1},id=${idFiltro})}">Siguiente</a>
+    </nav>
+
     <div class="footer-actions">
 
         <a class="btn btn-secondary"
-           th:href="@{/}">
+           th:href="@{/dashboard}">
             ← Volver al panel principal
         </a>
 

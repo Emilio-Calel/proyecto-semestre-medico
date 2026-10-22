@@ -5,11 +5,12 @@ import com.example.proyecto_semestre_medico.model.Sucursal;
 import com.example.proyecto_semestre_medico.model.SucursalEspecialidad;
 
 import java.util.List;
+import org.springframework.data.domain.Page;
 
 public interface SucursalEspecialidadService {
 
-    List<SucursalEspecialidad> listar(
-            Long id
+    Page<SucursalEspecialidad> listar(
+            Long id, int pagina
     );
 
     List<Sucursal> listarSucursalesActivas();
