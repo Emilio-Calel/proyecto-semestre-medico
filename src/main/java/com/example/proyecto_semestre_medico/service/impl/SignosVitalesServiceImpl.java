@@ -220,6 +220,12 @@ public class SignosVitalesServiceImpl
                 dto.getTalla()
         );
 
+        signos.setEmergencia(
+                Boolean.TRUE.equals(
+                        dto.getEmergencia()
+                )
+        );
+
         signos.setObservaciones(
                 dto.getObservaciones() == null
                         ? null
@@ -230,6 +236,15 @@ public class SignosVitalesServiceImpl
         SignosVitales guardados =
                 signosVitalesRepository
                         .save(signos);
+
+        if (Boolean.TRUE.equals(
+                dto.getEmergencia()
+        )) {
+
+            cita.setPrioridadEmergencia(
+                    true
+            );
+        }
 
         /*
          * Finalizada la toma de signos,
@@ -278,55 +293,84 @@ public class SignosVitalesServiceImpl
             );
         }
 
-        validarEntero(
-                dto.getPresionSistolica(),
-                40,
-                300,
-                "Presión sistólica"
-        );
-
-        validarEntero(
-                dto.getPresionDiastolica(),
-                20,
-                200,
-                "Presión diastólica"
-        );
-
-        if (dto.getPresionSistolica()
+        // RN-CU07-01
+        if (dto.getPresionSistolica() == null
+                || dto.getPresionDiastolica() == null
+                || dto.getPresionSistolica() < 60
+                || dto.getPresionSistolica() > 250
+                || dto.getPresionDiastolica() < 40
+                || dto.getPresionDiastolica() > 150
+                || dto.getPresionSistolica()
                 <= dto.getPresionDiastolica()) {
 
             throw new IllegalArgumentException(
-                    "La presión sistólica debe ser mayor que la diastólica"
+                    "La presión arterial debe ingresarse en formato sistólica/diastólica (ej: 120/80) dentro de rangos válidos."
             );
         }
 
-        validarEntero(
-                dto.getPulso(),
-                20,
-                250,
-                "Pulso"
-        );
+        // RN-CU07-02
+        if (dto.getTemperatura() == null
+                || dto.getTemperatura()
+                .compareTo(
+                        new BigDecimal("34.0")
+                ) < 0
+                || dto.getTemperatura()
+                .compareTo(
+                        new BigDecimal("42.0")
+                ) > 0
+                || dto.getTemperatura()
+                .scale() > 1) {
 
-        validarDecimal(
-                dto.getTemperatura(),
-                new BigDecimal("30.0"),
-                new BigDecimal("45.0"),
-                "Temperatura"
-        );
+            throw new IllegalArgumentException(
+                    "La temperatura debe estar entre 34.0 y 42.0°C con un decimal."
+            );
+        }
 
-        validarDecimal(
-                dto.getPeso(),
-                new BigDecimal("0.01"),
-                new BigDecimal("500.00"),
-                "Peso"
-        );
+        // RN-CU07-03
+        if (dto.getPeso() == null
+                || dto.getPeso()
+                .compareTo(
+                        new BigDecimal("0.50")
+                ) < 0
+                || dto.getPeso()
+                .compareTo(
+                        new BigDecimal("300.00")
+                ) > 0
+                || dto.getPeso()
+                .scale() > 2) {
 
-        validarDecimal(
-                dto.getTalla(),
-                new BigDecimal("1.00"),
-                new BigDecimal("300.00"),
-                "Talla"
-        );
+            throw new IllegalArgumentException(
+                    "El peso debe estar entre 0.5 y 300 kg con dos decimales."
+            );
+        }
+
+        // RN-CU07-04
+        if (dto.getTalla() == null
+                || dto.getTalla()
+                .compareTo(
+                        new BigDecimal("30.00")
+                ) < 0
+                || dto.getTalla()
+                .compareTo(
+                        new BigDecimal("250.00")
+                ) > 0
+                || dto.getTalla()
+                .scale() > 2) {
+
+            throw new IllegalArgumentException(
+                    "La talla debe estar entre 30 y 250 cm con dos decimales."
+            );
+        }
+
+        // RN-CU07-05
+        if (dto.getPulso() == null
+                || dto.getPulso() < 30
+                || dto.getPulso() > 220) {
+
+            throw new IllegalArgumentException(
+                    "La frecuencia cardíaca debe estar entre 30 y 220 latidos por minuto."
+            );
+        }
 
         if (dto.getObservaciones() != null
                 && dto.getObservaciones()

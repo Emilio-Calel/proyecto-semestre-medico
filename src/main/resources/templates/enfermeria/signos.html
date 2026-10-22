@@ -251,7 +251,8 @@
         }
 
         input,
-        textarea {
+        textarea,
+        select {
             width: 100%;
             border: 1px solid #ccd8db;
             border-radius: 10px;
@@ -261,6 +262,10 @@
             transition:
                     border-color 0.2s ease,
                     box-shadow 0.2s ease;
+        }
+
+        select {
+            padding: 13px 14px;
         }
 
         input {
@@ -275,7 +280,8 @@
         }
 
         input:focus,
-        textarea:focus {
+        textarea:focus,
+        select:focus {
             border-color: #1596a3;
             box-shadow:
                     0 0 0 3px
@@ -404,6 +410,8 @@
                 width: 100%;
             }
         }
+
+
     </style>
 </head>
 
@@ -719,6 +727,33 @@
                         </span>
 
                     </div>
+
+                </div>
+
+                <div class="form-group full-width">
+
+                    <label for="emergencia">
+                        ¿Emergencia?
+                    </label>
+
+                    <select
+                            id="emergencia"
+                            th:field="*{emergencia}">
+
+                        <option value="false">
+                            No
+                        </option>
+
+                        <option value="true">
+                            Sí
+                        </option>
+
+                    </select>
+
+                    <span class="helper-text">
+        Marque Sí si el paciente requiere prioridad
+        para pasar directamente a consulta médica.
+    </span>
 
                 </div>
 

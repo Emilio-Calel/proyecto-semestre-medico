@@ -17,6 +17,8 @@ public class SignosVitalesDTO {
 
     private String observaciones;
 
+    private Boolean emergencia = false;
+
     public SignosVitalesDTO() {
     }
 
@@ -93,5 +95,15 @@ public class SignosVitalesDTO {
     ) {
         this.observaciones =
                 observaciones;
+    }
+
+    public Boolean getEmergencia() {
+        return emergencia;
+    }
+
+    public void setEmergencia(
+            Boolean emergencia
+    ) {
+        this.emergencia = emergencia;
     }
 }

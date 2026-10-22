@@ -76,6 +76,12 @@ public class SignosVitales {
     public SignosVitales() {
     }
 
+    @Column(
+            name = "es_emergencia",
+            nullable = false
+    )
+    private Boolean emergencia = false;
+
     @PrePersist
     public void prePersist() {
         if (fechaRegistro == null) {
@@ -176,5 +182,15 @@ public class SignosVitales {
 
     public LocalDateTime getFechaRegistro() {
         return fechaRegistro;
+    }
+
+    public Boolean getEmergencia() {
+        return emergencia;
+    }
+
+    public void setEmergencia(
+            Boolean emergencia
+    ) {
+        this.emergencia = emergencia;
     }
 }

@@ -87,6 +87,12 @@ public class EnfermeriaController {
 
             dto.setCitaId(citaId);
 
+            dto.setEmergencia(
+                    Boolean.TRUE.equals(
+                            cita.getPrioridadEmergencia()
+                    )
+            );
+
             model.addAttribute(
                     "cita",
                     cita
@@ -124,17 +130,40 @@ public class EnfermeriaController {
 
         try {
 
-            signosVitalesService
-                    .registrar(
-                            authentication.getName(),
-                            dto
-                    );
+            var signos =
+                    signosVitalesService
+                            .registrar(
+                                    authentication.getName(),
+                                    dto
+                            );
 
-            redirectAttributes
-                    .addFlashAttribute(
-                            "mensaje",
-                            "Signos vitales registrados correctamente"
-                    );
+            String nombrePaciente =
+                    signos.getCita()
+                            .getPaciente()
+                            .getNombreCompleto();
+
+            if (Boolean.TRUE.equals(
+                    signos.getEmergencia()
+            )) {
+
+                redirectAttributes
+                        .addFlashAttribute(
+                                "mensaje",
+                                "Signos vitales de emergencia registrados para paciente "
+                                        + nombrePaciente
+                                        + ". El paciente debe pasar directamente a consulta médica."
+                        );
+
+            } else {
+
+                redirectAttributes
+                        .addFlashAttribute(
+                                "mensaje",
+                                "Signos vitales del paciente "
+                                        + nombrePaciente
+                                        + " registrados correctamente. El paciente puede regresar a la sala de espera."
+                        );
+            }
 
             return "redirect:/enfermeria";
 
