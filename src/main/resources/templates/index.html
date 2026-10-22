@@ -561,6 +561,35 @@
 
         </article>
 
+        <article
+                class="module-card"
+                sec:authorize="hasRole('MEDICO')">
+
+            <div class="module-icon">
+                &#10010;
+            </div>
+
+            <h2>Panel Médico</h2>
+
+            <p>
+                Consulte sus pacientes asignados y continúe
+                con la atención médica.
+            </p>
+
+            <a
+                    class="module-link"
+                    th:href="@{/medico}">
+
+                <span>Ir al Panel Médico</span>
+
+                <span class="arrow">
+                    →
+                </span>
+
+            </a>
+
+        </article>
+
     </section>
 
 </main>

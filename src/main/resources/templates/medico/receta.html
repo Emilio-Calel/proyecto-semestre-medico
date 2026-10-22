@@ -343,7 +343,7 @@
                         class="dosis"
                         maxlength="200"
                         required
-                        placeholder="Ej. 1 tableta cada 8 horas">
+                        placeholder="Ej. 1 tableta">
 
             </div>
 
@@ -361,12 +361,21 @@
 
             </div>
 
+            <div class="field">
+                <label>Frecuencia *</label>
+                <input type="text" class="frecuencia" required placeholder="Ej. cada 8 horas">
+            </div>
+            <div class="field">
+                <label>Duración *</label>
+                <input type="text" class="duracion" required placeholder="Ej. 7 días">
+            </div>
+
         </div>
 
         <div class="field">
 
             <label>
-                Indicaciones
+                Indicaciones especiales
             </label>
 
             <textarea
@@ -391,7 +400,7 @@
 
 </template>
 
-<script>
+<script th:inline="javascript">
 
     const container =
         document.getElementById(
@@ -440,6 +449,10 @@
                     .name =
                     `detalles[${index}].cantidad`;
 
+                ["frecuencia", "duracion"].forEach(campo => {
+                    detalle.querySelector("." + campo).name = "detalles[" + index + "]." + campo;
+                });
+
                 detalle
                     .querySelector(
                         ".indicaciones"
@@ -451,7 +464,7 @@
     }
 
 
-    function agregarDetalle() {
+    function agregarDetalle(datos = {}) {
 
         const fragmento =
             template.content
@@ -476,9 +489,16 @@
                 }
             );
 
-        container.appendChild(
-            fragmento
-        );
+        for (const [clase, propiedad] of Object.entries({medicamento: "medicamentoId", dosis: "dosis", cantidad: "cantidad", frecuencia: "frecuencia", duracion: "duracion", indicaciones: "indicaciones"})) {
+            detalle.querySelector("." + clase).value = datos[propiedad] ?? "";
+        }
+        detalle.querySelectorAll("[required]").forEach(campo => {
+            campo.addEventListener("invalid", () => campo.setCustomValidity(
+                "Todos los campos de la receta son obligatorios excepto indicaciones especiales."));
+            campo.addEventListener("input", () => campo.setCustomValidity(""));
+            campo.addEventListener("change", () => campo.setCustomValidity(""));
+        });
+        container.appendChild(fragmento);
 
         actualizarIndices();
     }
@@ -486,7 +506,7 @@
 
     botonAgregar.addEventListener(
         "click",
-        agregarDetalle
+        () => agregarDetalle()
     );
 
 
@@ -495,7 +515,15 @@
      * con al menos un medicamento.
      */
 
-    agregarDetalle();
+    const detallesGuardados = /*[[${recetaForm.detalles}]]*/ [];
+    if (detallesGuardados.length) detallesGuardados.forEach(datos => agregarDetalle(datos));
+    else agregarDetalle();
+    document.querySelector("form").addEventListener("submit", event => {
+        if (!container.querySelector(".detalle")) {
+            event.preventDefault();
+            window.alert("Todos los campos de la receta son obligatorios excepto indicaciones especiales.");
+        }
+    });
 
 </script>
 

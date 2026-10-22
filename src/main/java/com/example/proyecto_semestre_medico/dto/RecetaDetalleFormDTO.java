@@ -8,7 +8,15 @@ public class RecetaDetalleFormDTO {
 
     private Integer cantidad;
 
+    private String frecuencia;
+    private String duracion;
+
     private String indicaciones;
+
+    public String getFrecuencia() { return frecuencia; }
+    public void setFrecuencia(String frecuencia) { this.frecuencia = frecuencia; }
+    public String getDuracion() { return duracion; }
+    public void setDuracion(String duracion) { this.duracion = duracion; }
 
     public RecetaDetalleFormDTO() {
     }

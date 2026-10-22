@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.proyecto_semestre_medico.repository.EstadoCitaRepository;
 import com.example.proyecto_semestre_medico.repository.MedicoRepository;
+import com.example.proyecto_semestre_medico.repository.SignosVitalesRepository;
 import com.example.proyecto_semestre_medico.model.Medico;
 
 import java.time.LocalDateTime;
@@ -28,19 +29,22 @@ public class ConsultaMedicaServiceImpl
     private final Cie10Repository cie10Repository;
     private final EstadoCitaRepository estadoCitaRepository;
     private final MedicoRepository medicoRepository;
+    private final SignosVitalesRepository signosVitalesRepository;
 
     public ConsultaMedicaServiceImpl(
             CitaRepository citaRepository,
             ConsultaMedicaRepository consultaMedicaRepository,
             Cie10Repository cie10Repository,
             EstadoCitaRepository estadoCitaRepository,
-            MedicoRepository medicoRepository
+            MedicoRepository medicoRepository,
+            SignosVitalesRepository signosVitalesRepository
     ) {
         this.citaRepository = citaRepository;
         this.consultaMedicaRepository = consultaMedicaRepository;
         this.cie10Repository = cie10Repository;
         this.estadoCitaRepository = estadoCitaRepository;
         this.medicoRepository = medicoRepository;
+        this.signosVitalesRepository = signosVitalesRepository;
     }
 
     @Override
@@ -150,6 +154,12 @@ public class ConsultaMedicaServiceImpl
 
             throw new IllegalArgumentException(
                     "Solo se puede iniciar una consulta para una cita en espera."
+            );
+        }
+
+        if (!signosVitalesRepository.existsByCitaId(citaId)) {
+            throw new IllegalArgumentException(
+                    "El paciente debe tener signos vitales registrados antes de iniciar la consulta."
             );
         }
 
@@ -344,12 +354,12 @@ public class ConsultaMedicaServiceImpl
             String nombreUsuario
     ) {
 
-        if (dto.getCitaId() == null) {
+        if (dto == null || dto.getCitaId() == null) {
             throw new IllegalArgumentException(
                     "La cita es obligatoria."
             );
         }
-        obtenerCitaDelMedico(
+        Cita citaValidada = obtenerCitaDelMedico(
                 dto.getCitaId(),
                 nombreUsuario
         );
@@ -362,6 +372,18 @@ public class ConsultaMedicaServiceImpl
                                         "La consulta médica no existe."
                                 )
                         );
+
+        if (!"CONSULTA_MEDICA".equals(citaValidada.getEstadoCita().getCodigo())
+                || !"EN_CURSO".equals(consulta.getEstado())) {
+            throw new IllegalArgumentException("La cita no se encuentra en consulta médica en curso.");
+        }
+        if (!"EN_CURSO".equals(dto.getEstado()) && !"FINALIZADA".equals(dto.getEstado())) {
+            throw new IllegalArgumentException("Estado de consulta inválido.");
+        }
+        boolean finalizar = "FINALIZADA".equals(dto.getEstado());
+        if (finalizar) {
+            validarParaFinalizar(dto);
+        }
 
         validarTextoObligatorio(
                 dto.getMotivoVisita(),
@@ -405,14 +427,7 @@ public class ConsultaMedicaServiceImpl
             consulta.setCie10(null);
         }
 
-        boolean finalizar =
-                "FINALIZADA".equalsIgnoreCase(
-                        dto.getEstado()
-                );
-
         if (finalizar) {
-
-            validarParaFinalizar(dto);
 
             consulta.setEstado(
                     "FINALIZADA"
@@ -452,7 +467,7 @@ public class ConsultaMedicaServiceImpl
 
     @Override
     @Transactional
-    public void marcarNoAsistio(Long citaId,
+    public String marcarNoAsistio(Long citaId,
                                 String nombreUsuario) {
 
         Cita cita =
@@ -484,6 +499,7 @@ public class ConsultaMedicaServiceImpl
         );
 
         citaRepository.save(cita);
+        return cita.getNumeroCita();
     }
 
     private Medico obtenerMedicoAutenticado(
@@ -518,7 +534,7 @@ public class ConsultaMedicaServiceImpl
                                 )
                         );
 
-        if (!cita.getMedico()
+        if (cita.getMedico() == null || !cita.getMedico()
                 .getId()
                 .equals(medico.getId())) {
 
@@ -532,7 +548,7 @@ public class ConsultaMedicaServiceImpl
 
     @Override
     @Transactional
-    public void finalizarAtencion(Long citaId,
+    public String finalizarAtencion(Long citaId,
                                   String nombreUsuario) {
 
         Cita cita =
@@ -573,6 +589,7 @@ public class ConsultaMedicaServiceImpl
         );
 
         citaRepository.save(cita);
+        return cita.getNumeroCita();
     }
 
     private void validarParaFinalizar(

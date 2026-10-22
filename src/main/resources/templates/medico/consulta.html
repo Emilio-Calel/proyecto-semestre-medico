@@ -445,11 +445,7 @@
                 <input type="hidden"
                        th:field="*{citaId}">
 
-                <input type="hidden"
-                       th:field="*{numeroCita}">
 
-                <input type="hidden"
-                       th:field="*{paciente}">
 
                 <div class="form-grid">
 
@@ -887,6 +883,25 @@
                 }
             }
         );
+
+    const camposCierre = ["motivoVisita", "hallazgosClinicos", "diagnostico", "planTratamiento"];
+    function validarCierre() {
+        const finalizar = document.getElementById("estado").value === "FINALIZADA";
+        camposCierre.forEach(id => {
+            const campo = document.getElementById(id);
+            campo.setCustomValidity("");
+            if (!finalizar) return;
+            const valor = campo.value.trim();
+            if (id === "diagnostico" && (valor.length < 10 || valor.length > 5000)) {
+                campo.setCustomValidity("El diagnóstico es obligatorio. Debe contener entre 10 y 5000 caracteres.");
+            } else if (!valor) {
+                campo.setCustomValidity("Debe completar todos los campos obligatorios para cerrar la consulta.");
+            }
+        });
+    }
+    camposCierre.forEach(id => document.getElementById(id).addEventListener("input", validarCierre));
+    document.getElementById("estado").addEventListener("change", validarCierre);
+    validarCierre();
 
 </script>
 

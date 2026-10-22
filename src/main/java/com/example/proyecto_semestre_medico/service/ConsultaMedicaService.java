@@ -22,12 +22,12 @@ public interface ConsultaMedicaService {
             String nombreUsuario
     );
 
-    void marcarNoAsistio(
+    String marcarNoAsistio(
             Long citaId,
             String nombreUsuario
     );
 
-    void finalizarAtencion(
+    String finalizarAtencion(
             Long citaId,
             String nombreUsuario
     );

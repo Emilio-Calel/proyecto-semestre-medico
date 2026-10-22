@@ -127,7 +127,7 @@ public class OrdenLaboratorioServiceImpl
                                 )
                         );
 
-        if (!cita.getMedico()
+        if (cita.getMedico() == null || !cita.getMedico()
                 .getId()
                 .equals(medico.getId())) {
 

@@ -22,6 +22,8 @@ import com.example.proyecto_semestre_medico.service.SeguimientoCitaService;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.stream.Collectors;
 import java.util.List;
 
 @Controller
@@ -227,10 +229,16 @@ public class MedicoController {
                     e.getMessage()
             );
 
-            model.addAttribute(
-                    "consultaForm",
-                    dto
-            );
+            try {
+                ConsultaMedicaFormDTO contexto = consultaMedicaService.obtenerConsulta(
+                        dto.getCitaId(), authentication.getName());
+                dto.setNumeroCita(contexto.getNumeroCita());
+                dto.setPaciente(contexto.getPaciente());
+            } catch (IllegalArgumentException contextoInvalido) {
+                redirectAttributes.addFlashAttribute("error", contextoInvalido.getMessage());
+                return "redirect:/medico";
+            }
+            model.addAttribute("consultaForm", dto);
 
             return "medico/consulta";
         }
@@ -251,14 +259,14 @@ public class MedicoController {
 
         try {
 
-            consultaMedicaService.marcarNoAsistio(
+            String numeroCita = consultaMedicaService.marcarNoAsistio(
                     citaId,
                     authentication.getName()
             );
 
             redirectAttributes.addFlashAttribute(
                     "mensaje",
-                    "Cita marcada como No Asistió."
+                    "Cita #" + numeroCita + " marcada como No Asistió."
             );
 
         } catch (IllegalArgumentException e) {
@@ -287,14 +295,14 @@ public class MedicoController {
 
         try {
 
-            consultaMedicaService.finalizarAtencion(
+            String numeroCita = consultaMedicaService.finalizarAtencion(
                     citaId,
                     authentication.getName()
             );
 
             redirectAttributes.addFlashAttribute(
                     "mensaje",
-                    "Atención finalizada correctamente para la cita."
+                    "Atención finalizada para cita #" + numeroCita + "."
             );
 
         } catch (IllegalArgumentException e) {
@@ -396,7 +404,11 @@ public class MedicoController {
                     "Orden de laboratorio generada exitosamente. "
                             + "Número de orden: "
                             + orden.getNumeroOrden()
-                            + "."
+                            + ". Exámenes: "
+                            + orden.getDetalles().stream()
+                                    .map(detalle -> detalle.getExamen().getNombre())
+                                    .collect(Collectors.joining(", "))
+                            + ". El paciente debe dirigirse al área de laboratorio."
             );
 
             return "redirect:/medico";
@@ -522,10 +534,11 @@ public class MedicoController {
 
             redirectAttributes.addFlashAttribute(
                     "mensaje",
-                    "Receta generada correctamente. "
-                            + "Número de receta: "
-                            + receta.getId()
-                            + ". Vigencia: 7 días."
+                    "Receta médica generada exitosamente. Medicamentos: "
+                            + receta.getDetalles().stream()
+                                    .map(detalle -> detalle.getMedicamento().getNombre())
+                                    .collect(Collectors.joining(", "))
+                            + ". El paciente puede adquirirlos en la farmacia de la clínica."
             );
 
             return "redirect:/medico";
@@ -680,10 +693,11 @@ public class MedicoController {
 
             redirectAttributes.addFlashAttribute(
                     "mensaje",
-                    "Seguimiento programado correctamente. "
-                            + "Nueva cita: "
-                            + seguimiento.getNumeroCita()
-                            + "."
+                    "Cita de seguimiento agendada para el "
+                            + seguimiento.getFechaHoraInicio().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                            + " a las "
+                            + seguimiento.getFechaHoraInicio().format(DateTimeFormatter.ofPattern("HH:mm"))
+                            + ". Se enviará notificación al paciente."
             );
 
             return "redirect:/medico";

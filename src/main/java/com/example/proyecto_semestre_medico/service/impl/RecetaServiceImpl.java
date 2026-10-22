@@ -134,6 +134,10 @@ public class RecetaServiceImpl
             );
         }
 
+        if (!"PENDIENTE_CIERRE".equals(consulta.getCita().getEstadoCita().getCodigo())) {
+            throw new IllegalArgumentException("Solo pueden generarse recetas para citas pendientes de cierre.");
+        }
+
         Usuario usuario =
                 buscarUsuario(
                         nombreUsuario
@@ -221,10 +225,7 @@ public class RecetaServiceImpl
             );
 
             detalle.setIndicaciones(
-                    normalizarOpcional(
-                            detalleDTO
-                                    .getIndicaciones()
-                    )
+                    indicacionesCompletas(detalleDTO)
             );
 
             detalle.setActivo(true);
@@ -438,7 +439,7 @@ public class RecetaServiceImpl
                 || dto.getDetalles().isEmpty()) {
 
             throw new IllegalArgumentException(
-                    "La receta debe contener al menos un medicamento."
+                    "Todos los campos de la receta son obligatorios excepto indicaciones especiales."
             );
         }
 
@@ -448,7 +449,7 @@ public class RecetaServiceImpl
             if (detalle == null) {
 
                 throw new IllegalArgumentException(
-                        "Detalle de receta inválido."
+                        "Todos los campos de la receta son obligatorios excepto indicaciones especiales."
                 );
             }
 
@@ -456,7 +457,7 @@ public class RecetaServiceImpl
                     == null) {
 
                 throw new IllegalArgumentException(
-                        "Debe seleccionar un medicamento."
+                        "Todos los campos de la receta son obligatorios excepto indicaciones especiales."
                 );
             }
 
@@ -466,8 +467,18 @@ public class RecetaServiceImpl
                     .isEmpty()) {
 
                 throw new IllegalArgumentException(
-                        "La dosis es obligatoria."
+                        "Todos los campos de la receta son obligatorios excepto indicaciones especiales."
                 );
+            }
+
+            if (detalle.getFrecuencia() == null || detalle.getFrecuencia().isBlank()
+                    || detalle.getDuracion() == null || detalle.getDuracion().isBlank()) {
+                throw new IllegalArgumentException(
+                        "Todos los campos de la receta son obligatorios excepto indicaciones especiales.");
+            }
+
+            if (indicacionesCompletas(detalle).length() > 1000) {
+                throw new IllegalArgumentException("Las indicaciones no pueden exceder 1000 caracteres.");
             }
 
             if (detalle.getDosis()
@@ -497,6 +508,13 @@ public class RecetaServiceImpl
                 );
             }
         }
+    }
+
+    private String indicacionesCompletas(RecetaDetalleFormDTO detalle) {
+        return "Frecuencia: " + detalle.getFrecuencia().trim()
+                + ". Duración: " + detalle.getDuracion().trim()
+                + (detalle.getIndicaciones() == null || detalle.getIndicaciones().isBlank()
+                    ? "" : ". Indicaciones especiales: " + detalle.getIndicaciones().trim());
     }
 
     private boolean verificarVencimiento(
