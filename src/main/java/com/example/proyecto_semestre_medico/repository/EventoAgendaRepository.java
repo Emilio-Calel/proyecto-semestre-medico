@@ -17,6 +17,7 @@ public interface EventoAgendaRepository
         FROM EventoAgenda e
         WHERE e.medico.id = :medicoId
           AND e.activo = true
+          AND e.tipoEvento IN ('BLOQUEO', 'VACACIONES', 'CAPACITACION', 'REUNION', 'DESCANSO', 'OTRO')
           AND e.fechaInicio < :fechaFin
           AND e.fechaFin > :fechaInicio
     """)
@@ -48,4 +49,8 @@ public interface EventoAgendaRepository
             Long id,
             Long medicoId
     );
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT e FROM EventoAgenda e WHERE e.id = :id AND e.medico.id = :medicoId AND e.activo = true")
+    Optional<EventoAgenda> buscarParaModificar(@Param("id") Long id, @Param("medicoId") Long medicoId);
 }

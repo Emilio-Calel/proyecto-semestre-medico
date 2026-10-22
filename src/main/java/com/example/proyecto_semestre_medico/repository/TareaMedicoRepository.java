@@ -25,4 +25,9 @@ public interface TareaMedicoRepository
             Long id,
             Long medicoId
     );
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("SELECT t FROM TareaMedico t WHERE t.id = :id AND t.medico.id = :medicoId AND t.activo = true")
+    Optional<TareaMedico> buscarParaModificar(@org.springframework.data.repository.query.Param("id") Long id,
+            @org.springframework.data.repository.query.Param("medicoId") Long medicoId);
 }

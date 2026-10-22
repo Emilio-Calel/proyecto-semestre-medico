@@ -81,6 +81,17 @@ public class AgendaItemDTO {
         return tipoEvento;
     }
 
+    public String getTipoEventoDescripcion() {
+        if (tipoEvento == null) return "";
+        return switch (tipoEvento) {
+            case "BLOQUEO" -> "Bloqueo de disponibilidad";
+            case "PERSONAL" -> "Evento personal";
+            case "CAPACITACION" -> "Capacitación";
+            case "VACACIONES" -> "Vacaciones";
+            default -> "Bloqueo de disponibilidad (" + tipoEvento + ")";
+        };
+    }
+
     public void setTipoEvento(String tipoEvento) {
         this.tipoEvento = tipoEvento;
     }

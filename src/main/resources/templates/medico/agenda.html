@@ -464,7 +464,7 @@
         .agenda-item.evento {
             border-left:
                     4px solid
-                    #9a75c3;
+                    #8b5cf6;
         }
 
         .item-time {
@@ -522,6 +522,8 @@
             display: grid;
             gap: 18px;
         }
+        [hidden] { display: none !important; }
+        summary { cursor: pointer; }
 
         .form-body {
             padding: 16px;
@@ -781,9 +783,13 @@
 
         <div class="view-selector">
 
+            <a class="view-button" th:href="@{/medico/agenda(vista=${vista},fecha=${fechaAnterior},filtroTareas=${filtroTareas})}">Anterior</a>
+            <a class="view-button" th:href="@{/medico/agenda(vista=${vista},fecha=${hoy},filtroTareas=${filtroTareas})}">Hoy</a>
+            <a class="view-button" th:href="@{/medico/agenda(vista=${vista},fecha=${fechaSiguiente},filtroTareas=${filtroTareas})}">Siguiente</a>
+
             <a th:href="@{/medico/agenda(
                     vista='DIA',
-                    fecha=${fechaBase}
+                    fecha=${fechaBase},filtroTareas=${filtroTareas}
                )}"
                class="view-button"
                th:classappend="${vista == 'DIA'} ? ' active'">
@@ -792,7 +798,7 @@
 
             <a th:href="@{/medico/agenda(
                     vista='SEMANA',
-                    fecha=${fechaBase}
+                    fecha=${fechaBase},filtroTareas=${filtroTareas}
                )}"
                class="view-button"
                th:classappend="${vista == 'SEMANA'} ? ' active'">
@@ -801,7 +807,7 @@
 
             <a th:href="@{/medico/agenda(
                     vista='MES',
-                    fecha=${fechaBase}
+                    fecha=${fechaBase},filtroTareas=${filtroTareas}
                )}"
                class="view-button"
                th:classappend="${vista == 'MES'} ? ' active'">
@@ -813,6 +819,8 @@
         <form method="get"
               th:action="@{/medico/agenda}"
               class="date-form">
+
+            <input type="hidden" name="filtroTareas" th:value="${filtroTareas}">
 
             <input type="hidden"
                    name="vista"
@@ -828,6 +836,9 @@
             </button>
 
         </form>
+
+        <a class="button btn-primary" href="#evento-editor">Nuevo Evento</a>
+        <button type="button" id="toggle-tareas" class="btn-secondary" aria-controls="task-panel" aria-expanded="true">Mostrar / ocultar tareas</button>
 
     </section>
 
@@ -902,7 +913,8 @@
                                         : ' evento'
                                     ">
 
-                                <div class="item-time">
+                                <span th:if="${item.todoElDia}" class="item-badge">Todo el día</span>
+                                <div class="item-time" th:unless="${item.todoElDia}">
 
                                     <span
                                             th:text="${#temporals.format(
@@ -922,10 +934,15 @@
 
                                 </div>
 
-                                <div class="item-title"
+                                <details>
+                                <summary class="item-title"
                                      th:text="${item.titulo}">
                                     Título
-                                </div>
+                                </summary>
+
+                                <p th:if="${item.tipo == 'CITA'}" th:text="|Paciente: ${item.titulo}|"></p>
+                                <p th:text="|Inicio: ${#temporals.format(item.inicio, 'dd/MM/yyyy HH:mm')}|"></p>
+                                <p th:text="|Fin: ${#temporals.format(item.fin, 'dd/MM/yyyy HH:mm')}|"></p>
 
                                 <div class="item-description"
                                      th:text="${item.descripcion}">
@@ -939,7 +956,7 @@
 
                                 <span class="item-badge"
                                       th:if="${item.tipo == 'EVENTO'}"
-                                      th:text="${item.tipoEvento}">
+                                      th:text="${item.tipoEventoDescripcion}">
                                     EVENTO
                                 </span>
 
@@ -960,7 +977,7 @@
                                           }"
                                           method="post"
                                           onsubmit="return confirm(
-                                              '¿Eliminar este evento?'
+                                              '¿Está seguro de eliminar este evento?'
                                           );">
 
                                         <button type="submit"
@@ -971,6 +988,8 @@
                                     </form>
 
                                 </div>
+
+                                </details>
 
                             </article>
 
@@ -990,21 +1009,21 @@
                  EVENTOS
                  ========================================= -->
 
-            <section class="card">
+            <section class="card" id="evento-editor">
 
                 <div class="card-header">
 
                     <h3 th:text="
                         ${eventoForm.id != null}
                         ? 'Editar evento'
-                        : 'Nuevo evento'
+                        : 'Nuevo Evento'
                     ">
                         Nuevo evento
                     </h3>
 
                     <p>
-                        Los eventos bloquean automáticamente
-                        esos horarios para nuevas citas.
+                        Bloqueo de disponibilidad, Vacaciones y Capacitación reservan el horario.
+                        Evento personal es informativo.
                     </p>
 
                 </div>
@@ -1014,6 +1033,8 @@
                     <form th:action="@{/medico/agenda/evento/guardar}"
                           th:object="${eventoForm}"
                           method="post">
+
+                        <div th:if="${eventoError}" class="alert alert-error" th:text="${eventoError}"></div>
 
                         <input type="hidden"
                                th:field="*{id}">
@@ -1026,7 +1047,7 @@
 
                             <input type="text"
                                    th:field="*{titulo}"
-                                   minlength="3"
+                                   minlength="5"
                                    maxlength="200"
                                    required
                                    placeholder="Ej. Reunión clínica">
@@ -1042,25 +1063,17 @@
                             <select th:field="*{tipoEvento}"
                                     required>
 
-                                <option value="REUNION">
-                                    Reunión
-                                </option>
-
-                                <option value="DESCANSO">
-                                    Descanso
-                                </option>
+                                <option value="BLOQUEO">Bloqueo de disponibilidad</option>
 
                                 <option value="CAPACITACION">
                                     Capacitación
                                 </option>
 
                                 <option value="PERSONAL">
-                                    Personal
+                                    Evento personal
                                 </option>
 
-                                <option value="OTRO">
-                                    Otro
-                                </option>
+                                <option value="VACACIONES">Vacaciones</option>
 
                             </select>
 
@@ -1116,6 +1129,8 @@
 
                         </label>
 
+                        <p>Todo el día: inicio a las 00:00 y fin a las 00:00 del día siguiente al último día incluido.</p>
+
                         <div class="form-actions">
 
                             <button type="submit"
@@ -1124,7 +1139,7 @@
                                 <span th:text="
                                     ${eventoForm.id != null}
                                     ? 'Actualizar evento'
-                                    : 'Crear evento'
+                                    : 'Nuevo Evento'
                                 ">
                                     Crear evento
                                 </span>
@@ -1149,11 +1164,13 @@
                  NUEVA TAREA
                  ========================================= -->
 
+            <div id="task-panel">
+
             <section class="card">
 
                 <div class="card-header">
 
-                    <h3>Nueva tarea</h3>
+                    <h3>Nueva Tarea</h3>
 
                     <p>
                         Organice actividades y pendientes.
@@ -1167,6 +1184,8 @@
                           th:object="${tareaForm}"
                           method="post">
 
+                        <div th:if="${tareaError}" class="alert alert-error" th:text="${tareaError}"></div>
+
                         <input type="hidden"
                                th:field="*{id}">
 
@@ -1178,7 +1197,7 @@
 
                             <input type="text"
                                    th:field="*{titulo}"
-                                   minlength="3"
+                                   minlength="5"
                                    maxlength="200"
                                    required
                                    placeholder="Ej. Revisar resultados">
@@ -1213,7 +1232,7 @@
                                     </option>
 
                                     <option value="NORMAL">
-                                        Normal
+                                        Media
                                     </option>
 
                                     <option value="ALTA">
@@ -1231,16 +1250,23 @@
                                 </label>
 
                                 <input type="datetime-local"
-                                       th:field="*{fechaLimite}"
-                                       required>
+                                       th:field="*{fechaLimite}">
 
                             </div>
 
                         </div>
 
+                        <div class="field">
+                            <label for="estado">Estado</label>
+                            <select th:field="*{estado}" required>
+                                <option value="PENDIENTE">Pendiente</option>
+                                <option value="EN_PROGRESO">En progreso</option>
+                                <option value="COMPLETADA">Completada</option>
+                            </select>
+                        </div>
                         <button type="submit"
                                 class="btn-primary">
-                            Crear tarea
+                            Nueva Tarea
                         </button>
 
                     </form>
@@ -1257,10 +1283,10 @@
 
                 <div class="card-header">
 
-                    <h3>Mis tareas</h3>
+                    <h3 th:text="|Mis tareas (${#lists.size(tareas)})|">Mis tareas</h3>
 
                     <p>
-                        Pendientes y actividades completadas.
+                        Todas sus tareas, independientemente del día del calendario.
                     </p>
 
                 </div>
@@ -1268,21 +1294,21 @@
                 <div class="tasks-toolbar">
 
                     <a th:href="@{/medico/agenda(
-                            filtroTareas='TODAS'
+                            filtroTareas='TODAS',vista=${vista},fecha=${fechaBase}
                        )}"
                        class="task-filter">
                         Todas
                     </a>
 
                     <a th:href="@{/medico/agenda(
-                            filtroTareas='PENDIENTES'
+                            filtroTareas='PENDIENTES',vista=${vista},fecha=${fechaBase}
                        )}"
                        class="task-filter">
                         Pendientes
                     </a>
 
                     <a th:href="@{/medico/agenda(
-                            filtroTareas='COMPLETADAS'
+                            filtroTareas='COMPLETADAS',vista=${vista},fecha=${fechaBase}
                        )}"
                        class="task-filter">
                         Completadas
@@ -1313,7 +1339,7 @@
 
                             <span class="priority"
                                   th:classappend="${tarea.prioridad}"
-                                  th:text="${tarea.prioridad}">
+                                  th:text="${tarea.prioridadDescripcion}">
                                 NORMAL
                             </span>
 
@@ -1329,7 +1355,7 @@
                             Fecha límite:
 
                             <strong
-                                    th:text="${#temporals.format(
+                                    th:text="${tarea.fechaLimite == null ? 'Sin fecha límite' : #temporals.format(
                                         tarea.fechaLimite,
                                         'dd/MM/yyyy HH:mm'
                                     )}">
@@ -1337,6 +1363,7 @@
 
                         </div>
 
+                        <p th:text="|Estado: ${tarea.estadoDescripcion}|"></p>
                         <div class="task-actions">
 
                             <form th:action="@{
@@ -1345,14 +1372,15 @@
                                   }"
                                   method="post">
 
+                                <select name="estado" aria-label="Estado de la tarea" required>
+                                    <option value="PENDIENTE" th:selected="${tarea.estado == 'PENDIENTE'}">Pendiente</option>
+                                    <option value="EN_PROGRESO" th:selected="${tarea.estado == 'EN_PROGRESO'}">En progreso</option>
+                                    <option value="COMPLETADA" th:selected="${tarea.estado == 'COMPLETADA'}">Completada</option>
+                                </select>
+
                                 <button type="submit"
-                                        class="btn-success"
-                                        th:text="
-                                            ${tarea.completada}
-                                            ? 'Reabrir'
-                                            : 'Completar'
-                                        ">
-                                    Completar
+                                        class="btn-success">
+                                    Actualizar estado
                                 </button>
 
                             </form>
@@ -1381,11 +1409,38 @@
 
             </section>
 
+            </div>
         </aside>
 
     </div>
 
 </main>
+
+<script>
+    document.getElementById('toggle-tareas').addEventListener('click', function () {
+        const panel = document.getElementById('task-panel');
+        panel.hidden = !panel.hidden;
+        this.setAttribute('aria-expanded', String(!panel.hidden));
+    });
+    document.getElementById('todoElDia1')?.addEventListener('change', ajustarTodoElDia);
+    // Thymeleaf puede generar sufijo para el checkbox; seleccionar por nombre también lo soporta.
+    const todoElDia = document.querySelector('input[type="checkbox"][name="todoElDia"]');
+    if (todoElDia && todoElDia.id !== 'todoElDia1') todoElDia.addEventListener('change', ajustarTodoElDia);
+    function ajustarTodoElDia() {
+        if (!this.checked) return;
+        const inicio = document.querySelector('[name="fechaInicio"]');
+        const fin = document.querySelector('[name="fechaFin"]');
+        if (!inicio.value) return;
+        inicio.value = inicio.value.slice(0, 10) + 'T00:00';
+        if (!fin.value || fin.value.slice(0, 10) <= inicio.value.slice(0, 10)) {
+            const siguiente = new Date(inicio.value + ':00');
+            siguiente.setDate(siguiente.getDate() + 1);
+            fin.value = siguiente.getFullYear() + '-' + String(siguiente.getMonth() + 1).padStart(2, '0') + '-' + String(siguiente.getDate()).padStart(2, '0') + 'T00:00';
+        } else {
+            fin.value = fin.value.slice(0, 10) + 'T00:00';
+        }
+    }
+</script>
 
 </body>
 

@@ -14,25 +14,29 @@ import com.example.proyecto_semestre_medico.repository.TareaMedicoRepository;
 import com.example.proyecto_semestre_medico.service.AgendaMedicoService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Locale;
 
 @Service
+@PreAuthorize("hasRole('MEDICO') and #nombreUsuario == authentication.name")
 public class AgendaMedicoServiceImpl
         implements AgendaMedicoService {
 
     private static final Set<String>
             TIPOS_EVENTO =
             Set.of(
-                    "REUNION",
-                    "DESCANSO",
+                    "BLOQUEO",
                     "CAPACITACION",
                     "PERSONAL",
-                    "OTRO"
+                    "VACACIONES"
             );
 
     private static final Set<String>
@@ -245,6 +249,9 @@ public class AgendaMedicoServiceImpl
                         nombreUsuario
                 );
 
+        // El mismo bloqueo utilizado por CU-03 y CU-12 serializa cambios de disponibilidad.
+        medicoRepository.buscarParaAgendar(medico.getId()).orElseThrow();
+
         EventoAgenda evento;
 
         if (dto.getId() == null) {
@@ -260,7 +267,7 @@ public class AgendaMedicoServiceImpl
 
             evento =
                     eventoAgendaRepository
-                            .findByIdAndMedicoIdAndActivoTrue(
+                            .buscarParaModificar(
                                     dto.getId(),
                                     medico.getId()
                             )
@@ -360,7 +367,7 @@ public class AgendaMedicoServiceImpl
         );
 
         dto.setTipoEvento(
-                evento.getTipoEvento()
+                TIPOS_EVENTO.contains(evento.getTipoEvento()) ? evento.getTipoEvento() : "BLOQUEO"
         );
 
         dto.setTodoElDia(
@@ -382,9 +389,11 @@ public class AgendaMedicoServiceImpl
                         nombreUsuario
                 );
 
+        medicoRepository.buscarParaAgendar(medico.getId()).orElseThrow();
+
         EventoAgenda evento =
                 eventoAgendaRepository
-                        .findByIdAndMedicoIdAndActivoTrue(
+                        .buscarParaModificar(
                                 eventoId,
                                 medico.getId()
                         )
@@ -489,7 +498,7 @@ public class AgendaMedicoServiceImpl
 
             tarea =
                     tareaMedicoRepository
-                            .findByIdAndMedicoIdAndActivoTrue(
+                            .buscarParaModificar(
                                     dto.getId(),
                                     medico.getId()
                             )
@@ -521,6 +530,8 @@ public class AgendaMedicoServiceImpl
                 dto.getFechaLimite()
         );
 
+        tarea.setEstado(dto.getEstado().trim().toUpperCase(Locale.ROOT));
+
         tarea.setActivo(
                 true
         );
@@ -535,8 +546,11 @@ public class AgendaMedicoServiceImpl
     @Transactional
     public void cambiarEstadoTarea(
             Long tareaId,
+            String estado,
             String nombreUsuario
     ) {
+
+        validarEstadoTarea(estado);
 
         Medico medico =
                 obtenerMedico(
@@ -545,7 +559,7 @@ public class AgendaMedicoServiceImpl
 
         TareaMedico tarea =
                 tareaMedicoRepository
-                        .findByIdAndMedicoIdAndActivoTrue(
+                        .buscarParaModificar(
                                 tareaId,
                                 medico.getId()
                         )
@@ -555,11 +569,7 @@ public class AgendaMedicoServiceImpl
                                 )
                         );
 
-        tarea.setCompletada(
-                !Boolean.TRUE.equals(
-                        tarea.getCompletada()
-                )
-        );
+        tarea.setEstado(estado.trim().toUpperCase(Locale.ROOT));
 
         tareaMedicoRepository.save(
                 tarea
@@ -580,7 +590,7 @@ public class AgendaMedicoServiceImpl
 
         TareaMedico tarea =
                 tareaMedicoRepository
-                        .findByIdAndMedicoIdAndActivoTrue(
+                        .buscarParaModificar(
                                 tareaId,
                                 medico.getId()
                         )
@@ -621,13 +631,13 @@ public class AgendaMedicoServiceImpl
         if (dto.getTitulo() == null
                 || dto.getTitulo()
                 .trim()
-                .length() < 3
+                .length() < 5
                 || dto.getTitulo()
                 .trim()
                 .length() > 200) {
 
             throw new IllegalArgumentException(
-                    "El título del evento debe tener entre 3 y 200 caracteres."
+                    "El título del evento debe tener entre 5 y 200 caracteres."
             );
         }
 
@@ -657,6 +667,19 @@ public class AgendaMedicoServiceImpl
             throw new IllegalArgumentException(
                     "La fecha de finalización debe ser posterior a la fecha de inicio."
             );
+        }
+
+        if (Boolean.TRUE.equals(dto.getTodoElDia())) {
+            // Rango [inicio, fin): medianoche inicial y medianoche posterior al último día.
+            if (!dto.getFechaInicio().toLocalTime().equals(LocalTime.MIDNIGHT)
+                    || !dto.getFechaFin().toLocalTime().equals(LocalTime.MIDNIGHT)) {
+                throw new IllegalArgumentException("Para todo el día, indique inicio y fin a las 00:00; el fin es exclusivo.");
+            }
+            if (dto.getFechaInicio().toLocalDate().isBefore(LocalDate.now())) {
+                throw new IllegalArgumentException("La fecha de inicio debe ser actual o futura.");
+            }
+        } else if (dto.getFechaInicio().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("La fecha de inicio debe ser actual o futura.");
         }
 
         if (dto.getTipoEvento() == null
@@ -696,13 +719,13 @@ public class AgendaMedicoServiceImpl
         if (dto.getTitulo() == null
                 || dto.getTitulo()
                 .trim()
-                .length() < 3
+                .length() < 5
                 || dto.getTitulo()
                 .trim()
                 .length() > 200) {
 
             throw new IllegalArgumentException(
-                    "El título de la tarea debe tener entre 3 y 200 caracteres."
+                    "El título de la tarea debe tener entre 5 y 200 caracteres."
             );
         }
 
@@ -739,11 +762,20 @@ public class AgendaMedicoServiceImpl
             );
         }
 
-        if (dto.getFechaLimite() == null) {
+        // LocalDateTime: hoy se admite únicamente si la hora todavía es futura.
+        if (dto.getFechaLimite() != null && !dto.getFechaLimite().isAfter(LocalDateTime.now())) {
 
             throw new IllegalArgumentException(
-                    "La fecha límite es obligatoria."
+                    "La fecha límite debe ser futura."
             );
+        }
+        validarEstadoTarea(dto.getEstado());
+    }
+
+    private void validarEstadoTarea(String estado) {
+        if (estado == null || !Set.of("PENDIENTE", "EN_PROGRESO", "COMPLETADA")
+                .contains(estado.trim().toUpperCase(Locale.ROOT))) {
+            throw new IllegalArgumentException("El estado de la tarea no es válido.");
         }
     }
 
@@ -759,7 +791,7 @@ public class AgendaMedicoServiceImpl
             );
         }
 
-        return medicoRepository
+        Medico medico = medicoRepository
                 .findByPersonalUsuarioNombreUsuario(
                         nombreUsuario
                 )
@@ -768,6 +800,10 @@ public class AgendaMedicoServiceImpl
                                 "El usuario autenticado no está registrado como médico."
                         )
                 );
+        if (!Boolean.TRUE.equals(medico.getActivo())) {
+            throw new IllegalArgumentException("El médico no está activo.");
+        }
+        return medico;
     }
 
     private String limpiar(

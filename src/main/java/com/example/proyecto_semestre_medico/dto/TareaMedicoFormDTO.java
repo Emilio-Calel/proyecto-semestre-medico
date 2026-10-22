@@ -12,6 +12,10 @@ public class TareaMedicoFormDTO {
     private String descripcion;
 
     private String prioridad;
+    private String estado = "PENDIENTE";
+
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
 
     @DateTimeFormat(
             iso = DateTimeFormat.ISO.DATE_TIME

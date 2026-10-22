@@ -44,6 +44,7 @@ public interface AgendaMedicoService {
 
     void cambiarEstadoTarea(
             Long tareaId,
+            String estado,
             String nombreUsuario
     );
 

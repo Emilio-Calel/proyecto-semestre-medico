@@ -183,10 +183,7 @@ WHERE c.id = :citaId
           'NO_ASISTIO'
       )
 
-      AND (
-          c.estadoCita.codigo <> 'PENDIENTE_PAGO'
-          OR c.origen = 'SEGUIMIENTO'
-      )
+      AND c.estadoCita.codigo <> 'PENDIENTE_PAGO'
 
     ORDER BY c.fechaHoraInicio ASC
 """)

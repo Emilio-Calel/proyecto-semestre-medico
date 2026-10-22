@@ -40,8 +40,7 @@ public class TareaMedico {
     private String prioridad;
 
     @Column(
-            name = "fecha_limite",
-            nullable = false
+            name = "fecha_limite"
     )
     private LocalDateTime fechaLimite;
 
@@ -49,6 +48,9 @@ public class TareaMedico {
             nullable = false
     )
     private Boolean completada = false;
+
+    @Column(nullable = false, length = 20)
+    private String estado = "PENDIENTE";
 
     @Column(
             nullable = false
@@ -138,13 +140,33 @@ public class TareaMedico {
     }
 
     public Boolean getCompletada() {
-        return completada;
+        return "COMPLETADA".equals(estado);
     }
 
     public void setCompletada(
             Boolean completada
     ) {
         this.completada = completada;
+        this.estado = Boolean.TRUE.equals(completada) ? "COMPLETADA" : "PENDIENTE";
+    }
+
+    public String getEstado() { return estado; }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
+        this.completada = "COMPLETADA".equals(estado);
+    }
+
+    public String getEstadoDescripcion() {
+        return switch (estado) {
+            case "EN_PROGRESO" -> "En progreso";
+            case "COMPLETADA" -> "Completada";
+            default -> "Pendiente";
+        };
+    }
+
+    public String getPrioridadDescripcion() {
+        return "NORMAL".equals(prioridad) ? "Media" : ("ALTA".equals(prioridad) ? "Alta" : "Baja");
     }
 
     public Boolean getActivo() {

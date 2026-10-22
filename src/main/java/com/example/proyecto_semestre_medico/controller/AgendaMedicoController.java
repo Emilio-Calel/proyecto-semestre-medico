@@ -11,6 +11,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.validation.BindingResult;
+import java.time.format.DateTimeFormatter;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -35,6 +38,16 @@ public class AgendaMedicoController {
     ) {
         this.agendaMedicoService =
                 agendaMedicoService;
+    }
+
+    @InitBinder("eventoForm")
+    void camposEvento(WebDataBinder binder) {
+        binder.setAllowedFields("id", "titulo", "descripcion", "fechaInicio", "fechaFin", "tipoEvento", "todoElDia");
+    }
+
+    @InitBinder("tareaForm")
+    void camposTarea(WebDataBinder binder) {
+        binder.setAllowedFields("id", "titulo", "descripcion", "prioridad", "fechaLimite", "estado");
     }
 
     /*
@@ -167,12 +180,9 @@ public class AgendaMedicoController {
             List<AgendaItemDTO> elementosDia =
                     agenda.stream()
                             .filter(item ->
-                                    item.getInicio() != null
-                                            && item.getInicio()
-                                            .toLocalDate()
-                                            .equals(
-                                                    diaActual
-                                            )
+                                    item.getInicio() != null && item.getFin() != null
+                                            && item.getInicio().isBefore(diaActual.plusDays(1).atStartOfDay())
+                                            && item.getFin().isAfter(diaActual.atStartOfDay())
                             )
                             .toList();
 
@@ -194,6 +204,17 @@ public class AgendaMedicoController {
                 "fechaBase",
                 fechaBase
         );
+        model.addAttribute("hoy", LocalDate.now());
+        model.addAttribute("fechaAnterior", switch (vistaNormalizada) {
+            case "MES" -> fechaBase.minusMonths(1);
+            case "DIA" -> fechaBase.minusDays(1);
+            default -> fechaBase.minusWeeks(1);
+        });
+        model.addAttribute("fechaSiguiente", switch (vistaNormalizada) {
+            case "MES" -> fechaBase.plusMonths(1);
+            case "DIA" -> fechaBase.plusDays(1);
+            default -> fechaBase.plusWeeks(1);
+        });
 
         model.addAttribute(
                 "desdeFecha",
@@ -260,7 +281,7 @@ public class AgendaMedicoController {
             );
 
             eventoForm.setTipoEvento(
-                    "REUNION"
+                    "PERSONAL"
             );
 
             eventoForm.setTodoElDia(
@@ -313,6 +334,7 @@ public class AgendaMedicoController {
     public String guardarEvento(
             @ModelAttribute("eventoForm")
             EventoAgendaFormDTO dto,
+            BindingResult bindingResult,
 
             Authentication authentication,
             RedirectAttributes redirectAttributes
@@ -320,7 +342,10 @@ public class AgendaMedicoController {
 
         try {
 
-            agendaMedicoService
+            if (bindingResult.hasErrors() || bindingResult.getSuppressedFields().length > 0) {
+                throw new IllegalArgumentException("Revise los campos del evento y sus fechas.");
+            }
+            var evento = agendaMedicoService
                     .guardarEvento(
                             dto,
                             authentication.getName()
@@ -330,15 +355,17 @@ public class AgendaMedicoController {
                     .addFlashAttribute(
                             "mensaje",
                             dto.getId() == null
-                                    ? "Evento creado correctamente."
-                                    : "Evento actualizado correctamente."
+                                    ? "Evento creado exitosamente. " + evento.getTitulo() + " — "
+                                        + evento.getFechaInicio().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                                        + " a " + evento.getFechaFin().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) + "."
+                                    : "Evento actualizado exitosamente."
                     );
 
         } catch (IllegalArgumentException e) {
 
             redirectAttributes
                     .addFlashAttribute(
-                            "error",
+                            "eventoError",
                             e.getMessage()
                     );
 
@@ -449,6 +476,7 @@ public class AgendaMedicoController {
     public String guardarTarea(
             @ModelAttribute("tareaForm")
             TareaMedicoFormDTO dto,
+            BindingResult bindingResult,
 
             Authentication authentication,
             RedirectAttributes redirectAttributes
@@ -456,6 +484,9 @@ public class AgendaMedicoController {
 
         try {
 
+            if (bindingResult.hasErrors() || bindingResult.getSuppressedFields().length > 0) {
+                throw new IllegalArgumentException("Revise los campos de la tarea y su fecha límite.");
+            }
             agendaMedicoService
                     .guardarTarea(
                             dto,
@@ -472,7 +503,7 @@ public class AgendaMedicoController {
 
             redirectAttributes
                     .addFlashAttribute(
-                            "error",
+                            "tareaError",
                             e.getMessage()
                     );
 
@@ -495,6 +526,7 @@ public class AgendaMedicoController {
     @PostMapping("/tarea/estado/{id}")
     public String cambiarEstadoTarea(
             @PathVariable Long id,
+            @RequestParam(name = "estado", required = false) String estado,
 
             Authentication authentication,
             RedirectAttributes redirectAttributes
@@ -505,6 +537,7 @@ public class AgendaMedicoController {
             agendaMedicoService
                     .cambiarEstadoTarea(
                             id,
+                            estado,
                             authentication.getName()
                     );
 
