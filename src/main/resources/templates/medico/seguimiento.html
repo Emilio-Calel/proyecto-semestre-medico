@@ -214,6 +214,9 @@
 
 <main class="container">
 
+    <div th:if="${error}" th:text="${error}" style="color:#b91c1c;padding:12px;"></div>
+    <a th:href="@{/medico}">Volver al Panel Médico</a>
+
     <section class="card">
 
         <h3 style="margin-bottom:18px;">
@@ -393,8 +396,7 @@
 
                     <select
                             id="prioridad"
-                            th:field="*{prioridad}"
-                            required>
+                            th:field="*{prioridad}">
 
                         <option value="BAJA">
                             Baja
@@ -415,7 +417,7 @@
                 <div class="field full">
 
                     <label for="motivo">
-                        Motivo / observaciones
+                        Observaciones / motivo del seguimiento
                     </label>
 
                     <textarea
@@ -440,7 +442,7 @@
                 <a
                         class="btn btn-secondary"
                         th:href="@{/medico}">
-                    ← Cancelar
+                    ← Volver
                 </a>
 
                 <button

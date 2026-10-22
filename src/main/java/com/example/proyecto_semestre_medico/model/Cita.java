@@ -132,6 +132,15 @@ public class Cita {
     public Cita() {
     }
 
+    public String getTipoSeguimientoDescripcion() {
+        if (tipoSeguimiento == null) return "";
+        return switch (tipoSeguimiento) {
+            case "MONITOREO_TRATAMIENTO" -> "Monitoreo de Tratamiento";
+            case "REVISION_RESULTADOS_LABORATORIO" -> "Revisión de Resultados de Laboratorio";
+            default -> tipoSeguimiento;
+        };
+    }
+
     @PrePersist
     public void prePersist() {
 

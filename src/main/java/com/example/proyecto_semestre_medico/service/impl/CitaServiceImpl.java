@@ -153,7 +153,7 @@ public class CitaServiceImpl implements CitaService {
                 );
 
         Medico medico = medicoRepository
-                .findById(dto.getMedicoId())
+                .buscarParaAgendar(dto.getMedicoId())
                 .orElseThrow(() ->
                         new IllegalArgumentException(
                                 "Médico no válido"

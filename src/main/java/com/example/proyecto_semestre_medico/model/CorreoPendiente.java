@@ -42,6 +42,14 @@ public class CorreoPendiente {
     @Column(name = "fecha_envio")
     private LocalDateTime fechaEnvio;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cita_recordatorio_id")
+    private Cita citaRecordatorio;
+
+    public Cita getCitaRecordatorio() { return citaRecordatorio; }
+
+    public void setCitaRecordatorio(Cita cita) { this.citaRecordatorio = cita; }
+
     public CorreoPendiente() {
     }
 

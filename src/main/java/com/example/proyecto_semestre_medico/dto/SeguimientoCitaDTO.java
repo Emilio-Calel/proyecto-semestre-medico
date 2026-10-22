@@ -6,11 +6,12 @@ public class SeguimientoCitaDTO {
 
     private Long citaOrigenId;
 
+    @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime fechaHoraInicio;
 
     private String tipoSeguimiento;
 
-    private String prioridad;
+    private String prioridad = "NORMAL";
 
     private String motivo;
 

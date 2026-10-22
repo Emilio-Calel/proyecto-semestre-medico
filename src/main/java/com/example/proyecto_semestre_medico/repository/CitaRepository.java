@@ -18,6 +18,10 @@ public interface CitaRepository
             String numeroCita
     );
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select c from Cita c where c.id = :id")
+    Optional<Cita> buscarParaSeguimiento(@Param("id") Long id);
+
     @Query("""
         SELECT COUNT(c) > 0
         FROM Cita c
@@ -132,14 +136,14 @@ WHERE c.id = :citaId
     );
 
     @Query("""
-    SELECT c
+    SELECT c.id
     FROM Cita c
-    JOIN FETCH c.paciente
-    JOIN FETCH c.medico m
-    JOIN FETCH m.personal
-    JOIN FETCH c.especialidad
-    JOIN FETCH c.sucursal
-    JOIN FETCH c.estadoCita
+    JOIN c.paciente
+    JOIN c.medico m
+    JOIN m.personal
+    JOIN c.especialidad
+    JOIN c.sucursal
+    JOIN c.estadoCita
     WHERE c.origen = 'SEGUIMIENTO'
       AND c.recordatorioSeguimientoEnviado = false
       AND c.fechaHoraInicio >= :desde
@@ -151,7 +155,7 @@ WHERE c.id = :citaId
       )
     ORDER BY c.fechaHoraInicio ASC
 """)
-    List<Cita> buscarSeguimientosParaRecordatorio(
+    List<Long> buscarSeguimientosParaRecordatorio(
             @Param("desde")
             LocalDateTime desde,
 

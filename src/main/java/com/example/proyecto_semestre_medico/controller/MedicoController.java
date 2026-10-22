@@ -20,6 +20,8 @@ import com.example.proyecto_semestre_medico.dto.SeguimientoContextoDTO;
 import com.example.proyecto_semestre_medico.model.Cita;
 import com.example.proyecto_semestre_medico.service.SeguimientoCitaService;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.WebDataBinder;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -628,15 +630,17 @@ public class MedicoController {
                             );
 
             SeguimientoCitaDTO seguimientoForm =
-                    new SeguimientoCitaDTO();
+                    model.containsAttribute("seguimientoForm")
+                            ? (SeguimientoCitaDTO) model.getAttribute("seguimientoForm")
+                            : new SeguimientoCitaDTO();
 
             seguimientoForm.setCitaOrigenId(
                     citaId
             );
 
-            seguimientoForm.setPrioridad(
-                    "NORMAL"
-            );
+            if (seguimientoForm.getPrioridad() == null || seguimientoForm.getPrioridad().isBlank()) {
+                seguimientoForm.setPrioridad("NORMAL");
+            }
 
             model.addAttribute(
                     "contexto",
@@ -688,16 +692,26 @@ public class MedicoController {
      * =========================================================
      */
 
+    @InitBinder("seguimientoForm")
+    public void camposSeguimiento(WebDataBinder binder) {
+        binder.setAllowedFields("citaOrigenId", "fechaHoraInicio", "tipoSeguimiento", "prioridad", "motivo");
+    }
+
     @PostMapping("/seguimiento/guardar")
     public String guardarSeguimiento(
             @ModelAttribute("seguimientoForm")
             SeguimientoCitaDTO dto,
+            BindingResult bindingResult,
 
             Authentication authentication,
             RedirectAttributes redirectAttributes
     ) {
 
         try {
+
+            if (bindingResult.hasErrors()) {
+                throw new IllegalArgumentException("Seleccione una fecha futura dentro de los horarios disponibles del médico.");
+            }
 
             Cita seguimiento =
                     seguimientoCitaService
@@ -708,11 +722,9 @@ public class MedicoController {
 
             redirectAttributes.addFlashAttribute(
                     "mensaje",
-                    "Cita de seguimiento agendada para el "
-                            + seguimiento.getFechaHoraInicio().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-                            + " a las "
-                            + seguimiento.getFechaHoraInicio().format(DateTimeFormatter.ofPattern("HH:mm"))
-                            + ". Se enviará notificación al paciente."
+                    "Cita de seguimiento agendada exitosamente. Tipo: "
+                            + seguimiento.getTipoSeguimientoDescripcion() + ". Paciente: "
+                            + seguimiento.getPaciente().getNombreCompleto() + "."
             );
 
             return "redirect:/medico";
@@ -724,11 +736,13 @@ public class MedicoController {
                     e.getMessage()
             );
 
+            redirectAttributes.addFlashAttribute("seguimientoForm", dto);
+            if (dto.getCitaOrigenId() == null) return "redirect:/medico";
+
             String fecha =
                     dto.getFechaHoraInicio() != null
-                            ? dto.getFechaHoraInicio()
-                            .toLocalDate()
-                            .toString()
+                            ? (dto.getFechaHoraInicio().toLocalDate().isBefore(LocalDate.now())
+                            ? LocalDate.now() : dto.getFechaHoraInicio().toLocalDate()).toString()
                             : "";
 
             return "redirect:/medico/seguimiento/"

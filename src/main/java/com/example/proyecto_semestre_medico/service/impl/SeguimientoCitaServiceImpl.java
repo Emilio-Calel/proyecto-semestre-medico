@@ -15,6 +15,8 @@ import com.example.proyecto_semestre_medico.service.CitaDisponibilidadService;
 import com.example.proyecto_semestre_medico.service.SeguimientoCitaService;
 import com.example.proyecto_semestre_medico.dto.SeguimientoContextoDTO;
 import com.example.proyecto_semestre_medico.service.CorreoPendienteService;
+import com.example.proyecto_semestre_medico.service.CorreoSeguimientoPlantilla;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +28,7 @@ import java.util.Set;
 import java.util.UUID;
 
 @Service
+@PreAuthorize("hasRole('MEDICO') and #nombreUsuario == authentication.name")
 public class SeguimientoCitaServiceImpl
         implements SeguimientoCitaService {
 
@@ -63,6 +66,11 @@ public class SeguimientoCitaServiceImpl
             citaDisponibilidadService;
 
     private final int reservaMinutos;
+    private final int duracionMinutos;
+    private final CorreoSeguimientoPlantilla plantillaCorreo;
+
+    private static final String FECHA_INVALIDA = "Seleccione una fecha futura dentro de los horarios disponibles del médico.";
+    private static final String HORARIO_OCUPADO = "El horario seleccionado ya no está disponible. Por favor, elija otro horario.";
 
     private final CorreoPendienteService
             correoPendienteService;
@@ -77,7 +85,9 @@ public class SeguimientoCitaServiceImpl
             CorreoPendienteService correoPendienteService,
 
             @Value("${app.citas.reserva-minutos:5}")
-            int reservaMinutos
+            int reservaMinutos,
+            @Value("${app.citas.duracion-minutos:30}") int duracionMinutos,
+            CorreoSeguimientoPlantilla plantillaCorreo
     ) {
 
         this.citaRepository =
@@ -103,6 +113,8 @@ public class SeguimientoCitaServiceImpl
 
         this.correoPendienteService =
                 correoPendienteService;
+        this.duracionMinutos = duracionMinutos;
+        this.plantillaCorreo = plantillaCorreo;
     }
 
     /*
@@ -168,6 +180,10 @@ public class SeguimientoCitaServiceImpl
             String nombreUsuario
     ) {
 
+        if (fecha == null || fecha.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException(FECHA_INVALIDA);
+        }
+
         Cita citaOrigen =
                 obtenerYValidarCitaOrigen(
                         citaOrigenId,
@@ -204,6 +220,11 @@ public class SeguimientoCitaServiceImpl
                 dto
         );
 
+        Medico medico = medicoRepository.findByPersonalUsuarioNombreUsuario(nombreUsuario)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró el médico asociado al usuario autenticado."));
+        medicoRepository.buscarParaAgendar(medico.getId())
+                .orElseThrow(() -> new IllegalArgumentException("El médico original no existe."));
+
         Cita citaOrigen =
                 obtenerYValidarCitaOrigen(
                         dto.getCitaOrigenId(),
@@ -212,6 +233,12 @@ public class SeguimientoCitaServiceImpl
 
         LocalDateTime inicio =
                 dto.getFechaHoraInicio();
+
+        LocalDateTime finSolicitado = inicio.plusMinutes(duracionMinutos);
+        if (eventoAgendaRepository.existeBloqueoEnRango(medico.getId(), inicio, finSolicitado)
+                || citaRepository.existeCitaEnRango(medico.getId(), inicio, finSolicitado)) {
+            throw new IllegalArgumentException(HORARIO_OCUPADO);
+        }
 
         /*
          * Consultamos nuevamente los horarios
@@ -241,7 +268,7 @@ public class SeguimientoCitaServiceImpl
                         .findFirst()
                         .orElseThrow(() ->
                                 new IllegalArgumentException(
-                                        "El horario seleccionado ya no se encuentra disponible."
+                                        FECHA_INVALIDA
                                 )
                         );
 
@@ -266,7 +293,7 @@ public class SeguimientoCitaServiceImpl
                 )) {
 
             throw new IllegalArgumentException(
-                    "El médico ya no está disponible en ese horario."
+                    HORARIO_OCUPADO
             );
         }
 
@@ -280,7 +307,7 @@ public class SeguimientoCitaServiceImpl
                 )) {
 
             throw new IllegalArgumentException(
-                    "El horario acaba de ser reservado. Seleccione otro."
+                    HORARIO_OCUPADO
             );
         }
 
@@ -367,6 +394,8 @@ public class SeguimientoCitaServiceImpl
         seguimiento.setPrioridadEmergencia(
                 false
         );
+        seguimiento.setRecordatorioSeguimientoEnviado(false);
+        seguimiento.setFechaRecordatorioSeguimiento(null);
 
         /*
          * Mantenemos el mismo mecanismo de reserva
@@ -482,6 +511,24 @@ public class SeguimientoCitaServiceImpl
             );
         }
 
+        if (consulta.getMedico() == null || !medicoAutenticado.getId().equals(consulta.getMedico().getId())
+                || consulta.getCita() == null || !citaOrigenId.equals(consulta.getCita().getId())) {
+            throw new IllegalArgumentException("No tiene autorización para programar seguimiento de esta consulta.");
+        }
+        if (citaOrigen.getPaciente() == null || citaOrigen.getPaciente().getId() == null
+                || citaOrigen.getEspecialidad() == null || citaOrigen.getSucursal() == null
+                || citaOrigen.getEspecialidad().getId() == null || citaOrigen.getSucursal().getId() == null
+                || !Boolean.TRUE.equals(citaOrigen.getSucursal().getActivo())
+                || !Boolean.TRUE.equals(citaOrigen.getEspecialidad().getActivo())
+                || !Boolean.TRUE.equals(medicoAutenticado.getActivo())
+                || medicoAutenticado.getPersonal() == null
+                || medicoAutenticado.getPersonal().getSucursal() == null
+                || !citaOrigen.getSucursal().getId().equals(medicoAutenticado.getPersonal().getSucursal().getId())
+                || medicoAutenticado.getEspecialidad() == null
+                || !citaOrigen.getEspecialidad().getId().equals(medicoAutenticado.getEspecialidad().getId())) {
+            throw new IllegalArgumentException("La consulta original no tiene un contexto válido de paciente, médico, especialidad y sucursal.");
+        }
+
         return citaOrigen;
     }
 
@@ -514,7 +561,7 @@ public class SeguimientoCitaServiceImpl
                 == null) {
 
             throw new IllegalArgumentException(
-                    "Debe seleccionar fecha y hora para el seguimiento."
+                    FECHA_INVALIDA
             );
         }
 
@@ -524,7 +571,7 @@ public class SeguimientoCitaServiceImpl
                 )) {
 
             throw new IllegalArgumentException(
-                    "La fecha y hora del seguimiento deben ser futuras."
+                    FECHA_INVALIDA
             );
         }
 
@@ -547,7 +594,7 @@ public class SeguimientoCitaServiceImpl
                 .contains(tipo)) {
 
             throw new IllegalArgumentException(
-                    "El tipo de seguimiento seleccionado no es válido."
+                    "Debe seleccionar el tipo de seguimiento."
             );
         }
 
@@ -556,9 +603,7 @@ public class SeguimientoCitaServiceImpl
                 || dto.getPrioridad()
                 .isBlank()) {
 
-            throw new IllegalArgumentException(
-                    "Debe seleccionar la prioridad del seguimiento."
-            );
+            dto.setPrioridad("NORMAL");
         }
 
         String prioridad =
@@ -584,7 +629,7 @@ public class SeguimientoCitaServiceImpl
                 .length() > 2000) {
 
             throw new IllegalArgumentException(
-                    "El motivo del seguimiento debe tener entre 10 y 2000 caracteres."
+                    "Las observaciones son obligatorias. Deben contener entre 10 y 2000 caracteres."
             );
         }
     }
@@ -618,94 +663,12 @@ public class SeguimientoCitaServiceImpl
         return numero;
     }
 
-    private void registrarCorreoConfirmacion(
-            Cita seguimiento
-    ) {
-
-        String correoPaciente =
-                seguimiento
-                        .getPaciente()
-                        .getCorreo();
-
-        if (correoPaciente == null
-                || correoPaciente.isBlank()) {
-
-            return;
+    private void registrarCorreoConfirmacion(Cita seguimiento) {
+        String destinatario = seguimiento.getPaciente().getCorreo();
+        if (destinatario == null || destinatario.isBlank()) {
+            throw new IllegalArgumentException("El paciente no tiene correo electrónico registrado para recibir la notificación de seguimiento.");
         }
-
-        String tipoLegible =
-                switch (
-                        seguimiento
-                                .getTipoSeguimiento()
-                        ) {
-
-                    case "MONITOREO_TRATAMIENTO" ->
-                            "Monitoreo de Tratamiento";
-
-                    case "REVISION_RESULTADOS_LABORATORIO" ->
-                            "Revisión de Resultados de Laboratorio";
-
-                    default ->
-                            seguimiento.getTipoSeguimiento();
-                };
-
-        String contenido =
-                """
-                Sistema Informático Hospitalario
-    
-                Se ha programado una cita de seguimiento.
-    
-                Paciente: %s
-                Número de cita: %s
-                Tipo de seguimiento: %s
-                Prioridad: %s
-                Médico: %s
-                Especialidad: %s
-                Sucursal: %s
-                Fecha y hora: %s
-    
-                Motivo:
-                %s
-    
-                Este es un mensaje generado automáticamente por el sistema hospitalario.
-                """
-                        .formatted(
-                                seguimiento
-                                        .getPaciente()
-                                        .getNombreCompleto(),
-
-                                seguimiento
-                                        .getNumeroCita(),
-
-                                tipoLegible,
-
-                                seguimiento
-                                        .getPrioridadSeguimiento(),
-
-                                seguimiento
-                                        .getMedico()
-                                        .getPersonal()
-                                        .getNombreCompleto(),
-
-                                seguimiento
-                                        .getEspecialidad()
-                                        .getNombre(),
-
-                                seguimiento
-                                        .getSucursal()
-                                        .getNombre(),
-
-                                seguimiento
-                                        .getFechaHoraInicio(),
-
-                                seguimiento
-                                        .getMotivoConsulta()
-                        );
-
-        correoPendienteService.registrar(
-                correoPaciente,
-                "Confirmación de cita de seguimiento",
-                contenido
-        );
+        correoPendienteService.registrar(destinatario, plantillaCorreo.asuntoConfirmacion(),
+                plantillaCorreo.contenido(seguimiento, false));
     }
 }

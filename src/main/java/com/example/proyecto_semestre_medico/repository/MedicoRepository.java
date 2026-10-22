@@ -12,6 +12,10 @@ import java.util.Optional;
 
 public interface MedicoRepository extends JpaRepository<Medico, Long> {
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select m from Medico m where m.id = :id")
+    Optional<Medico> buscarParaAgendar(@Param("id") Long id);
+
     Optional<Medico> findByPersonalId(Long personalId);
     Optional<Medico> findByPersonalUsuarioNombreUsuario(
             String nombreUsuario
