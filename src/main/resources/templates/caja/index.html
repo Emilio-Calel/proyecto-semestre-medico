@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es"
-      xmlns:th="http://www.thymeleaf.org">
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <head>
     <meta charset="UTF-8">
@@ -247,6 +248,9 @@
         <h1>Caja - Cobro Presencial</h1>
         <span>Gestión de pagos de consultas médicas</span>
     </div>
+
+    <a class="back-link" th:href="@{/caja/laboratorio}"
+       sec:authorize="hasRole('CAJERO')">Cobro Lab</a>
 
     <a
             class="back-link"

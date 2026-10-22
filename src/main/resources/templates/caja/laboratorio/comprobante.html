@@ -217,6 +217,16 @@
 
         <div class="body">
 
+            <div class="row"><span>Sucursal</span><strong>Laboratorio</strong></div>
+
+            <div class="row">
+                <span>Detalle</span>
+                <div>
+                    <p th:each="detalle : ${orden.detalles}"
+                       th:text="${detalle.examen.nombre} + ' — Q' + ${#numbers.formatDecimal(detalle.precio, 1, 'NONE', 2, 'POINT')}"></p>
+                </div>
+            </div>
+
             <div class="row">
 
                 <span>
@@ -282,9 +292,7 @@
 
                 <strong th:text="'Q' + ${#numbers.formatDecimal(
                         pago.montoRecibido,
-                        1,
-                        2
-                )}">
+                        1, 'NONE', 2, 'POINT')}">
                 </strong>
 
             </div>
@@ -298,9 +306,7 @@
 
                 <strong th:text="'Q' + ${#numbers.formatDecimal(
                         pago.cambio,
-                        1,
-                        2
-                )}">
+                        1, 'NONE', 2, 'POINT')}">
                 </strong>
 
             </div>
@@ -327,15 +333,14 @@
 
                 <span th:text="'Q' + ${#numbers.formatDecimal(
                         pago.monto,
-                        1,
-                        2
-                )}">
+                        1, 'NONE', 2, 'POINT')}">
                 </span>
 
             </div>
 
-            <div class="success">
-                La orden fue habilitada para procesamiento en laboratorio.
+            <div class="success"
+                 th:text="|¡Pago de laboratorio registrado exitosamente! Paciente: ${orden.paciente.nombreCompleto}. La orden ha sido actualizada a estado ‘En proceso’.|">
+                ¡Pago de laboratorio registrado exitosamente!
             </div>
 
             <div class="actions">
@@ -348,7 +353,7 @@
 
                 <a th:href="@{/caja/laboratorio}"
                    class="button button-primary">
-                    Nuevo Pago
+                    Nuevo Cobro
                 </a>
 
             </div>

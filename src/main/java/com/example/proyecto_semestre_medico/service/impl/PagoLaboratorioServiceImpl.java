@@ -17,14 +17,17 @@ import com.example.proyecto_semestre_medico.service.DatosSensiblesService;
 import com.example.proyecto_semestre_medico.service.PagoLaboratorioService;
 
 import org.springframework.stereotype.Service;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 @Service
+@PreAuthorize("hasRole('CAJERO')")
 public class PagoLaboratorioServiceImpl
         implements PagoLaboratorioService {
 
@@ -95,6 +98,7 @@ public class PagoLaboratorioServiceImpl
                         "PENDIENTE"
                 )
                 .stream()
+                .filter(this::estaPendienteDePago)
                 .map(this::convertirOrden)
                 .toList();
     }
@@ -146,6 +150,10 @@ public class PagoLaboratorioServiceImpl
             return List.of();
         }
 
+        if (!estaPendienteDePago(orden)) {
+            return List.of();
+        }
+
         return List.of(
                 convertirOrden(
                         orden
@@ -179,6 +187,7 @@ public class PagoLaboratorioServiceImpl
 
     @Override
     @Transactional
+    @PreAuthorize("hasRole('CAJERO') and #nombreUsuarioCajero == authentication.name")
     public PagoLaboratorio procesarPago(
             String nombreUsuarioCajero,
             PagoLaboratorioFormDTO dto
@@ -190,22 +199,8 @@ public class PagoLaboratorioServiceImpl
 
         OrdenLaboratorio orden =
                 obtenerOrdenPendiente(
-                        dto.getOrdenId()
+                        dto.getOrdenId(), true
                 );
-
-        boolean yaPagada =
-                pagoLaboratorioRepository
-                        .existsByOrdenLaboratorioIdAndEstado(
-                                orden.getId(),
-                                "APROBADO"
-                        );
-
-        if (yaPagada) {
-
-            throw new IllegalArgumentException(
-                    "La orden ya posee un pago aprobado."
-            );
-        }
 
         Usuario cajero =
                 usuarioRepository
@@ -265,12 +260,22 @@ public class PagoLaboratorioServiceImpl
                 );
             }
 
+            try {
+                recibido = recibido.setScale(2, RoundingMode.UNNECESSARY);
+            } catch (ArithmeticException e) {
+                throw new IllegalArgumentException("El monto recibido debe tener como máximo dos decimales.");
+            }
+            if (recibido.signum() < 0 || recibido.precision() > 10) {
+                throw new IllegalArgumentException("El monto recibido no es válido.");
+            }
+
             if (recibido.compareTo(
                     orden.getMontoTotal()
             ) < 0) {
 
                 throw new IllegalArgumentException(
-                        "El monto recibido es insuficiente."
+                        "El monto recibido (Q" + recibido.toPlainString()
+                                + ") es menor al monto a cobrar (Q" + orden.getMontoTotal().setScale(2).toPlainString() + ")"
                 );
             }
 
@@ -318,7 +323,7 @@ public class PagoLaboratorioServiceImpl
             )) {
 
                 throw new IllegalArgumentException(
-                        "Debe ingresar exactamente los últimos 4 dígitos de la tarjeta."
+                        "Ingrese los últimos 4 dígitos de la tarjeta."
                 );
             }
 
@@ -347,13 +352,8 @@ public class PagoLaboratorioServiceImpl
                     ultimos4
             )) {
 
-                pago.setEstado(
-                        "RECHAZADO"
-                );
-
-                pago.setReferencia(
-                        "SIM-RECHAZADO"
-                );
+                throw new IllegalArgumentException(
+                        "La transacción con tarjeta fue rechazada por el banco. Solicite al paciente otro método de pago.");
 
             } else {
 
@@ -461,6 +461,10 @@ public class PagoLaboratorioServiceImpl
     private OrdenLaboratorio obtenerOrdenPendiente(
             Long ordenId
     ) {
+        return obtenerOrdenPendiente(ordenId, false);
+    }
+
+    private OrdenLaboratorio obtenerOrdenPendiente(Long ordenId, boolean bloquear) {
 
         if (ordenId == null) {
 
@@ -470,10 +474,8 @@ public class PagoLaboratorioServiceImpl
         }
 
         OrdenLaboratorio orden =
-                ordenLaboratorioRepository
-                        .findById(
-                                ordenId
-                        )
+                (bloquear ? ordenLaboratorioRepository.buscarParaProcesar(ordenId)
+                        : ordenLaboratorioRepository.findById(ordenId))
                         .orElseThrow(() ->
                                 new IllegalArgumentException(
                                         "La orden de laboratorio no existe."
@@ -498,7 +500,21 @@ public class PagoLaboratorioServiceImpl
             );
         }
 
+        if (pagoLaboratorioRepository.existsByOrdenLaboratorioIdAndEstado(ordenId, "APROBADO")) {
+            throw new IllegalArgumentException("La orden ya posee un pago aprobado.");
+        }
+        if (orden.getMontoTotal() == null || orden.getMontoTotal().signum() < 0
+                || orden.getMontoTotal().stripTrailingZeros().scale() > 2
+                || orden.getMontoTotal().setScale(2).precision() > 10) {
+            throw new IllegalArgumentException("El monto total de la orden no es válido.");
+        }
+
         return orden;
+    }
+
+    private boolean estaPendienteDePago(OrdenLaboratorio orden) {
+        return "PENDIENTE".equals(orden.getEstado()) && !Boolean.TRUE.equals(orden.getExterna())
+                && !pagoLaboratorioRepository.existsByOrdenLaboratorioIdAndEstado(orden.getId(), "APROBADO");
     }
 
     // =====================================================

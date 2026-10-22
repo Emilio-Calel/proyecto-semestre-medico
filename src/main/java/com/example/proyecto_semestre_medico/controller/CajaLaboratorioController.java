@@ -11,6 +11,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.dao.DataAccessException;
 
 import org.springframework.web.bind.annotation.*;
 
@@ -39,6 +42,11 @@ public class CajaLaboratorioController {
     public String inicio() {
 
         return "caja/laboratorio/index";
+    }
+
+    @InitBinder("pagoForm")
+    public void limitarCamposPago(WebDataBinder binder) {
+        binder.setAllowedFields("ordenId", "metodoPago", "montoRecibido", "ultimos4");
     }
 
     // =====================================================
@@ -102,7 +110,7 @@ public class CajaLaboratorioController {
 
                 model.addAttribute(
                         "mensajeBusqueda",
-                        "No se encontraron órdenes pendientes de pago."
+                        "No se encontraron órdenes de laboratorio pendientes de pago. Verifique el DPI o número de orden e intente de nuevo."
                 );
             }
 
@@ -127,6 +135,7 @@ public class CajaLaboratorioController {
             Model model
     ) {
 
+        try {
         OrdenLaboratorioPagoDTO orden =
                 pagoLaboratorioService
                         .obtenerOrdenParaPago(
@@ -151,6 +160,10 @@ public class CajaLaboratorioController {
         );
 
         return "caja/laboratorio/pago";
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("error", e.getMessage());
+            return "caja/laboratorio/index";
+        }
     }
 
     // =====================================================
@@ -161,6 +174,7 @@ public class CajaLaboratorioController {
     public String procesar(
             @ModelAttribute("pagoForm")
             PagoLaboratorioFormDTO pagoForm,
+            BindingResult bindingResult,
 
             Authentication authentication,
 
@@ -168,6 +182,10 @@ public class CajaLaboratorioController {
     ) {
 
         try {
+
+            if (bindingResult.hasErrors()) {
+                throw new IllegalArgumentException("El monto recibido no es válido. Ingrese un número con hasta dos decimales.");
+            }
 
             PagoLaboratorio pago =
                     pagoLaboratorioService
@@ -186,7 +204,7 @@ public class CajaLaboratorioController {
 
                 model.addAttribute(
                         "error",
-                        "El pago con tarjeta fue rechazado."
+                        "La transacción con tarjeta fue rechazada por el banco. Solicite al paciente otro método de pago."
                 );
 
                 model.addAttribute(
@@ -218,12 +236,14 @@ public class CajaLaboratorioController {
 
         } catch (
                 IllegalArgumentException
-                | IllegalStateException e
+                | IllegalStateException | DataAccessException e
         ) {
 
             model.addAttribute(
                     "error",
-                    e.getMessage()
+                    e instanceof DataAccessException
+                            ? "No fue posible registrar el pago. Verifique la orden antes de intentar nuevamente."
+                            : e.getMessage()
             );
 
             try {
@@ -236,7 +256,8 @@ public class CajaLaboratorioController {
                                 )
                 );
 
-            } catch (Exception ignored) {
+            } catch (IllegalArgumentException | DataAccessException noDisponible) {
+                return "caja/laboratorio/index";
             }
 
             return "caja/laboratorio/pago";

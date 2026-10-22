@@ -303,9 +303,7 @@
 
                 <strong th:text="'Q' + ${#numbers.formatDecimal(
                         orden.montoTotal,
-                        1,
-                        2
-                )}">
+                        1, 'NONE', 2, 'POINT')}">
                 </strong>
 
             </div>
@@ -368,12 +366,13 @@
                 <div class="field">
 
                     <label for="montoRecibido">
-                        Monto recibido
+                        Monto Recibido (Q)
                     </label>
 
                     <input id="montoRecibido"
                            type="number"
                            min="0"
+                           max="99999999.99"
                            step="0.01"
                            th:field="*{montoRecibido}">
 
@@ -381,7 +380,7 @@
 
                 <div class="change-box">
 
-                    Cambio:
+                    Cambio a Devolver
                     <span id="cambio">
                         Q0.00
                     </span>
@@ -424,6 +423,7 @@
 
                 <button type="submit"
                         class="button button-primary"
+                        th:text="'Confirmar Pago Q' + ${#numbers.formatDecimal(orden.montoTotal, 1, 'NONE', 2, 'POINT')}"
                         onclick="return confirm(
                             '¿Confirmar el pago de esta orden?'
                         );">
@@ -495,6 +495,8 @@
 
                 monto.required = false;
                 ultimos4.required = false;
+                monto.disabled = true;
+                ultimos4.disabled = true;
 
 
                 if (valor === "EFECTIVO") {
@@ -504,6 +506,7 @@
                     );
 
                     monto.required = true;
+                    monto.disabled = false;
 
                 } else if (
                     valor === "VISA"
@@ -516,6 +519,7 @@
                     );
 
                     ultimos4.required = true;
+                    ultimos4.disabled = false;
                 }
             }
 

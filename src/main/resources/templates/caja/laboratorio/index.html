@@ -7,7 +7,7 @@
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0">
 
-  <title>Caja - Laboratorio</title>
+  <title>Cobro de Laboratorio en Caja</title>
 
   <style>
     * {
@@ -300,15 +300,15 @@
     </div>
 
     <div>
-      <h1>Caja - Laboratorio</h1>
+      <h1>Cobro de Laboratorio en Caja</h1>
       <p>Cobro de órdenes de laboratorio</p>
     </div>
 
   </div>
 
-  <a th:href="@{/}"
+  <a th:href="@{/caja}"
      class="home-button">
-    ← Inicio
+    ← Volver a Caja
   </a>
 
 </header>
@@ -350,12 +350,12 @@
 
           <option value="DPI"
                   th:selected="${tipoBusqueda == 'DPI'}">
-            DPI
+            Por DPI
           </option>
 
           <option value="ORDEN"
                   th:selected="${tipoBusqueda == 'ORDEN'}">
-            Número de orden
+            Por No. Orden
           </option>
 
         </select>
@@ -441,9 +441,7 @@
           <td class="amount"
               th:text="'Q' + ${#numbers.formatDecimal(
                             orden.montoTotal,
-                            1,
-                            2
-                    )}">
+                            1, 'NONE', 2, 'POINT')}">
           </td>
 
           <td>
@@ -468,7 +466,7 @@
 
     <div th:if="${#lists.isEmpty(ordenes)}"
          class="empty">
-      No se encontraron órdenes pendientes.
+      No se encontraron órdenes de laboratorio pendientes de pago. Verifique el DPI o número de orden e intente de nuevo.
     </div>
 
   </section>
