@@ -1,19 +1,13 @@
 package com.example.proyecto_semestre_medico.dto;
 
+import java.math.BigDecimal;
+
 public class PagoPresencialDTO {
 
     private Long citaId;
-
     private String metodoPago;
-
-    /*
-     * Solo se usan cuando el pago
-     * presencial es con tarjeta.
-     */
-    private String numeroTarjeta;
-    private String nombreTitular;
-    private String expiracion;
-    private String cvv;
+    private BigDecimal montoRecibido;
+    private String ultimos4;
 
     public PagoPresencialDTO() {
     }
@@ -36,43 +30,23 @@ public class PagoPresencialDTO {
         this.metodoPago = metodoPago;
     }
 
-    public String getNumeroTarjeta() {
-        return numeroTarjeta;
+    public BigDecimal getMontoRecibido() {
+        return montoRecibido;
     }
 
-    public void setNumeroTarjeta(
-            String numeroTarjeta
+    public void setMontoRecibido(
+            BigDecimal montoRecibido
     ) {
-        this.numeroTarjeta = numeroTarjeta;
+        this.montoRecibido = montoRecibido;
     }
 
-    public String getNombreTitular() {
-        return nombreTitular;
+    public String getUltimos4() {
+        return ultimos4;
     }
 
-    public void setNombreTitular(
-            String nombreTitular
+    public void setUltimos4(
+            String ultimos4
     ) {
-        this.nombreTitular = nombreTitular;
-    }
-
-    public String getExpiracion() {
-        return expiracion;
-    }
-
-    public void setExpiracion(
-            String expiracion
-    ) {
-        this.expiracion = expiracion;
-    }
-
-    public String getCvv() {
-        return cvv;
-    }
-
-    public void setCvv(
-            String cvv
-    ) {
-        this.cvv = cvv;
+        this.ultimos4 = ultimos4;
     }
 }

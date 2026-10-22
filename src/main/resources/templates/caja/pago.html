@@ -4,136 +4,791 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
     <title>Pago presencial</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f8f9;
+            color: #1f2933;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            min-height: 74px;
+            padding: 0 34px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            background:
+                    linear-gradient(
+                            135deg,
+                            #0f6f7a,
+                            #1596a3
+                    );
+
+            color: #ffffff;
+
+            box-shadow:
+                    0 3px 12px
+                    rgba(15, 80, 90, 0.15);
+        }
+
+        .brand h1 {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .brand span {
+            font-size: 12px;
+            color:
+                    rgba(
+                            255,
+                            255,
+                            255,
+                            0.80
+                    );
+        }
+
+        .back-link {
+            color: #ffffff;
+            text-decoration: none;
+
+            border:
+                    1px solid
+                    rgba(
+                            255,
+                            255,
+                            255,
+                            0.30
+                    );
+
+            background:
+                    rgba(
+                            255,
+                            255,
+                            255,
+                            0.12
+                    );
+
+            padding: 10px 15px;
+            border-radius: 9px;
+
+            font-size: 13px;
+            font-weight: bold;
+
+            transition:
+                    background 0.2s ease,
+                    transform 0.2s ease;
+        }
+
+        .back-link:hover {
+            background:
+                    rgba(
+                            255,
+                            255,
+                            255,
+                            0.22
+                    );
+
+            transform:
+                    translateY(-1px);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        .page-header {
+            margin-bottom: 24px;
+        }
+
+        .page-label {
+            display: inline-block;
+
+            background: #e7f5f6;
+            color: #0f6f7a;
+
+            padding: 7px 11px;
+            border-radius: 20px;
+
+            font-size: 12px;
+            font-weight: bold;
+
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+
+            margin-bottom: 12px;
+        }
+
+        .page-header h2 {
+            font-size: 29px;
+            margin-bottom: 8px;
+        }
+
+        .page-header p {
+            color: #6f7f85;
+            line-height: 1.6;
+        }
+
+        .alert-error {
+            padding: 14px 16px;
+
+            border-radius: 10px;
+
+            margin-bottom: 20px;
+
+            background: #fff1f1;
+
+            border:
+                    1px solid
+                    #efb6b6;
+
+            color: #9b1c1c;
+
+            font-size: 14px;
+        }
+
+        .summary-card,
+        .payment-card {
+            background: #ffffff;
+
+            border:
+                    1px solid
+                    #e2ebed;
+
+            border-radius: 16px;
+
+            box-shadow:
+                    0 6px 18px
+                    rgba(
+                            30,
+                            70,
+                            80,
+                            0.05
+                    );
+
+            margin-bottom: 24px;
+        }
+
+        .summary-card {
+            padding: 24px;
+        }
+
+        .summary-card h3 {
+            margin-bottom: 18px;
+        }
+
+        .summary-grid {
+            display: grid;
+
+            grid-template-columns:
+                    repeat(
+                            2,
+                            1fr
+                    );
+
+            gap: 0 24px;
+        }
+
+        .summary-item {
+            padding: 12px 0;
+
+            border-bottom:
+                    1px solid
+                    #e8eff0;
+        }
+
+        .summary-label {
+            display: block;
+
+            color: #7a898f;
+
+            font-size: 12px;
+
+            margin-bottom: 5px;
+        }
+
+        .summary-value {
+            display: block;
+
+            color: #293a40;
+
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .amount-box {
+            margin-top: 20px;
+
+            padding: 18px;
+
+            border-radius: 12px;
+
+            background:
+                    linear-gradient(
+                            135deg,
+                            #edf8f9,
+                            #f8fcfc
+                    );
+
+            border:
+                    1px solid
+                    #d2e8ea;
+        }
+
+        .amount-box span {
+            display: block;
+
+            color: #6d7c82;
+
+            font-size: 12px;
+
+            margin-bottom: 5px;
+        }
+
+        .amount-box strong {
+            display: block;
+
+            color: #0f6f7a;
+
+            font-size: 26px;
+        }
+
+        .payment-card {
+            overflow: hidden;
+        }
+
+        .payment-header {
+            padding: 22px 24px;
+
+            border-bottom:
+                    1px solid
+                    #e3ecee;
+
+            background: #f8fbfb;
+        }
+
+        .payment-header h3 {
+            margin-bottom: 6px;
+        }
+
+        .payment-header p {
+            color: #718087;
+
+            font-size: 13px;
+        }
+
+        .payment-body {
+            padding: 26px 24px;
+        }
+
+        .form-group {
+            display: grid;
+
+            gap: 8px;
+
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: bold;
+
+            color: #374151;
+        }
+
+        select,
+        input {
+            width: 100%;
+
+            padding: 13px 14px;
+
+            border:
+                    1px solid
+                    #ccd8db;
+
+            border-radius: 10px;
+
+            font-size: 14px;
+
+            outline: none;
+
+            background: #ffffff;
+
+            transition:
+                    border-color 0.2s ease,
+                    box-shadow 0.2s ease;
+        }
+
+        select:focus,
+        input:focus {
+            border-color: #1596a3;
+
+            box-shadow:
+                    0 0 0 3px
+                    rgba(
+                            21,
+                            150,
+                            163,
+                            0.12
+                    );
+        }
+
+        .method-box {
+            margin-top: 20px;
+
+            padding: 20px;
+
+            border-radius: 12px;
+
+            background: #f7fafb;
+
+            border:
+                    1px solid
+                    #e0eaec;
+        }
+
+        .method-box h4 {
+            margin-bottom: 16px;
+
+            color: #33474d;
+        }
+
+        .helper-text {
+            color: #7b898f;
+
+            font-size: 12px;
+            line-height: 1.5;
+
+            margin-top: 6px;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+
+            gap: 12px;
+
+            margin-top: 24px;
+        }
+
+        .btn {
+            border: none;
+
+            border-radius: 10px;
+
+            padding: 12px 20px;
+
+            font-size: 14px;
+            font-weight: bold;
+
+            cursor: pointer;
+
+            text-decoration: none;
+        }
+
+        .btn-secondary {
+            background: #edf2f3;
+
+            color: #47575d;
+
+            border:
+                    1px solid
+                    #d7e0e2;
+        }
+
+        .btn-primary {
+            background:
+                    linear-gradient(
+                            135deg,
+                            #0f6f7a,
+                            #1596a3
+                    );
+
+            color: #ffffff;
+
+            box-shadow:
+                    0 5px 14px
+                    rgba(
+                            15,
+                            111,
+                            122,
+                            0.18
+                    );
+        }
+
+        .btn-primary:hover {
+            transform:
+                    translateY(-1px);
+
+            box-shadow:
+                    0 7px 17px
+                    rgba(
+                            15,
+                            111,
+                            122,
+                            0.24
+                    );
+        }
+
+        @media (
+        max-width: 700px
+        ) {
+
+            .topbar {
+                padding: 14px 18px;
+            }
+
+            .container {
+                padding:
+                        28px
+                        14px;
+            }
+
+            .summary-grid {
+                grid-template-columns:
+                        1fr;
+            }
+
+            .actions {
+                flex-direction:
+                        column-reverse;
+            }
+
+            .btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
-<h1>Pago Presencial</h1>
+<header class="topbar">
 
-<div th:if="${error}">
-    <strong th:text="${error}"></strong>
-</div>
+    <div class="brand">
 
-<p>
-    Cita:
-    <strong th:text="${cita.numeroCita}"></strong>
-</p>
+        <h1>
+            Caja - Pago Presencial
+        </h1>
 
-<p>
-    Paciente:
-    <strong th:text="${cita.paciente.nombreCompleto}"></strong>
-</p>
-
-<p>
-    Total:
-    Q<strong th:text="${monto}"></strong>
-</p>
-
-<hr>
-
-<form
-        th:action="@{/caja/procesar}"
-        th:object="${pagoForm}"
-        method="post">
-
-    <input
-            type="hidden"
-            th:field="*{citaId}">
-
-    <label for="metodoPago">
-        Método de pago
-    </label>
-
-    <select
-            id="metodoPago"
-            th:field="*{metodoPago}"
-            onchange="actualizarCampos()"
-            required>
-
-        <option value="">
-            Seleccione
-        </option>
-
-        <option value="EFECTIVO">
-            Efectivo
-        </option>
-
-        <option value="VISA">
-            Visa
-        </option>
-
-        <option value="MASTERCARD">
-            Mastercard
-        </option>
-
-        <option value="DEBITO">
-            Débito
-        </option>
-
-    </select>
-
-    <div
-            id="datosTarjeta"
-            style="display:none;">
-
-        <br>
-
-        <label for="numeroTarjeta">
-            Número de tarjeta
-        </label>
-
-        <input
-                type="text"
-                id="numeroTarjeta"
-                th:field="*{numeroTarjeta}"
-                maxlength="19">
-
-        <br><br>
-
-        <label for="nombreTitular">
-            Titular
-        </label>
-
-        <input
-                type="text"
-                id="nombreTitular"
-                th:field="*{nombreTitular}">
-
-        <br><br>
-
-        <label for="expiracion">
-            Expiración
-        </label>
-
-        <input
-                type="text"
-                id="expiracion"
-                th:field="*{expiracion}"
-                placeholder="MM/YY"
-                maxlength="5">
-
-        <br><br>
-
-        <label for="cvv">
-            CVV
-        </label>
-
-        <input
-                type="password"
-                id="cvv"
-                th:field="*{cvv}"
-                maxlength="4">
+        <span>
+            Registro de pagos de consultas médicas
+        </span>
 
     </div>
 
-    <br><br>
+    <a
+            class="back-link"
+            th:href="@{/caja}">
+        Volver a Caja
+    </a>
 
-    <button type="submit">
-        Registrar pago
-    </button>
+</header>
 
-</form>
+<main class="container">
+
+    <section class="page-header">
+
+        <span class="page-label">
+            CU-06
+        </span>
+
+        <h2>
+            Registrar pago
+        </h2>
+
+        <p>
+            Verifique los datos de la cita,
+            seleccione el método de pago
+            y complete la información correspondiente.
+        </p>
+
+    </section>
+
+    <div
+            class="alert-error"
+            th:if="${error}"
+            th:text="${error}">
+    </div>
+
+    <section class="summary-card">
+
+        <h3>
+            Detalle de la cita
+        </h3>
+
+        <div class="summary-grid">
+
+            <div class="summary-item">
+
+                <span class="summary-label">
+                    Número de cita
+                </span>
+
+                <span
+                        class="summary-value"
+                        th:text="${cita.numeroCita}">
+                </span>
+
+            </div>
+
+            <div class="summary-item">
+
+                <span class="summary-label">
+                    Paciente
+                </span>
+
+                <span
+                        class="summary-value"
+                        th:text="${cita.paciente.nombreCompleto}">
+                </span>
+
+            </div>
+
+            <div class="summary-item">
+
+                <span class="summary-label">
+                    Especialidad
+                </span>
+
+                <span
+                        class="summary-value"
+                        th:text="${cita.especialidad.nombre}">
+                </span>
+
+            </div>
+
+            <div class="summary-item">
+
+                <span class="summary-label">
+                    Médico
+                </span>
+
+                <span
+                        class="summary-value"
+                        th:text="${cita.medico.personal.nombreCompleto}">
+                </span>
+
+            </div>
+
+            <div class="summary-item">
+
+                <span class="summary-label">
+                    Fecha y hora
+                </span>
+
+                <span
+                        class="summary-value"
+                        th:text="${cita.fechaHoraInicio}">
+                </span>
+
+            </div>
+
+            <div class="summary-item">
+
+                <span class="summary-label">
+                    Estado actual
+                </span>
+
+                <span
+                        class="summary-value"
+                        th:text="${cita.estadoCita.codigo}">
+                </span>
+
+            </div>
+
+        </div>
+
+        <div class="amount-box">
+
+            <span>
+                Monto total a cobrar
+            </span>
+
+            <strong>
+                Q<span th:text="${monto}">
+                </span>
+            </strong>
+
+        </div>
+
+    </section>
+
+    <section class="payment-card">
+
+        <div class="payment-header">
+
+            <h3>
+                Método de pago
+            </h3>
+
+            <p>
+                Seleccione cómo realizará
+                el paciente el pago.
+            </p>
+
+        </div>
+
+        <div class="payment-body">
+
+            <form
+                    th:action="@{/caja/procesar}"
+                    th:object="${pagoForm}"
+                    method="post">
+
+                <input
+                        type="hidden"
+                        th:field="*{citaId}">
+
+                <div class="form-group">
+
+                    <label for="metodoPago">
+                        Método de pago
+                    </label>
+
+                    <select
+                            id="metodoPago"
+                            th:field="*{metodoPago}"
+                            onchange="actualizarCampos()"
+                            required>
+
+                        <option value="">
+                            Seleccione
+                        </option>
+
+                        <option value="EFECTIVO">
+                            Efectivo
+                        </option>
+
+                        <option value="VISA">
+                            Visa
+                        </option>
+
+                        <option value="MASTERCARD">
+                            Mastercard
+                        </option>
+
+                        <option value="DEBITO">
+                            Débito
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <!-- ============================= -->
+                <!-- DATOS PARA PAGO EN EFECTIVO -->
+                <!-- ============================= -->
+
+                <div
+                        id="datosEfectivo"
+                        class="method-box"
+                        style="display:none;">
+
+                    <h4>
+                        Pago en efectivo
+                    </h4>
+
+                    <div class="form-group">
+
+                        <label for="montoRecibido">
+                            Monto Recibido
+                        </label>
+
+                        <input
+                                type="number"
+                                id="montoRecibido"
+                                th:field="*{montoRecibido}"
+                                min="0.01"
+                                step="0.01"
+                                placeholder="Ej. 300.00">
+
+                        <span class="helper-text">
+                            Ingrese la cantidad entregada
+                            por el paciente.
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <!-- ============================= -->
+                <!-- DATOS PARA PAGO CON TARJETA -->
+                <!-- ============================= -->
+
+                <div
+                        id="datosTarjeta"
+                        class="method-box"
+                        style="display:none;">
+
+                    <h4>
+                        Pago con tarjeta
+                    </h4>
+
+                    <div class="form-group">
+
+                        <label for="ultimos4">
+                            Últimos 4 dígitos
+                        </label>
+
+                        <input
+                                type="text"
+                                id="ultimos4"
+                                th:field="*{ultimos4}"
+                                maxlength="4"
+                                inputmode="numeric"
+                                placeholder="Ej. 1234">
+
+                        <span class="helper-text">
+            Ingrese únicamente los últimos cuatro dígitos
+            de la tarjeta como referencia del pago.
+        </span>
+
+                    </div>
+
+                </div>
+
+                <div class="actions">
+
+                    <a
+                            class="btn btn-secondary"
+                            th:href="@{/caja}">
+                        Cancelar
+                    </a>
+
+                    <button
+                            class="btn btn-primary"
+                            type="submit">
+                        Registrar Pago
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </section>
+
+</main>
 
 <script>
 
@@ -144,17 +799,78 @@
                 "metodoPago"
             ).value;
 
-        const tarjeta =
+        const datosEfectivo =
+            document.getElementById(
+                "datosEfectivo"
+            );
+
+        const datosTarjeta =
             document.getElementById(
                 "datosTarjeta"
             );
 
-        tarjeta.style.display =
-            metodo === "EFECTIVO"
-            || metodo === ""
-                ? "none"
-                : "block";
+        const montoRecibido =
+            document.getElementById(
+                "montoRecibido"
+            );
+
+        const ultimos4 =
+            document.getElementById(
+                "ultimos4"
+            );
+
+        if (metodo === "EFECTIVO") {
+
+            datosEfectivo.style.display =
+                "block";
+
+            datosTarjeta.style.display =
+                "none";
+
+            montoRecibido.required =
+                true;
+
+            ultimos4.required =
+                false;
+
+        } else if (
+            metodo === "VISA"
+            || metodo === "MASTERCARD"
+            || metodo === "DEBITO"
+        ) {
+
+            datosEfectivo.style.display =
+                "none";
+
+            datosTarjeta.style.display =
+                "block";
+
+            montoRecibido.required =
+                false;
+
+            ultimos4.required =
+                true;
+
+        } else {
+
+            datosEfectivo.style.display =
+                "none";
+
+            datosTarjeta.style.display =
+                "none";
+
+            montoRecibido.required =
+                false;
+
+            ultimos4.required =
+                false;
+        }
     }
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        actualizarCampos
+    );
 
 </script>
 

@@ -47,6 +47,7 @@ public interface CitaRepository
     SELECT c
     FROM Cita c
     WHERE c.estadoCita.codigo = 'PENDIENTE_PAGO'
+      AND c.origen = 'PORTAL'
       AND c.reservaExpiraEn IS NOT NULL
       AND c.reservaExpiraEn <= :ahora
 """)
@@ -250,6 +251,39 @@ WHERE c.id = :citaId
 """)
     Optional<Cita> buscarParaIniciarConsulta(
             @Param("citaId") Long citaId
+    );
+
+    @Query("""
+    SELECT c
+    FROM Cita c
+    JOIN FETCH c.paciente p
+    JOIN FETCH c.sucursal
+    JOIN FETCH c.especialidad
+    JOIN FETCH c.medico m
+    JOIN FETCH m.personal
+    JOIN FETCH c.estadoCita
+    WHERE c.estadoCita.codigo = 'PENDIENTE_PAGO'
+      AND p.dpiHash = :dpiHash
+    ORDER BY c.fechaHoraInicio ASC
+""")
+    List<Cita> buscarPendientesPagoPorDpiHash(
+            @Param("dpiHash") String dpiHash
+    );
+
+    @Query("""
+    SELECT c
+    FROM Cita c
+    JOIN FETCH c.paciente
+    JOIN FETCH c.sucursal
+    JOIN FETCH c.especialidad
+    JOIN FETCH c.medico m
+    JOIN FETCH m.personal
+    JOIN FETCH c.estadoCita
+    WHERE LOWER(c.numeroCita) = LOWER(:numeroCita)
+      AND c.estadoCita.codigo = 'PENDIENTE_PAGO'
+""")
+    Optional<Cita> buscarPendientePagoPorNumeroCita(
+            @Param("numeroCita") String numeroCita
     );
 }
 

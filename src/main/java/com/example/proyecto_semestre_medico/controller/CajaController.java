@@ -5,6 +5,7 @@ import com.example.proyecto_semestre_medico.model.Cita;
 import com.example.proyecto_semestre_medico.model.Pago;
 import com.example.proyecto_semestre_medico.repository.CitaRepository;
 import com.example.proyecto_semestre_medico.service.PagoPresencialService;
+import com.example.proyecto_semestre_medico.service.DatosSensiblesService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -12,6 +13,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.util.List;
 import java.math.BigDecimal;
 
 @Controller
@@ -21,18 +24,22 @@ public class CajaController {
 
     private final CitaRepository citaRepository;
     private final PagoPresencialService pagoPresencialService;
+    private final DatosSensiblesService datosSensiblesService;
 
     private final BigDecimal precioBase;
 
     public CajaController(
             CitaRepository citaRepository,
             PagoPresencialService pagoPresencialService,
+            DatosSensiblesService datosSensiblesService,
             @Value("${app.citas.precio-base:250.00}")
             BigDecimal precioBase
     ) {
         this.citaRepository = citaRepository;
         this.pagoPresencialService =
                 pagoPresencialService;
+        this.datosSensiblesService =
+                datosSensiblesService;
         this.precioBase = precioBase;
     }
 
@@ -43,42 +50,134 @@ public class CajaController {
 
     @GetMapping("/buscar")
     public String buscar(
-            @RequestParam String numeroCita,
+            @RequestParam String criterio,
+            @RequestParam(
+                    defaultValue = "CITA"
+            ) String tipoBusqueda,
             Model model
     ) {
 
-        if (numeroCita == null
-                || numeroCita.isBlank()) {
+        if (criterio == null
+                || criterio.isBlank()) {
 
             model.addAttribute(
                     "error",
-                    "Ingrese un número de cita"
+                    "No hay citas pendientes de pago bajo los parámetros indicados."
+            );
+
+            model.addAttribute(
+                    "tipoBusqueda",
+                    tipoBusqueda
             );
 
             return "caja/index";
         }
 
-        Cita cita =
-                citaRepository
-                        .findByNumeroCitaIgnoreCase(
-                                numeroCita.trim()
-                        )
-                        .orElse(null);
+        String valor =
+                criterio.trim();
 
-        if (cita == null) {
+        String tipo =
+                tipoBusqueda == null
+                        ? "CITA"
+                        : tipoBusqueda
+                        .trim()
+                        .toUpperCase();
 
-            model.addAttribute(
-                    "error",
-                    "Cita no encontrada"
-            );
+        List<Cita> resultados;
 
-            return "caja/index";
+        if ("DPI".equals(tipo)) {
+
+            /*
+             * Aplicamos RN-GLOBAL-001
+             * porque la búsqueda utiliza DPI.
+             */
+            if (!valor.matches("^[0-9]+$")) {
+
+                model.addAttribute(
+                        "error",
+                        "El DPI debe contener únicamente números. No se permiten letras ni caracteres especiales."
+                );
+
+                model.addAttribute(
+                        "tipoBusqueda",
+                        "DPI"
+                );
+
+                model.addAttribute(
+                        "criterio",
+                        valor
+                );
+
+                return "caja/index";
+            }
+
+            if (valor.length() != 13) {
+
+                model.addAttribute(
+                        "error",
+                        "El DPI debe contener exactamente 13 dígitos. Usted ingresó "
+                                + valor.length()
+                                + " dígitos."
+                );
+
+                model.addAttribute(
+                        "tipoBusqueda",
+                        "DPI"
+                );
+
+                model.addAttribute(
+                        "criterio",
+                        valor
+                );
+
+                return "caja/index";
+            }
+
+            String dpiHash =
+                    datosSensiblesService
+                            .generarHashBusqueda(
+                                    valor
+                            );
+
+            resultados =
+                    citaRepository
+                            .buscarPendientesPagoPorDpiHash(
+                                    dpiHash
+                            );
+
+        } else {
+
+            resultados =
+                    citaRepository
+                            .buscarPendientePagoPorNumeroCita(
+                                    valor
+                            )
+                            .map(List::of)
+                            .orElseGet(List::of);
         }
 
         model.addAttribute(
-                "cita",
-                cita
+                "tipoBusqueda",
+                tipo
         );
+
+        model.addAttribute(
+                "criterio",
+                valor
+        );
+
+        model.addAttribute(
+                "resultados",
+                resultados
+        );
+
+        if (resultados.isEmpty()) {
+
+            model.addAttribute(
+                    "error",
+                    "No hay citas pendientes de pago bajo los parámetros indicados."
+            );
+        }
 
         return "caja/index";
     }
@@ -164,12 +263,53 @@ public class CajaController {
                         pago.getCita()
                 );
 
+                if ("EFECTIVO".equals(
+                        pago.getMetodoPago()
+                )) {
+
+                    BigDecimal montoRecibido =
+                            dto.getMontoRecibido();
+
+                    BigDecimal cambio =
+                            montoRecibido.subtract(
+                                    pago.getMonto()
+                            );
+
+                    model.addAttribute(
+                            "montoRecibido",
+                            montoRecibido
+                    );
+
+                    model.addAttribute(
+                            "cambio",
+                            cambio
+                    );
+
+                    model.addAttribute(
+                            "mensajeCambio",
+                            "Monto recibido: Q"
+                                    + montoRecibido
+                                    + ". Cambio a devolver: Q"
+                                    + cambio
+                                    + "."
+                    );
+                }
+
+                model.addAttribute(
+                        "mensajeExito",
+                        "¡Pago registrado exitosamente! Paciente: "
+                                + pago.getCita()
+                                .getPaciente()
+                                .getNombreCompleto()
+                                + ". La cita ha sido actualizada a estado Confirmada."
+                );
+
                 return "caja/comprobante";
             }
 
             model.addAttribute(
                     "error",
-                    "El pago fue rechazado"
+                    "La transacción con tarjeta fue rechazada por el banco. Solicite al paciente otro método de pago."
             );
 
         } catch (IllegalArgumentException
@@ -195,10 +335,6 @@ public class CajaController {
                 "monto",
                 precioBase
         );
-
-        dto.setNumeroTarjeta(null);
-        dto.setCvv(null);
-        dto.setExpiracion(null);
 
         return "caja/pago";
     }

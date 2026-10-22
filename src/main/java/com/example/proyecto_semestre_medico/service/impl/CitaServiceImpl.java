@@ -48,7 +48,7 @@ public class CitaServiceImpl implements CitaService {
             AntivirusService antivirusService,
             @Value("${app.citas.duracion-minutos:30}")
             int duracionMinutos,
-            @Value("${app.citas.reserva-minutos:5}")
+            @Value("${app.citas.reserva-minutos:10}")
             int reservaMinutos
     ) {
         this.citaRepository = citaRepository;
@@ -302,12 +302,21 @@ public class CitaServiceImpl implements CitaService {
                 origen
         );
 
-        cita.setReservaExpiraEn(
-                LocalDateTime.now()
-                        .plusMinutes(
-                                reservaMinutos
-                        )
-        );
+        if ("PORTAL".equals(origen)) {
+
+            cita.setReservaExpiraEn(
+                    LocalDateTime.now()
+                            .plusMinutes(
+                                    reservaMinutos
+                            )
+            );
+
+        } else {
+
+            cita.setReservaExpiraEn(
+                    null
+            );
+        }
 
         Cita citaGuardada =
                 citaRepository.save(cita);

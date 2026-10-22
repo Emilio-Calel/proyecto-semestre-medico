@@ -12,15 +12,12 @@ import com.example.proyecto_semestre_medico.repository.EstadoCitaRepository;
 import com.example.proyecto_semestre_medico.repository.PagoRepository;
 import com.example.proyecto_semestre_medico.repository.UsuarioRepository;
 import com.example.proyecto_semestre_medico.service.PagoPresencialService;
-import com.example.proyecto_semestre_medico.service.PasarelaPagoService;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.YearMonth;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.UUID;
 
 @Service
@@ -32,7 +29,6 @@ public class PagoPresencialServiceImpl
     private final EstadoCitaRepository estadoCitaRepository;
     private final UsuarioRepository usuarioRepository;
     private final AuditoriaRepository auditoriaRepository;
-    private final PasarelaPagoService pasarelaPagoService;
 
     private final BigDecimal precioBase;
 
@@ -42,7 +38,6 @@ public class PagoPresencialServiceImpl
             EstadoCitaRepository estadoCitaRepository,
             UsuarioRepository usuarioRepository,
             AuditoriaRepository auditoriaRepository,
-            PasarelaPagoService pasarelaPagoService,
             @Value("${app.citas.precio-base:250.00}")
             BigDecimal precioBase
     ) {
@@ -51,7 +46,6 @@ public class PagoPresencialServiceImpl
         this.estadoCitaRepository = estadoCitaRepository;
         this.usuarioRepository = usuarioRepository;
         this.auditoriaRepository = auditoriaRepository;
-        this.pasarelaPagoService = pasarelaPagoService;
         this.precioBase = precioBase;
     }
 
@@ -118,41 +112,77 @@ public class PagoPresencialServiceImpl
 
         if ("EFECTIVO".equals(metodo)) {
 
+            if (dto.getMontoRecibido() == null) {
+                throw new IllegalArgumentException(
+                        "Debe ingresar el monto recibido."
+                );
+            }
+
+            if (dto.getMontoRecibido()
+                    .compareTo(BigDecimal.ZERO) <= 0) {
+
+                throw new IllegalArgumentException(
+                        "El monto recibido debe ser mayor a Q0.00."
+                );
+            }
+
+            if (dto.getMontoRecibido()
+                    .compareTo(precioBase) < 0) {
+
+                throw new IllegalArgumentException(
+                        "El monto recibido (Q"
+                                + dto.getMontoRecibido()
+                                + ") es menor al monto a cobrar (Q"
+                                + precioBase
+                                + ")"
+                );
+            }
+
             pago.setEstado("APROBADO");
             pago.setUltimos4(null);
             pago.setReferenciaPasarela(null);
 
         } else {
 
-            validarTarjeta(dto);
+            String ultimos4 =
+                    dto.getUltimos4() == null
+                            ? ""
+                            : dto.getUltimos4().trim();
 
-            String tarjeta =
-                    dto.getNumeroTarjeta()
-                            .replaceAll("\\s+", "");
+            if (!ultimos4.matches("^[0-9]{4}$")) {
 
-            var resultado =
-                    pasarelaPagoService.procesar(
-                            tarjeta,
-                            dto.getNombreTitular().trim(),
-                            dto.getExpiracion(),
-                            dto.getCvv(),
-                            precioBase
-                    );
+                throw new IllegalArgumentException(
+                        "Debe ingresar los últimos 4 dígitos de la tarjeta."
+                );
+            }
 
             pago.setUltimos4(
-                    tarjeta.substring(
-                            tarjeta.length() - 4
-                    )
+                    ultimos4
             );
 
+            /*
+             * En CU-06 el pago es presencial.
+             * Caja solo registra la referencia
+             * de los últimos cuatro dígitos.
+             */
             pago.setReferenciaPasarela(
-                    resultado.referencia()
+                    "PRESENCIAL-"
+                            + metodo
+                            + "-"
+                            + ultimos4
             );
 
-            if (resultado.aprobado()) {
-                pago.setEstado("APROBADO");
+            if ("0000".equals(ultimos4)) {
+
+                pago.setEstado(
+                        "RECHAZADO"
+                );
+
             } else {
-                pago.setEstado("RECHAZADO");
+
+                pago.setEstado(
+                        "APROBADO"
+                );
             }
         }
 
@@ -221,125 +251,6 @@ public class PagoPresencialServiceImpl
                     "Método de pago no válido"
             );
         }
-    }
-
-    private void validarTarjeta(
-            PagoPresencialDTO dto
-    ) {
-
-        String tarjeta =
-                dto.getNumeroTarjeta() == null
-                        ? ""
-                        : dto.getNumeroTarjeta()
-                        .replaceAll("\\s+", "");
-
-        if (!tarjeta.matches(
-                "^[0-9]{13,19}$"
-        )) {
-            throw new IllegalArgumentException(
-                    "El número de tarjeta debe contener entre 13 y 19 dígitos"
-            );
-        }
-
-        if (!luhnValido(tarjeta)) {
-            throw new IllegalArgumentException(
-                    "El número de tarjeta no es válido"
-            );
-        }
-
-        if (dto.getNombreTitular() == null
-                || dto.getNombreTitular()
-                .trim()
-                .length() < 5) {
-
-            throw new IllegalArgumentException(
-                    "Nombre del titular no válido"
-            );
-        }
-
-        validarExpiracion(
-                dto.getExpiracion()
-        );
-
-        if (dto.getCvv() == null
-                || !dto.getCvv()
-                .matches("^[0-9]{3,4}$")) {
-
-            throw new IllegalArgumentException(
-                    "El CVV debe contener 3 o 4 dígitos"
-            );
-        }
-    }
-
-    private void validarExpiracion(
-            String expiracion
-    ) {
-
-        if (expiracion == null
-                || !expiracion.matches(
-                "^(0[1-9]|1[0-2])/[0-9]{2}$"
-        )) {
-
-            throw new IllegalArgumentException(
-                    "La expiración debe tener formato MM/YY"
-            );
-        }
-
-        try {
-
-            YearMonth fecha =
-                    YearMonth.parse(
-                            expiracion,
-                            DateTimeFormatter.ofPattern(
-                                    "MM/yy"
-                            )
-                    );
-
-            if (fecha.isBefore(
-                    YearMonth.now()
-            )) {
-
-                throw new IllegalArgumentException(
-                        "La tarjeta está vencida"
-                );
-            }
-
-        } catch (DateTimeParseException e) {
-
-            throw new IllegalArgumentException(
-                    "La fecha de expiración no es válida"
-            );
-        }
-    }
-
-    private boolean luhnValido(
-            String numero
-    ) {
-
-        int suma = 0;
-        boolean duplicar = false;
-
-        for (int i = numero.length() - 1;
-             i >= 0;
-             i--) {
-
-            int digito =
-                    numero.charAt(i) - '0';
-
-            if (duplicar) {
-
-                digito *= 2;
-
-                if (digito > 9) {
-                    digito -= 9;
-                }
-            }
-
-            suma += digito;
-            duplicar = !duplicar;
-        }
-
-        return suma % 10 == 0;
     }
 
     private String generarNumeroTransaccion() {

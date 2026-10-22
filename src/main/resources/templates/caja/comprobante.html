@@ -3,69 +3,911 @@
       xmlns:th="http://www.thymeleaf.org">
 
 <head>
+
     <meta charset="UTF-8">
-    <title>Comprobante</title>
+
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0">
+
+    <title>Comprobante de Pago</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f8f9;
+            color: #1f2933;
+            min-height: 100vh;
+        }
+
+        /* =====================================================
+           TOPBAR
+           ===================================================== */
+
+        .topbar {
+            min-height: 74px;
+            padding: 0 34px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            background:
+                    linear-gradient(
+                            135deg,
+                            #0f6f7a,
+                            #1596a3
+                    );
+
+            color: #ffffff;
+
+            box-shadow:
+                    0 3px 12px
+                    rgba(15, 80, 90, 0.15);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+
+            border-radius: 12px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background:
+                    rgba(255, 255, 255, 0.15);
+
+            font-size: 23px;
+        }
+
+        .brand h1 {
+            font-size: 20px;
+            margin-bottom: 3px;
+        }
+
+        .brand span {
+            font-size: 12px;
+
+            color:
+                    rgba(255, 255, 255, 0.80);
+        }
+
+        .back-link {
+            color: #ffffff;
+
+            text-decoration: none;
+
+            border:
+                    1px solid
+                    rgba(255, 255, 255, 0.30);
+
+            background:
+                    rgba(255, 255, 255, 0.12);
+
+            padding: 10px 15px;
+
+            border-radius: 9px;
+
+            font-size: 13px;
+            font-weight: bold;
+
+            transition:
+                    background 0.2s ease,
+                    transform 0.2s ease;
+        }
+
+        .back-link:hover {
+            background:
+                    rgba(255, 255, 255, 0.22);
+
+            transform: translateY(-1px);
+        }
+
+        /* =====================================================
+           CONTENIDO
+           ===================================================== */
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+
+            margin: 0 auto;
+
+            padding: 42px 24px;
+        }
+
+        /* =====================================================
+           ÉXITO
+           ===================================================== */
+
+        .success-card {
+            background:
+                    linear-gradient(
+                            135deg,
+                            #eaf8f1,
+                            #f7fcf9
+                    );
+
+            border:
+                    1px solid
+                    #bde4ce;
+
+            border-radius: 18px;
+
+            padding: 26px;
+
+            margin-bottom: 24px;
+
+            display: flex;
+            gap: 18px;
+            align-items: flex-start;
+
+            box-shadow:
+                    0 7px 20px
+                    rgba(30, 90, 65, 0.06);
+        }
+
+        .success-icon {
+            width: 52px;
+            height: 52px;
+
+            flex-shrink: 0;
+
+            border-radius: 50%;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background: #d5f1e1;
+
+            font-size: 25px;
+        }
+
+        .success-card h2 {
+            color: #17663b;
+
+            font-size: 23px;
+
+            margin-bottom: 8px;
+        }
+
+        .success-card p {
+            color: #47705a;
+
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* =====================================================
+           COMPROBANTE
+           ===================================================== */
+
+        .receipt-card {
+            background: #ffffff;
+
+            border:
+                    1px solid
+                    #e2ebed;
+
+            border-radius: 18px;
+
+            overflow: hidden;
+
+            box-shadow:
+                    0 8px 24px
+                    rgba(30, 70, 80, 0.07);
+
+            margin-bottom: 24px;
+        }
+
+        .receipt-header {
+            padding: 24px 26px;
+
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+
+            background: #f8fbfb;
+
+            border-bottom:
+                    1px solid
+                    #e2ebed;
+        }
+
+        .receipt-title span {
+            display: inline-block;
+
+            background: #e7f5f6;
+
+            color: #0f6f7a;
+
+            padding: 6px 10px;
+
+            border-radius: 20px;
+
+            font-size: 11px;
+            font-weight: bold;
+
+            margin-bottom: 8px;
+        }
+
+        .receipt-title h3 {
+            font-size: 21px;
+        }
+
+        .transaction-box {
+            text-align: right;
+        }
+
+        .transaction-box span {
+            display: block;
+
+            color: #7a898f;
+
+            font-size: 11px;
+
+            margin-bottom: 4px;
+        }
+
+        .transaction-box strong {
+            color: #0f6f7a;
+
+            font-size: 15px;
+        }
+
+        .receipt-body {
+            padding: 26px;
+        }
+
+        .section-title {
+            color: #33474d;
+
+            font-size: 15px;
+
+            margin-bottom: 12px;
+
+            padding-bottom: 8px;
+
+            border-bottom:
+                    1px solid
+                    #e7edef;
+        }
+
+        .info-grid {
+            display: grid;
+
+            grid-template-columns:
+                    repeat(
+                            2,
+                            1fr
+                    );
+
+            gap: 0 26px;
+
+            margin-bottom: 27px;
+        }
+
+        .info-item {
+            padding: 12px 0;
+
+            border-bottom:
+                    1px solid
+                    #edf1f2;
+        }
+
+        .info-label {
+            display: block;
+
+            color: #7b898f;
+
+            font-size: 12px;
+
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            display: block;
+
+            color: #293a40;
+
+            font-size: 14px;
+
+            font-weight: bold;
+
+            word-break: break-word;
+        }
+
+        /* =====================================================
+           MONTO
+           ===================================================== */
+
+        .amount-panel {
+            padding: 20px;
+
+            margin-top: 8px;
+
+            border-radius: 14px;
+
+            background:
+                    linear-gradient(
+                            135deg,
+                            #edf8f9,
+                            #f8fcfc
+                    );
+
+            border:
+                    1px solid
+                    #d2e8ea;
+        }
+
+        .amount-row {
+            display: flex;
+
+            justify-content: space-between;
+
+            gap: 15px;
+
+            padding: 7px 0;
+
+            font-size: 14px;
+        }
+
+        .amount-row span {
+            color: #65767c;
+        }
+
+        .amount-row strong {
+            color: #263b41;
+        }
+
+        .amount-row.total {
+            margin-top: 8px;
+
+            padding-top: 14px;
+
+            border-top:
+                    1px solid
+                    #cfe2e5;
+        }
+
+        .amount-row.total span {
+            font-weight: bold;
+
+            color: #294147;
+        }
+
+        .amount-row.total strong {
+            color: #0f6f7a;
+
+            font-size: 21px;
+        }
+
+        .change-message {
+            margin-top: 16px;
+
+            padding: 13px 15px;
+
+            border-radius: 10px;
+
+            background: #fff8e9;
+
+            border:
+                    1px solid
+                    #ead8ad;
+
+            color: #795e24;
+
+            font-size: 13px;
+
+            line-height: 1.5;
+        }
+
+        /* =====================================================
+           ACCIONES
+           ===================================================== */
+
+        .actions {
+            display: flex;
+
+            justify-content: flex-end;
+
+            gap: 12px;
+        }
+
+        .button {
+            border: none;
+
+            border-radius: 10px;
+
+            padding: 12px 18px;
+
+            font-size: 14px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+
+            text-decoration: none;
+
+            transition:
+                    transform 0.2s ease,
+                    box-shadow 0.2s ease;
+        }
+
+        .button-secondary {
+            background: #edf2f3;
+
+            border:
+                    1px solid
+                    #d7e0e2;
+
+            color: #47575d;
+        }
+
+        .button-primary {
+            background:
+                    linear-gradient(
+                            135deg,
+                            #0f6f7a,
+                            #1596a3
+                    );
+
+            color: #ffffff;
+
+            box-shadow:
+                    0 5px 14px
+                    rgba(15, 111, 122, 0.18);
+        }
+
+        .button:hover {
+            transform:
+                    translateY(-1px);
+        }
+
+        /* =====================================================
+           FOOTER
+           ===================================================== */
+
+        .footer {
+            text-align: center;
+
+            padding: 16px 20px 32px;
+
+            color: #98a5a9;
+
+            font-size: 12px;
+        }
+
+        /* =====================================================
+           RESPONSIVE
+           ===================================================== */
+
+        @media (max-width: 700px) {
+
+            .topbar {
+                padding: 14px 18px;
+            }
+
+            .container {
+                padding: 28px 14px;
+            }
+
+            .success-card {
+                flex-direction: column;
+            }
+
+            .receipt-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .transaction-box {
+                text-align: left;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .button {
+                width: 100%;
+
+                text-align: center;
+            }
+        }
+
+        /* =====================================================
+           IMPRESIÓN
+           ===================================================== */
+
+        @media print {
+
+            body {
+                background: #ffffff;
+            }
+
+            .topbar,
+            .success-card,
+            .actions,
+            .footer {
+                display: none !important;
+            }
+
+            .container {
+                max-width: 100%;
+                padding: 0;
+            }
+
+            .receipt-card {
+                box-shadow: none;
+                border: none;
+            }
+        }
+
+    </style>
+
 </head>
 
 <body>
 
-<h1>Pago Registrado</h1>
+<header class="topbar">
 
-<p>
-    Número de transacción:
-    <strong th:text="${pago.numeroTransaccion}"></strong>
-</p>
+    <div class="brand">
 
-<p>
-    Número de cita:
-    <strong th:text="${cita.numeroCita}"></strong>
-</p>
+        <div class="brand-icon">
+            💳
+        </div>
 
-<p>
-    Paciente:
-    <strong th:text="${cita.paciente.nombreCompleto}"></strong>
-</p>
+        <div>
 
-<p>
-    Monto:
-    Q<strong th:text="${pago.monto}"></strong>
-</p>
+            <h1>
+                Caja
+            </h1>
 
-<p>
-    Método:
-    <strong th:text="${pago.metodoPago}"></strong>
-</p>
+            <span>
+                Comprobante de pago presencial
+            </span>
 
-<p>
-    Canal:
-    <strong th:text="${pago.canal}"></strong>
-</p>
+        </div>
 
-<p th:if="${pago.ultimos4 != null}">
-    Tarjeta:
-    ****
-    <strong th:text="${pago.ultimos4}"></strong>
-</p>
+    </div>
 
-<p>
-    Fecha:
-    <strong th:text="${pago.fechaPago}"></strong>
-</p>
-
-<p>
-    Sucursal:
-    <strong th:text="${cita.sucursal.nombre}"></strong>
-</p>
-
-<button onclick="window.print()">
-    Imprimir comprobante
-</button>
-
-<p>
-    <a th:href="@{/caja}">
-        Volver a Caja
+    <a
+            class="back-link"
+            th:href="@{/caja}">
+        Nuevo Cobro
     </a>
-</p>
+
+</header>
+
+<main class="container">
+
+    <!-- =====================================================
+         MENSAJE DE ÉXITO
+         ===================================================== -->
+
+    <section class="success-card">
+
+        <div class="success-icon">
+            ✓
+        </div>
+
+        <div>
+
+            <h2>
+                Pago registrado exitosamente
+            </h2>
+
+            <p
+                    th:if="${mensajeExito}"
+                    th:text="${mensajeExito}">
+            </p>
+
+        </div>
+
+    </section>
+
+    <!-- =====================================================
+         COMPROBANTE
+         ===================================================== -->
+
+    <section class="receipt-card">
+
+        <div class="receipt-header">
+
+            <div class="receipt-title">
+
+                <span>
+                    PaymentReceipt
+                </span>
+
+                <h3>
+                    Comprobante de Pago
+                </h3>
+
+            </div>
+
+            <div class="transaction-box">
+
+                <span>
+                    Número de transacción
+                </span>
+
+                <strong
+                        th:text="${pago.numeroTransaccion}">
+                </strong>
+
+            </div>
+
+        </div>
+
+        <div class="receipt-body">
+
+            <!-- DATOS DEL PACIENTE -->
+
+            <h4 class="section-title">
+                Datos del paciente
+            </h4>
+
+            <div class="info-grid">
+
+                <div class="info-item">
+
+                    <span class="info-label">
+                        Paciente
+                    </span>
+
+                    <span
+                            class="info-value"
+                            th:text="${cita.paciente.nombreCompleto}">
+                    </span>
+
+                </div>
+
+                <div class="info-item">
+
+                    <span class="info-label">
+                        Número de cita
+                    </span>
+
+                    <span
+                            class="info-value"
+                            th:text="${cita.numeroCita}">
+                    </span>
+
+                </div>
+
+            </div>
+
+            <!-- DETALLE DE CITA -->
+
+            <h4 class="section-title">
+                Detalle de la cita
+            </h4>
+
+            <div class="info-grid">
+
+                <div class="info-item">
+
+                    <span class="info-label">
+                        Especialidad
+                    </span>
+
+                    <span
+                            class="info-value"
+                            th:text="${cita.especialidad.nombre}">
+                    </span>
+
+                </div>
+
+                <div class="info-item">
+
+                    <span class="info-label">
+                        Médico
+                    </span>
+
+                    <span
+                            class="info-value"
+                            th:text="${cita.medico.personal.nombreCompleto}">
+                    </span>
+
+                </div>
+
+                <div class="info-item">
+
+                    <span class="info-label">
+                        Fecha y hora de la cita
+                    </span>
+
+                    <span
+                            class="info-value"
+                            th:text="${cita.fechaHoraInicio}">
+                    </span>
+
+                </div>
+
+                <div class="info-item">
+
+                    <span class="info-label">
+                        Sucursal
+                    </span>
+
+                    <span
+                            class="info-value"
+                            th:text="${cita.sucursal.nombre}">
+                    </span>
+
+                </div>
+
+            </div>
+
+            <!-- DATOS DEL PAGO -->
+
+            <h4 class="section-title">
+                Datos del pago
+            </h4>
+
+            <div class="info-grid">
+
+                <div class="info-item">
+
+                    <span class="info-label">
+                        Forma de pago
+                    </span>
+
+                    <span
+                            class="info-value"
+                            th:text="${pago.metodoPago}">
+                    </span>
+
+                </div>
+
+                <div class="info-item">
+
+                    <span class="info-label">
+                        Fecha y hora de transacción
+                    </span>
+
+                    <span
+                            class="info-value"
+                            th:text="${pago.fechaPago}">
+                    </span>
+
+                </div>
+
+                <div
+                        class="info-item"
+                        th:if="${pago.ultimos4 != null}">
+
+                    <span class="info-label">
+                        Referencia de tarjeta
+                    </span>
+
+                    <span class="info-value">
+                        ****<span th:text="${pago.ultimos4}"></span>
+                    </span>
+
+                </div>
+
+                <div class="info-item">
+
+                    <span class="info-label">
+                        Canal
+                    </span>
+
+                    <span
+                            class="info-value"
+                            th:text="${pago.canal}">
+                    </span>
+
+                </div>
+
+            </div>
+
+            <!-- TOTALES -->
+
+            <div class="amount-panel">
+
+                <div class="amount-row total">
+
+                    <span>
+                        Total pagado
+                    </span>
+
+                    <strong>
+                        Q<span th:text="${pago.monto}"></span>
+                    </strong>
+
+                </div>
+
+                <div
+                        class="amount-row"
+                        th:if="${montoRecibido != null}">
+
+                    <span>
+                        Monto recibido
+                    </span>
+
+                    <strong>
+                        Q<span th:text="${montoRecibido}"></span>
+                    </strong>
+
+                </div>
+
+                <div
+                        class="amount-row"
+                        th:if="${cambio != null}">
+
+                    <span>
+                        Cambio a devolver
+                    </span>
+
+                    <strong>
+                        Q<span th:text="${cambio}"></span>
+                    </strong>
+
+                </div>
+
+                <div
+                        class="change-message"
+                        th:if="${mensajeCambio != null}"
+                        th:text="${mensajeCambio}">
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- =====================================================
+         ACCIONES
+         ===================================================== -->
+
+    <div class="actions">
+
+        <button
+                class="button button-secondary"
+                type="button"
+                onclick="window.print()">
+            🖨 Imprimir Comprobante
+        </button>
+
+        <a
+                class="button button-primary"
+                th:href="@{/caja}">
+            Nuevo Cobro
+        </a>
+
+    </div>
+
+</main>
+
+<footer class="footer">
+    Sistema Informático Hospitalario
+</footer>
 
 </body>
+
 </html>
