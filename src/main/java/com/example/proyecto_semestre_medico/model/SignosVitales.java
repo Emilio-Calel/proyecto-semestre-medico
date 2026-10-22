@@ -68,6 +68,12 @@ public class SignosVitales {
     private String observaciones;
 
     @Column(
+            name = "alertas_clinicas",
+            length = 500
+    )
+    private String alertasClinicas;
+
+    @Column(
             name = "fecha_registro",
             nullable = false
     )
@@ -192,5 +198,16 @@ public class SignosVitales {
             Boolean emergencia
     ) {
         this.emergencia = emergencia;
+    }
+
+    public String getAlertasClinicas() {
+        return alertasClinicas;
+    }
+
+    public void setAlertasClinicas(
+            String alertasClinicas
+    ) {
+        this.alertasClinicas =
+                alertasClinicas;
     }
 }

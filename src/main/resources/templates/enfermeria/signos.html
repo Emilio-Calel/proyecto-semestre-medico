@@ -411,6 +411,28 @@
             }
         }
 
+        .clinical-alerts {
+            grid-column: 1 / -1;
+            background: #fff7e6;
+            border: 1px solid #f2cf8d;
+            border-radius: 10px;
+            padding: 14px 16px;
+            color: #8a5a00;
+            font-size: 13px;
+            line-height: 1.5;
+            margin-bottom: 18px;
+        }
+
+        .clinical-alerts strong {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .clinical-alerts ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
 
     </style>
 </head>
@@ -555,6 +577,17 @@
 
         <h3>Mediciones</h3>
 
+        <div
+                id="alertasClinicas"
+                class="clinical-alerts"
+                style="display: none;">
+
+            <strong>Alertas clínicas</strong>
+
+            <ul id="listaAlertasClinicas"></ul>
+
+        </div>
+
         <p>
             Complete todos los campos obligatorios.
             Las unidades de medida se muestran junto a cada valor.
@@ -584,8 +617,8 @@
                                 type="number"
                                 id="presionSistolica"
                                 th:field="*{presionSistolica}"
-                                min="40"
-                                max="300"
+                                min="60"
+                                max="250"
                                 placeholder="Ej. 120"
                                 required>
 
@@ -610,8 +643,8 @@
                                 type="number"
                                 id="presionDiastolica"
                                 th:field="*{presionDiastolica}"
-                                min="20"
-                                max="200"
+                                min="40"
+                                max="150"
                                 placeholder="Ej. 80"
                                 required>
 
@@ -636,8 +669,8 @@
                                 type="number"
                                 id="pulso"
                                 th:field="*{pulso}"
-                                min="20"
-                                max="250"
+                                min="30"
+                                max="220"
                                 placeholder="Ej. 72"
                                 required>
 
@@ -662,8 +695,8 @@
                                 type="number"
                                 id="temperatura"
                                 th:field="*{temperatura}"
-                                min="30.0"
-                                max="45.0"
+                                min="34.0"
+                                max="42.0"
                                 step="0.1"
                                 placeholder="Ej. 36.5"
                                 required>
@@ -689,8 +722,8 @@
                                 type="number"
                                 id="peso"
                                 th:field="*{peso}"
-                                min="0.01"
-                                max="500"
+                                min="0.5"
+                                max="300"
                                 step="0.01"
                                 placeholder="Ej. 70.50"
                                 required>
@@ -716,8 +749,8 @@
                                 type="number"
                                 id="talla"
                                 th:field="*{talla}"
-                                min="1"
-                                max="300"
+                                min="30"
+                                max="250"
                                 step="0.01"
                                 placeholder="Ej. 170"
                                 required>
@@ -793,7 +826,7 @@
                     <button
                             class="save-button"
                             type="submit">
-                        Guardar signos vitales
+                        Registrar Signos Vitales
                     </button>
 
                 </div>
@@ -833,7 +866,281 @@
         actualizarContador
     );
 
+
+
     actualizarContador();
+
+    const presionSistolica =
+        document.getElementById(
+            "presionSistolica"
+        );
+
+    const presionDiastolica =
+        document.getElementById(
+            "presionDiastolica"
+        );
+
+    const temperatura =
+        document.getElementById(
+            "temperatura"
+        );
+
+    const pulso =
+        document.getElementById(
+            "pulso"
+        );
+
+    const alertasClinicas =
+        document.getElementById(
+            "alertasClinicas"
+        );
+
+    const listaAlertasClinicas =
+        document.getElementById(
+            "listaAlertasClinicas"
+        );
+
+    function evaluarAlertasClinicas() {
+
+        const alertas = [];
+
+        const sistolica =
+            parseInt(
+                presionSistolica.value
+            );
+
+        const diastolica =
+            parseInt(
+                presionDiastolica.value
+            );
+
+        const temp =
+            parseFloat(
+                temperatura.value
+            );
+
+        const frecuencia =
+            parseInt(
+                pulso.value
+            );
+
+        /*
+         * RN-CU07-06
+         * Presión arterial normal:
+         * 90/60 - 140/90
+         */
+        if (
+            !isNaN(sistolica)
+            && !isNaN(diastolica)
+            && (
+                sistolica < 90
+                || sistolica > 140
+                || diastolica < 60
+                || diastolica > 90
+            )
+        ) {
+
+            alertas.push(
+                "Presión arterial fuera de rango normal."
+            );
+        }
+
+        /*
+         * Temperatura normal:
+         * 36.0 - 37.5 °C
+         */
+        if (
+            !isNaN(temp)
+            && (
+                temp < 36.0
+                || temp > 37.5
+            )
+        ) {
+
+            alertas.push(
+                "Temperatura fuera de rango normal."
+            );
+        }
+
+        /*
+         * Frecuencia cardíaca normal:
+         * 60 - 100 lpm
+         */
+        if (
+            !isNaN(frecuencia)
+            && (
+                frecuencia < 60
+                || frecuencia > 100
+            )
+        ) {
+
+            alertas.push(
+                "Frecuencia cardíaca fuera de rango normal."
+            );
+        }
+
+        listaAlertasClinicas.innerHTML =
+            "";
+
+        if (alertas.length === 0) {
+
+            alertasClinicas.style.display =
+                "none";
+
+            return;
+        }
+
+        alertas.forEach(
+            alerta => {
+
+                const item =
+                    document.createElement(
+                        "li"
+                    );
+
+                item.textContent =
+                    alerta;
+
+                const detalle = document.createElement("span");
+                if (alerta.startsWith("Presión")) {
+                    detalle.textContent = " Valor actual: " + presionSistolica.value + "/" + presionDiastolica.value + " mmHg. Rango esperado: 90/60-140/90 mmHg.";
+                } else if (alerta.startsWith("Temperatura")) {
+                    detalle.textContent = " Valor actual: " + temperatura.value + " °C. Rango esperado: 36.0-37.5 °C.";
+                } else {
+                    detalle.textContent = " Valor actual: " + pulso.value + " lpm. Rango esperado: 60-100 lpm.";
+                }
+                item.appendChild(detalle);
+
+                listaAlertasClinicas
+                    .appendChild(
+                        item
+                    );
+            }
+        );
+
+        alertasClinicas.style.display =
+            "block";
+    }
+
+    [
+        presionSistolica,
+        presionDiastolica,
+        temperatura,
+        pulso
+    ].forEach(
+        campo => {
+
+            campo.addEventListener(
+                "input",
+                evaluarAlertasClinicas
+            );
+        }
+    );
+
+    evaluarAlertasClinicas();
+
+    function configurarMensajesValidacion() {
+
+        presionSistolica.addEventListener(
+            "invalid",
+            function () {
+
+                presionSistolica.setCustomValidity(
+                    "La presión arterial debe ingresarse en formato sistólica/diastólica (ej: 120/80) dentro de rangos válidos."
+                );
+            }
+        );
+
+        presionDiastolica.addEventListener(
+            "invalid",
+            function () {
+
+                presionDiastolica.setCustomValidity(
+                    "La presión arterial debe ingresarse en formato sistólica/diastólica (ej: 120/80) dentro de rangos válidos."
+                );
+            }
+        );
+
+        temperatura.addEventListener(
+            "invalid",
+            function () {
+
+                temperatura.setCustomValidity(
+                    "La temperatura debe estar entre 34.0 y 42.0°C con un decimal."
+                );
+            }
+        );
+
+        document
+            .getElementById("peso")
+            .addEventListener(
+                "invalid",
+                function () {
+
+                    this.setCustomValidity(
+                        "El peso debe estar entre 0.5 y 300 kg con dos decimales."
+                    );
+                }
+            );
+
+        document
+            .getElementById("talla")
+            .addEventListener(
+                "invalid",
+                function () {
+
+                    this.setCustomValidity(
+                        "La talla debe estar entre 30 y 250 cm con dos decimales."
+                    );
+                }
+            );
+
+        pulso.addEventListener(
+            "invalid",
+            function () {
+
+                pulso.setCustomValidity(
+                    "La frecuencia cardíaca debe estar entre 30 y 220 latidos por minuto."
+                );
+            }
+        );
+    }
+
+    [
+        presionSistolica,
+        presionDiastolica,
+        temperatura,
+        document.getElementById("peso"),
+        document.getElementById("talla"),
+        pulso
+    ].forEach(
+        campo => {
+
+            campo.addEventListener(
+                "input",
+                function () {
+                    this.setCustomValidity("");
+                }
+            );
+        }
+    );
+
+    configurarMensajesValidacion();
+
+    // Mantener la misma protección de coherencia de presión que el servidor.
+    function validarRelacionPresion() {
+        presionSistolica.setCustomValidity("");
+        presionDiastolica.setCustomValidity("");
+        if (presionSistolica.value !== "" && presionDiastolica.value !== ""
+                && Number(presionSistolica.value) <= Number(presionDiastolica.value)) {
+            presionSistolica.setCustomValidity(
+                "La presión arterial debe ingresarse en formato sistólica/diastólica (ej: 120/80) dentro de rangos válidos."
+            );
+        }
+    }
+    presionSistolica.addEventListener("input", validarRelacionPresion);
+    presionDiastolica.addEventListener("input", validarRelacionPresion);
+    validarRelacionPresion();
 
 </script>
 

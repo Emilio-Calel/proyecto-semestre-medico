@@ -387,7 +387,7 @@
 
     <a
             class="back-link"
-            th:href="@{/}">
+            th:href="@{/dashboard}">
         Volver al panel
     </a>
 
@@ -426,158 +426,345 @@
 
     </div>
 
-    <section class="content-card">
+                <section class="content-card">
 
-        <div class="card-header">
+                    <div class="card-header">
 
-            <div>
-                <h3>Pacientes presentes</h3>
+                        <div>
+                            <h3>Pacientes presentes</h3>
 
-                <p>
-                    Citas disponibles para atención por enfermería.
-                </p>
-            </div>
-
-            <span
-                    class="status-count"
-                    th:if="${!#lists.isEmpty(pacientes)}">
-                Pendientes
-            </span>
-
-        </div>
-
-        <div
-                class="empty-state"
-                th:if="${#lists.isEmpty(pacientes)}">
-
-            <div class="empty-icon">
-                ✓
-            </div>
-
-            <h4>No hay pacientes pendientes</h4>
-
-            <p>
-                Actualmente no hay pacientes pendientes
-                de toma de signos vitales.
-            </p>
-
-        </div>
-
-        <div
-                class="table-wrapper"
-                th:if="${!#lists.isEmpty(pacientes)}">
-
-            <table>
-
-                <thead>
-
-                <tr>
-                    <th>Cita</th>
-                    <th>Paciente</th>
-                    <th>Sucursal</th>
-                    <th>Especialidad</th>
-                    <th>Médico</th>
-                    <th>Fecha/Hora</th>
-                    <th>Estado</th>
-                    <th>Acción</th>
-                </tr>
-
-                </thead>
-
-                <tbody>
-
-                <tr th:each="cita : ${pacientes}">
-
-                    <td>
-                        <span
-                                class="cita-number"
-                                th:text="${cita.numeroCita}">
-                        </span>
-                    </td>
-
-                    <td>
-                        <span
-                                class="patient-name"
-                                th:text="${cita.paciente.nombreCompleto}">
-                        </span>
-                    </td>
-
-                    <td th:text="${cita.sucursal.nombre}">
-                    </td>
-
-                    <td
-                            th:text="${cita.especialidad != null
-                ? cita.especialidad.nombre
-                : 'Pendiente de asignación'}">
-                    </td>
-
-                    <td
-                            th:text="${cita.medico != null
-                ? cita.medico.personal.nombreCompleto
-                : 'Pendiente de asignación'}">
-                    </td>
-
-                    <td th:text="${cita.fechaHoraInicio}">
-                    </td>
-
-                    <td>
+                            <p>
+                                Pacientes que registraron su llegada
+                                y están pendientes de toma de signos vitales.
+                            </p>
+                        </div>
 
                         <span
-                                class="state-badge state-present"
-                                th:if="${cita.estadoCita.codigo == 'PACIENTE_PRESENTE'}"
-                                th:text="${cita.estadoCita.codigo}">
-                        </span>
+                                class="status-count"
+                                th:if="${!#lists.isEmpty(pacientesPresentes)}"
+                                th:text="${#lists.size(pacientesPresentes) + ' pendientes'}">
+        </span>
+
+                    </div>
+
+                    <div
+                            class="empty-state"
+                            th:if="${#lists.isEmpty(pacientesPresentes)}">
+
+                        <div class="empty-icon">
+                            ✓
+                        </div>
+
+                        <h4>No hay pacientes pendientes</h4>
+
+                        <p>
+                            Actualmente no hay pacientes en estado Paciente Presente.
+                        </p>
+
+                    </div>
+
+                    <div
+                            class="table-wrapper"
+                            th:if="${!#lists.isEmpty(pacientesPresentes)}">
+
+                        <table>
+
+                            <thead>
+                            <tr>
+                                <th>Cita</th>
+                                <th>Paciente</th>
+                                <th>Sucursal</th>
+                                <th>Especialidad</th>
+                                <th>Médico</th>
+                                <th>Fecha/Hora</th>
+                                <th>Estado</th>
+                                <th>Acción</th>
+                            </tr>
+                            </thead>
+
+                            <tbody>
+
+                            <tr th:each="cita : ${pacientesPresentes}">
+
+                                <td>
+                    <span
+                            class="cita-number"
+                            th:text="${cita.numeroCita}">
+                    </span>
+                                </td>
+
+                                <td>
+                    <span
+                            class="patient-name"
+                            th:text="${cita.paciente.nombreCompleto}">
+                    </span>
+                                </td>
+
+                                <td th:text="${cita.sucursal.nombre}">
+                                </td>
+
+                                <td
+                                        th:text="${cita.especialidad != null
+                        ? cita.especialidad.nombre
+                        : 'Pendiente de asignación'}">
+                                </td>
+
+                                <td
+                                        th:text="${cita.medico != null
+                        ? cita.medico.personal.nombreCompleto
+                        : 'Pendiente de asignación'}">
+                                </td>
+
+                                <td th:text="${cita.fechaHoraInicio}">
+                                </td>
+
+                                <td>
+                    <span
+                            class="state-badge state-present"
+                            th:text="${cita.estadoCita.codigo}">
+                    </span>
+                                </td>
+
+                                <td>
+
+                                    <form
+                                            class="action-form llamada-signos-form"
+                                            th:action="@{/enfermeria/citas/{id}/iniciar(id=${cita.id})}"
+                                            method="post"
+                                            th:attr="
+                                data-turno=${cita.numeroCita},
+                                data-paciente=${cita.paciente.nombreCompleto}">
+
+                                        <button
+                                                class="btn btn-primary"
+                                                type="submit">
+                                            Llamar y Tomar Signos
+                                        </button>
+
+                                    </form>
+
+                                </td>
+
+                            </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </section>
+
+                <section
+                        class="content-card"
+                        style="margin-top: 24px;">
+
+                    <div class="card-header">
+
+                        <div>
+                            <h3>Pacientes en toma de signos</h3>
+
+                            <p>
+                                Pacientes que ya fueron llamados
+                                y se encuentran en proceso de toma de signos vitales.
+                            </p>
+                        </div>
 
                         <span
-                                class="state-badge state-vitals"
-                                th:if="${cita.estadoCita.codigo == 'SIGNOS_VITALES'}"
-                                th:text="${cita.estadoCita.codigo}">
-                        </span>
+                                class="status-count"
+                                th:if="${!#lists.isEmpty(pacientesEnSignos)}"
+                                th:text="${#lists.size(pacientesEnSignos) + ' en proceso'}">
+        </span>
 
-                    </td>
+                    </div>
 
-                    <td>
+                    <div
+                            class="empty-state"
+                            th:if="${#lists.isEmpty(pacientesEnSignos)}">
 
-                        <form
-                                class="action-form"
-                                th:if="${cita.estadoCita.codigo == 'PACIENTE_PRESENTE'}"
-                                th:action="@{/enfermeria/citas/{id}/iniciar(id=${cita.id})}"
-                                method="post">
+                        <div class="empty-icon">
+                            ✓
+                        </div>
 
-                            <button
-                                    class="btn btn-primary"
-                                    type="submit">
-                                Llamar y Tomar Signos
-                            </button>
+                        <h4>No hay pacientes en proceso</h4>
 
-                        </form>
+                        <p>
+                            Actualmente no hay pacientes
+                            en toma de signos vitales.
+                        </p>
 
-                        <a
-                                class="btn btn-secondary"
-                                th:if="${cita.estadoCita.codigo == 'SIGNOS_VITALES'}"
-                                th:href="@{/enfermeria/citas/{id}/signos(id=${cita.id})}">
+                    </div>
 
-                            Continuar toma de signos
+                    <div
+                            class="table-wrapper"
+                            th:if="${!#lists.isEmpty(pacientesEnSignos)}">
 
-                        </a>
+                        <table>
 
-                    </td>
+                            <thead>
+                            <tr>
+                                <th>Cita</th>
+                                <th>Paciente</th>
+                                <th>Sucursal</th>
+                                <th>Especialidad</th>
+                                <th>Médico</th>
+                                <th>Fecha/Hora</th>
+                                <th>Estado</th>
+                                <th>Acción</th>
+                            </tr>
+                            </thead>
 
-                </tr>
+                            <tbody>
 
-                </tbody>
+                            <tr th:each="cita : ${pacientesEnSignos}">
 
-            </table>
+                                <td>
+                    <span
+                            class="cita-number"
+                            th:text="${cita.numeroCita}">
+                    </span>
+                                </td>
 
-        </div>
+                                <td>
+                    <span
+                            class="patient-name"
+                            th:text="${cita.paciente.nombreCompleto}">
+                    </span>
+                                </td>
 
-    </section>
+                                <td th:text="${cita.sucursal.nombre}">
+                                </td>
+
+                                <td
+                                        th:text="${cita.especialidad != null
+                        ? cita.especialidad.nombre
+                        : 'Pendiente de asignación'}">
+                                </td>
+
+                                <td
+                                        th:text="${cita.medico != null
+                        ? cita.medico.personal.nombreCompleto
+                        : 'Pendiente de asignación'}">
+                                </td>
+
+                                <td th:text="${cita.fechaHoraInicio}">
+                                </td>
+
+                                <td>
+                    <span
+                            class="state-badge state-vitals"
+                            th:text="${cita.estadoCita.codigo}">
+                    </span>
+                                </td>
+
+                                <td>
+
+                                    <a
+                                            class="btn btn-secondary"
+                                            th:href="@{/enfermeria/citas/{id}/signos(id=${cita.id})}">
+                                        Registrar Signos Vitales
+                                    </a>
+
+                                </td>
+
+                            </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </section>
+
 
 </main>
 
 <footer class="footer">
     Sistema Informático Hospitalario
 </footer>
+
+<script>
+
+    document
+        .querySelectorAll(
+            ".llamada-signos-form"
+        )
+        .forEach(form => {
+
+            form.addEventListener(
+                "submit",
+                function (event) {
+
+                    /*
+                     * Si el navegador no soporta
+                     * síntesis de voz, no bloqueamos
+                     * el flujo funcional.
+                     */
+                    if (
+                        !("speechSynthesis" in window)
+                    ) {
+                        return;
+                    }
+
+                    event.preventDefault();
+
+                    const turno =
+                        form.dataset.turno;
+
+                    const paciente =
+                        form.dataset.paciente;
+
+                    const mensaje =
+                        "Turno número "
+                        + turno
+                        + ". Paciente "
+                        + paciente
+                        + ", favor pasar a toma de signos vitales.";
+
+                    window.speechSynthesis
+                        .cancel();
+
+                    const voz =
+                        new SpeechSynthesisUtterance(
+                            mensaje
+                        );
+
+                    voz.lang = "es-GT";
+
+                    voz.rate = 0.95;
+                    voz.pitch = 1;
+                    voz.volume = 1;
+
+                    /*
+                     * Cuando finaliza el anuncio,
+                     * continuamos con el POST que
+                     * cambia la cita a SIGNOS_VITALES.
+                     */
+                    voz.onend =
+                        function () {
+
+                            form.submit();
+                        };
+
+                    /*
+                     * Si el navegador falla al
+                     * reproducir el audio, tampoco
+                     * debemos bloquear Enfermería.
+                     */
+                    voz.onerror =
+                        function () {
+
+                            form.submit();
+                        };
+
+                    window.speechSynthesis
+                        .speak(voz);
+                }
+            );
+        });
+
+</script>
 
 </body>
 </html>

@@ -30,3 +30,6 @@ uploads/
 .env
 .DS_Store
 Thumbs.db
+
+.codex/
+

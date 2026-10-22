@@ -226,6 +226,10 @@ public class SignosVitalesServiceImpl
                 )
         );
 
+        signos.setAlertasClinicas(
+                generarAlertasClinicas(dto)
+        );
+
         signos.setObservaciones(
                 dto.getObservaciones() == null
                         ? null
@@ -383,42 +387,6 @@ public class SignosVitalesServiceImpl
         }
     }
 
-    private void validarEntero(
-            Integer valor,
-            int minimo,
-            int maximo,
-            String campo
-    ) {
-
-        if (valor == null
-                || valor < minimo
-                || valor > maximo) {
-
-            throw new IllegalArgumentException(
-                    campo
-                            + " fuera del rango permitido"
-            );
-        }
-    }
-
-    private void validarDecimal(
-            BigDecimal valor,
-            BigDecimal minimo,
-            BigDecimal maximo,
-            String campo
-    ) {
-
-        if (valor == null
-                || valor.compareTo(minimo) < 0
-                || valor.compareTo(maximo) > 0) {
-
-            throw new IllegalArgumentException(
-                    campo
-                            + " fuera del rango permitido"
-            );
-        }
-    }
-
     private void notificarMedico(
             Cita cita
     ) {
@@ -500,5 +468,60 @@ public class SignosVitalesServiceImpl
         auditoriaRepository.save(
                 auditoria
         );
+    }
+
+    private String generarAlertasClinicas(
+            SignosVitalesDTO dto
+    ) {
+
+        StringBuilder alertas =
+                new StringBuilder();
+
+        // RN-CU07-06 - Presión arterial
+        if (dto.getPresionSistolica() < 90
+                || dto.getPresionSistolica() > 140
+                || dto.getPresionDiastolica() < 60
+                || dto.getPresionDiastolica() > 90) {
+
+            alertas.append(
+                    "Presión arterial fuera de rango normal."
+            );
+        }
+
+        // RN-CU07-06 - Temperatura
+        if (dto.getTemperatura()
+                .compareTo(
+                        new BigDecimal("36.0")
+                ) < 0
+                || dto.getTemperatura()
+                .compareTo(
+                        new BigDecimal("37.5")
+                ) > 0) {
+
+            if (!alertas.isEmpty()) {
+                alertas.append(" ");
+            }
+
+            alertas.append(
+                    "Temperatura fuera de rango normal."
+            );
+        }
+
+        // RN-CU07-06 - Frecuencia cardíaca
+        if (dto.getPulso() < 60
+                || dto.getPulso() > 100) {
+
+            if (!alertas.isEmpty()) {
+                alertas.append(" ");
+            }
+
+            alertas.append(
+                    "Frecuencia cardíaca fuera de rango normal."
+            );
+        }
+
+        return alertas.isEmpty()
+                ? null
+                : alertas.toString();
     }
 }
