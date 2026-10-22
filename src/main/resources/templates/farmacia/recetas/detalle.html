@@ -157,8 +157,8 @@
                 style="
                 background:#0f6f7a;
                 color:white;"
-                th:if="${receta.estado.name() == 'PENDIENTE'
-                or receta.estado.name() == 'PARCIAL'}"
+                th:if="${!receta.vencidaParaDespacho and receta.activo and (receta.estado.name() == 'PENDIENTE'
+                or receta.estado.name() == 'PARCIAL')}"
                 th:href="@{/farmacia/recetas/{id}/despachar(id=${receta.id})}">
             💊 Despachar receta
         </a>
@@ -210,7 +210,8 @@
 
     <div
             class="warning"
-            th:if="${receta.estado.name() == 'VENCIDA'}">
+            th:if="${receta.vencidaParaDespacho}"
+            th:text="${receta.mensajeVencida}">
 
         Esta receta está vencida y no puede ser despachada.
 
@@ -269,7 +270,7 @@
 
                 <strong
                         th:text="${#temporals.format(
-                            receta.fechaVencimiento,
+                            receta.vigenciaDespacho,
                             'dd/MM/yyyy HH:mm'
                         )}">
                 </strong>

@@ -8,14 +8,17 @@ import com.example.proyecto_semestre_medico.repository.*;
 import com.example.proyecto_semestre_medico.service.DespachoMedicamentoService;
 import com.example.proyecto_semestre_medico.service.MovimientoInventarioService;
 import org.springframework.stereotype.Service;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashSet;
 
 @Service
+@PreAuthorize("hasRole('FARMACEUTICO') or hasRole('ADMINISTRADOR')")
 public class DespachoMedicamentoServiceImpl
         implements DespachoMedicamentoService {
 
@@ -46,6 +49,10 @@ public class DespachoMedicamentoServiceImpl
     private final MovimientoInventarioService
             movimientoInventarioService;
 
+    private final NotificacionInternaRepository notificacionRepository;
+
+    private static final String RECETA_INVALIDA = "La receta es inválida. Verifique que el medicamento exista, la dosis sea correcta y la receta no sea anterior a 7 días.";
+
     public DespachoMedicamentoServiceImpl(
             DespachoMedicamentoRepository despachoRepository,
             RecetaRepository recetaRepository,
@@ -55,7 +62,8 @@ public class DespachoMedicamentoServiceImpl
             InventarioMedicamentoRepository inventarioRepository,
             UsuarioRepository usuarioRepository,
             AuditoriaRepository auditoriaRepository,
-            MovimientoInventarioService movimientoInventarioService
+            MovimientoInventarioService movimientoInventarioService,
+            NotificacionInternaRepository notificacionRepository
     ) {
 
         this.despachoRepository =
@@ -84,6 +92,7 @@ public class DespachoMedicamentoServiceImpl
 
         this.movimientoInventarioService =
                 movimientoInventarioService;
+        this.notificacionRepository = notificacionRepository;
     }
 
     /*
@@ -123,7 +132,7 @@ public class DespachoMedicamentoServiceImpl
                                 )
                         );
 
-        validarRecetaParaConsulta(
+        validarRecetaParaDespacho(
                 receta
         );
 
@@ -151,6 +160,8 @@ public class DespachoMedicamentoServiceImpl
                                 recetaId
                         );
 
+        validarContenidoReceta(detalles);
+
         List<MedicamentoRecetaFarmaciaDTO>
                 resultado =
                 new ArrayList<>();
@@ -176,12 +187,12 @@ public class DespachoMedicamentoServiceImpl
                             0
                     );
 
-            int stockDisponible =
-                    inventarioRepository
+            var registroInventario = inventarioRepository
                             .findByMedicamentoIdAndSucursalIdAndActivoTrue(
                                     medicamento.getId(),
                                     sucursalId
-                            )
+                            );
+            int stockDisponible = registroInventario
                             .map(
                                     InventarioMedicamento::getStockActual
                             )
@@ -189,6 +200,8 @@ public class DespachoMedicamentoServiceImpl
 
             MedicamentoRecetaFarmaciaDTO dto =
                     new MedicamentoRecetaFarmaciaDTO();
+
+            dto.setInventarioRegistrado(registroInventario.isPresent());
 
             dto.setRecetaDetalleId(
                     detalle.getId()
@@ -254,6 +267,7 @@ public class DespachoMedicamentoServiceImpl
 
     @Override
     @Transactional
+    @PreAuthorize("(hasRole('FARMACEUTICO') or hasRole('ADMINISTRADOR')) and #nombreUsuario == authentication.name")
     public DespachoMedicamento registrarDespacho(
             DespachoMedicamentoDTO dto,
             String nombreUsuario
@@ -265,7 +279,7 @@ public class DespachoMedicamentoServiceImpl
 
         Receta receta =
                 recetaRepository
-                        .findById(dto.getRecetaId())
+                        .buscarParaDespacho(dto.getRecetaId())
                         .orElseThrow(() ->
                                 new IllegalArgumentException(
                                         "Receta no encontrada."
@@ -275,6 +289,8 @@ public class DespachoMedicamentoServiceImpl
         validarRecetaParaDespacho(
                 receta
         );
+
+        validarContenidoReceta(recetaDetalleRepository.findByRecetaIdAndActivoTrueOrderByIdAsc(receta.getId()));
 
         Sucursal sucursal =
                 sucursalRepository
@@ -409,6 +425,11 @@ public class DespachoMedicamentoServiceImpl
                             : recetaDetalle
                             .getCantidadDespachada();
 
+            if (detalleDTO.getCantidadDespachadaPrevia() == null
+                    || detalleDTO.getCantidadDespachadaPrevia() != yaDespachado) {
+                throw new IllegalArgumentException("La receta fue actualizada por otro despacho. Vuelva a cargarla antes de continuar.");
+            }
+
             int pendiente =
                     recetaDetalle.getCantidad()
                             - yaDespachado;
@@ -475,6 +496,18 @@ public class DespachoMedicamentoServiceImpl
                 );
             }
 
+            if (medicamentoEntregado.getPrecio() == null || medicamentoEntregado.getPrecio().signum() < 0
+                    || medicamentoEntregado.getPrecio().stripTrailingZeros().scale() > 2) {
+                throw new IllegalArgumentException("El precio del medicamento no es válido.");
+            }
+
+            InventarioMedicamento inventario = inventarioRepository
+                    .findByMedicamentoIdAndSucursalIdAndActivoTrue(medicamentoEntregadoId, sucursal.getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Sin inventario registrado"));
+            if (inventario.getStockActual() == null || inventario.getStockActual() < cantidadSolicitada) {
+                throw new IllegalArgumentException("Stock insuficiente para " + medicamentoEntregado.getNombre() + ".");
+            }
+
             boolean sustituido =
                     !medicamentoEntregado
                             .getId()
@@ -483,6 +516,10 @@ public class DespachoMedicamentoServiceImpl
                                             .getMedicamento()
                                             .getId()
                             );
+
+            if (sustituido != Boolean.TRUE.equals(detalleDTO.getSustituir())) {
+                throw new IllegalArgumentException("Marque la sustitución y seleccione un medicamento alternativo distinto del original.");
+            }
 
             String motivoSustitucion =
                     normalizarOpcional(
@@ -527,7 +564,7 @@ public class DespachoMedicamentoServiceImpl
              *
              * y además descuenta realmente el stock.
              */
-            movimientoInventarioService
+            MovimientoInventarioMedicamento movimiento = movimientoInventarioService
                     .registrarDespachoAutomatico(
                             medicamentoEntregado.getId(),
                             sucursal.getId(),
@@ -541,6 +578,25 @@ public class DespachoMedicamentoServiceImpl
                                     + receta.getId(),
                             nombreUsuario
                     );
+
+            Integer minimo = medicamentoEntregado.getStockMinimo();
+            if (minimo != null && movimiento.getStockNuevo() <= minimo) {
+                despacho.getAvisos().add("ALERTA: El medicamento " + medicamentoEntregado.getNombre()
+                        + " ha alcanzado el nivel de stock mínimo (" + movimiento.getStockNuevo()
+                        + " unidades restantes). Se recomienda generar orden de reabastecimiento.");
+            }
+            if (sustituido) {
+                String mensaje = "Medicamento " + recetaDetalle.getMedicamento().getNombre()
+                        + " sustituido por " + medicamentoEntregado.getNombre()
+                        + ". El médico tratante será notificado de la sustitución.";
+                despacho.getAvisos().add(mensaje);
+                NotificacionInterna aviso = new NotificacionInterna();
+                aviso.setUsuarioDestino(receta.getConsultaMedica().getMedico().getPersonal().getUsuario());
+                aviso.setTipo("SUSTITUCION_MEDICAMENTO"); aviso.setTitulo("Sustitución en farmacia");
+                aviso.setMensaje(mensaje); aviso.setReferenciaTipo("RECETA");
+                aviso.setReferenciaId(receta.getId().toString());
+                notificacionRepository.save(aviso);
+            }
 
             DespachoMedicamentoDetalle
                     detalleDespacho =
@@ -617,6 +673,9 @@ public class DespachoMedicamentoServiceImpl
             );
         }
 
+        if (montoTotal.setScale(2).precision() > 12) {
+            throw new IllegalArgumentException("El total del despacho supera el monto permitido.");
+        }
         despacho.setMontoTotal(
                 montoTotal
         );
@@ -710,19 +769,26 @@ public class DespachoMedicamentoServiceImpl
                     "Debe indicar al menos un medicamento."
             );
         }
+        var lineasUnicas = new HashSet<Long>();
+        for (DespachoDetalleDTO linea : dto.getDetalles()) {
+            if (linea != null && linea.getCantidad() != null && linea.getCantidad() > 0
+                    && !lineasUnicas.add(linea.getRecetaDetalleId())) {
+                throw new IllegalArgumentException("No puede repetir un medicamento de la misma receta en el despacho.");
+            }
+        }
     }
 
-    private void validarRecetaParaConsulta(
-            Receta receta
-    ) {
-
-        if (!Boolean.TRUE.equals(
-                receta.getActivo()
-        )) {
-
-            throw new IllegalArgumentException(
-                    "La receta se encuentra inactiva."
-            );
+    private void validarContenidoReceta(List<RecetaDetalle> detalles) {
+        if (detalles.isEmpty()) throw new IllegalArgumentException(RECETA_INVALIDA);
+        for (RecetaDetalle detalle : detalles) {
+            Medicamento med = detalle.getMedicamento();
+            if (med == null || med.getId() == null || !Boolean.TRUE.equals(med.getActivo())
+                    || !medicamentoRepository.existsById(med.getId())
+                    || detalle.getDosis() == null || detalle.getDosis().isBlank()
+                    || detalle.getDosis().length() > 200
+                    || detalle.getCantidad() == null || detalle.getCantidad() <= 0) {
+                throw new IllegalArgumentException(RECETA_INVALIDA);
+            }
         }
     }
 
@@ -743,34 +809,12 @@ public class DespachoMedicamentoServiceImpl
          * Antes de cualquier despacho verificamos
          * la vigencia real.
          */
-        if ((receta.getEstado()
-                == EstadoReceta.PENDIENTE
-                || receta.getEstado()
-                == EstadoReceta.PARCIAL)
-                && receta.getFechaVencimiento()
-                .isBefore(
-                        LocalDateTime.now()
-                )) {
-
-            receta.setEstado(
-                    EstadoReceta.VENCIDA
-            );
-
-            recetaRepository.save(
-                    receta
-            );
-
-            throw new IllegalArgumentException(
-                    "La receta está vencida y no puede ser despachada."
-            );
+        if (receta.isVencidaParaDespacho()) {
+            throw new IllegalArgumentException(receta.getMensajeVencida());
         }
-
-        if (receta.getEstado()
-                == EstadoReceta.VENCIDA) {
-
-            throw new IllegalArgumentException(
-                    "La receta está vencida y no puede ser despachada."
-            );
+        if (receta.getFechaEmision() == null || receta.getFechaEmision().isAfter(LocalDateTime.now())
+                || receta.getFechaVencimiento() == null || receta.getConsultaMedica() == null) {
+            throw new IllegalArgumentException(RECETA_INVALIDA);
         }
 
         if (receta.getEstado()
@@ -787,6 +831,9 @@ public class DespachoMedicamentoServiceImpl
             throw new IllegalArgumentException(
                     "La receta fue marcada como no adquirida."
             );
+        }
+        if (receta.getEstado() != EstadoReceta.PENDIENTE && receta.getEstado() != EstadoReceta.PARCIAL) {
+            throw new IllegalArgumentException(RECETA_INVALIDA);
         }
     }
 
@@ -867,17 +914,15 @@ public class DespachoMedicamentoServiceImpl
             String nombreUsuario
     ) {
 
-        if (nombreUsuario == null
-                || nombreUsuario.isBlank()) {
-
-            return null;
+        if (nombreUsuario == null || nombreUsuario.isBlank()) {
+            throw new IllegalArgumentException("El usuario de farmacia es obligatorio.");
         }
 
         return usuarioRepository
                 .findByNombreUsuarioIgnoreCase(
                         nombreUsuario
                 )
-                .orElse(null);
+                .orElseThrow(() -> new IllegalArgumentException("El usuario de farmacia no existe."));
     }
 
     private String normalizarOpcional(

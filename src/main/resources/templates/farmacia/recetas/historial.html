@@ -178,6 +178,9 @@
 
 <main class="container">
 
+    <div class="success" th:if="${mensaje}" th:text="${mensaje}"></div>
+    <div class="warning" th:each="aviso : ${avisos}" th:text="${aviso}"></div>
+
     <div style="margin-bottom:20px;">
 
         <a
@@ -271,12 +274,11 @@
 
             <div
                     class="total"
-                    th:text="${'Q '
+                    th:text="${'Total del Despacho: Q'
                     + #numbers.formatDecimal(
                         despacho.montoTotal,
-                        1,
-                        2
-                    )}">
+                        1, 'NONE', 2, 'POINT'
+                    ) + '.'}">
             </div>
 
         </div>

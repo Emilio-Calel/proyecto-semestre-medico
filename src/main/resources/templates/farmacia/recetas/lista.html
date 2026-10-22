@@ -164,7 +164,9 @@
 
 <header class="topbar">
 
-    <h1>Farmacia — Recetas Médicas</h1>
+    <h1>Panel de Farmacia — Recetas Médicas</h1>
+    <a th:href="@{/dashboard}" style="color:white;">Panel principal</a>
+    <a th:href="@{/farmacia/recetas/buscar}" style="color:white;">Nuevo Despacho</a>
 
     <p>
         Consulte recetas pendientes, parciales y despachadas.
@@ -173,12 +175,18 @@
 </header>
 
 <main class="container">
+    <p th:if="${error}" th:text="${error}" style="color:#b91c1c;"></p>
 
     <section class="toolbar">
 
         <form
                 method="get"
-                th:action="@{/farmacia}">
+                th:action="@{/farmacia/recetas/buscar}">
+
+            <div><label for="recetaId">ID de Receta</label>
+                <input id="recetaId" name="recetaId" type="number" min="1" th:value="${recetaId}"></div>
+            <div><label for="consultaId">ID de Consulta</label>
+                <input id="consultaId" name="consultaId" type="number" min="1" th:value="${consultaId}"></div>
 
             <div>
 
@@ -210,7 +218,7 @@
             <button
                     type="submit"
                     class="btn btn-primary">
-                Filtrar
+                Buscar
             </button>
 
         </form>
@@ -227,10 +235,13 @@
 
                 <tr>
                     <th>Receta</th>
+                    <th>Consulta</th>
                     <th>Paciente</th>
                     <th>Médico</th>
                     <th>Emisión</th>
                     <th>Vencimiento</th>
+                    <th>Días transcurridos</th>
+                    <th>Notas</th>
                     <th>Estado</th>
                     <th>Acción</th>
                 </tr>
@@ -241,11 +252,12 @@
 
                 <tr
                         th:each="receta : ${recetas}"
-                        th:classappend="${receta.estado.name() == 'VENCIDA'}
+                        th:classappend="${receta.vencidaParaDespacho}
                             ? 'expired' : ''">
 
                     <td th:text="'#' + ${receta.id}">
                     </td>
+                    <td th:text="${receta.consultaMedica.id}"></td>
 
                     <td th:text="${receta.consultaMedica.cita.paciente.nombreCompleto}">
                     </td>
@@ -260,14 +272,16 @@
                     </td>
 
                     <td th:text="${#temporals.format(
-                        receta.fechaVencimiento,
+                        receta.vigenciaDespacho,
                         'dd/MM/yyyy HH:mm'
                     )}">
                     </td>
 
+                    <td th:text="${receta.diasTranscurridos}"></td>
+                    <td th:text="${receta.observaciones}"></td>
                     <td>
-
-                        <span
+                        <span th:if="${receta.vencidaParaDespacho}" style="color:#b91c1c;font-weight:bold;">Vencida</span>
+                        <span th:unless="${receta.vencidaParaDespacho}"
                                 class="status"
                                 th:classappend="${receta.estado.name()}"
                                 th:text="${receta.estado}">
@@ -285,6 +299,10 @@
                                 }">
                             Ver receta
                         </a>
+                        <a class="btn btn-primary"
+                           th:if="${!receta.vencidaParaDespacho and (receta.estado.name() == 'PENDIENTE' or receta.estado.name() == 'PARCIAL')}"
+                           th:href="@{/farmacia/recetas/{id}/despachar(id=${receta.id})}">Despachar</a>
+                        <button th:if="${receta.vencidaParaDespacho}" type="button" disabled>Despachar</button>
 
                     </td>
 

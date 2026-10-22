@@ -8,6 +8,8 @@ import java.util.List;
 
 public interface RecetaService {
 
+    List<Receta> buscarActivasFarmacia(Long recetaId, Long consultaId);
+
     Receta crearReceta(
             RecetaFormDTO dto,
             String nombreUsuario

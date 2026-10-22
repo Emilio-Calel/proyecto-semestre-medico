@@ -67,6 +67,29 @@ public class Receta {
     public Receta() {
     }
 
+    public long getDiasTranscurridos() {
+        return fechaEmision == null ? 0 : Math.max(0,
+                java.time.Duration.between(fechaEmision, LocalDateTime.now()).toDays());
+    }
+
+    public boolean isVencidaParaDespacho() {
+        LocalDateTime ahora = LocalDateTime.now();
+        return estado == EstadoReceta.VENCIDA || (fechaEmision != null
+                && fechaEmision.plusDays(7).isBefore(ahora))
+                || (fechaVencimiento != null && fechaVencimiento.isBefore(ahora));
+    }
+
+    public LocalDateTime getVigenciaDespacho() {
+        if (fechaEmision == null) return fechaVencimiento;
+        LocalDateTime limite = fechaEmision.plusDays(7);
+        return fechaVencimiento != null && fechaVencimiento.isBefore(limite) ? fechaVencimiento : limite;
+    }
+
+    public String getMensajeVencida() {
+        return "Receta Vencida. La receta #" + id + " fue emitida hace " + getDiasTranscurridos()
+                + " días y ya no es válida para despacho.";
+    }
+
     @PrePersist
     public void prePersist() {
 

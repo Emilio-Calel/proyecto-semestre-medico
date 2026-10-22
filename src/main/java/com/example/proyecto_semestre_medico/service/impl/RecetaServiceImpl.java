@@ -18,6 +18,7 @@ import com.example.proyecto_semestre_medico.service.RecetaService;
 import com.example.proyecto_semestre_medico.model.Medico;
 import com.example.proyecto_semestre_medico.repository.MedicoRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -252,6 +253,16 @@ public class RecetaServiceImpl
     }
 
     @Override
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasRole('FARMACEUTICO') or hasRole('ADMINISTRADOR')")
+    public List<Receta> buscarActivasFarmacia(Long recetaId, Long consultaId) {
+        if ((recetaId != null && recetaId <= 0) || (consultaId != null && consultaId <= 0)) {
+            throw new IllegalArgumentException("Los identificadores de receta y consulta deben ser positivos.");
+        }
+        return recetaRepository.buscarActivasFarmacia(recetaId, consultaId);
+    }
+
+    @Override
     @Transactional
     public Receta buscarPorId(
             Long id
@@ -259,7 +270,7 @@ public class RecetaServiceImpl
 
         Receta receta =
                 recetaRepository
-                        .findById(id)
+                        .buscarParaDespacho(id)
                         .orElseThrow(() ->
                                 new IllegalArgumentException(
                                         "Receta no encontrada."
@@ -310,6 +321,7 @@ public class RecetaServiceImpl
 
     @Override
     @Transactional
+    @PreAuthorize("(hasRole('FARMACEUTICO') or hasRole('ADMINISTRADOR')) and #nombreUsuario == authentication.name")
     public Receta marcarComoNoAdquirida(
             Long recetaId,
             String nombreUsuario
@@ -324,7 +336,7 @@ public class RecetaServiceImpl
 
         Receta receta =
                 recetaRepository
-                        .findById(recetaId)
+                        .buscarParaDespacho(recetaId)
                         .orElseThrow(() ->
                                 new IllegalArgumentException(
                                         "Receta no encontrada."
@@ -385,9 +397,10 @@ public class RecetaServiceImpl
             );
         }
 
-        receta.setEstado(
-                EstadoReceta.NO_ADQUIRIDA
-        );
+        Usuario usuarioNoAdquiere = buscarUsuario(nombreUsuario);
+        if (usuarioNoAdquiere == null) throw new IllegalArgumentException("El usuario de farmacia no existe.");
+
+        receta.setEstado(EstadoReceta.NO_ADQUIRIDA);
 
         receta =
                 recetaRepository.save(
@@ -533,10 +546,7 @@ public class RecetaServiceImpl
             return false;
         }
 
-        if (receta.getFechaVencimiento()
-                .isBefore(
-                        LocalDateTime.now()
-                )) {
+        if (receta.isVencidaParaDespacho()) {
 
             receta.setEstado(
                     EstadoReceta.VENCIDA
@@ -647,12 +657,9 @@ public class RecetaServiceImpl
                         .toString()
         );
 
-        auditoria.setDetalle(
-                "La receta "
-                        + receta.getId()
-                        + " fue marcada como NO_ADQUIRIDA. "
-                        + "El paciente decidió no adquirir los medicamentos pendientes."
-        );
+        auditoria.setDetalle("Se ha registrado que el paciente "
+                + receta.getConsultaMedica().getCita().getPaciente().getNombreCompleto()
+                + " no adquirió los medicamentos recetados en farmacia interna. Receta: " + receta.getId() + ".");
 
         auditoriaRepository.save(
                 auditoria

@@ -599,6 +599,12 @@
                 <span class="arrow">→</span>
             </a>
         </article>
+        <article class="module-card" sec:authorize="hasRole('FARMACEUTICO') or hasRole('ADMINISTRADOR')">
+            <div class="module-icon">💊</div>
+            <h2>Panel de Farmacia</h2>
+            <p>Consulte recetas y registre el despacho de medicamentos.</p>
+            <a class="module-link" th:href="@{/farmacia}"><span>Ir a Farmacia</span><span class="arrow">→</span></a>
+        </article>
     </section>
 
 </main>

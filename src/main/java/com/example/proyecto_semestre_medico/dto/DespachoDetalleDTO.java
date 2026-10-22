@@ -6,9 +6,21 @@ public class DespachoDetalleDTO {
 
     private Integer cantidad;
 
+    private Integer cantidadDespachadaPrevia;
+
+    public Integer getCantidadDespachadaPrevia() { return cantidadDespachadaPrevia; }
+
+    public void setCantidadDespachadaPrevia(Integer cantidad) { this.cantidadDespachadaPrevia = cantidad; }
+
     private Long medicamentoDespachadoId;
 
     private String motivoSustitucion;
+
+    private Boolean sustituir = false;
+
+    public Boolean getSustituir() { return sustituir; }
+
+    public void setSustituir(Boolean sustituir) { this.sustituir = sustituir; }
 
     public DespachoDetalleDTO() {
     }

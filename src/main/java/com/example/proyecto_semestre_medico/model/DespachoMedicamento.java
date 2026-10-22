@@ -75,6 +75,11 @@ public class DespachoMedicamento {
     public DespachoMedicamento() {
     }
 
+    @Transient
+    private List<String> avisos = new ArrayList<>();
+
+    public List<String> getAvisos() { return avisos; }
+
     @PrePersist
     public void prePersist() {
 

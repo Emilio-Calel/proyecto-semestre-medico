@@ -28,6 +28,12 @@ public class MedicamentoRecetaFarmaciaDTO {
 
     private BigDecimal precioUnitario;
 
+    private boolean inventarioRegistrado;
+
+    public boolean isInventarioRegistrado() { return inventarioRegistrado; }
+
+    public void setInventarioRegistrado(boolean registrado) { this.inventarioRegistrado = registrado; }
+
     public MedicamentoRecetaFarmaciaDTO() {
     }
 

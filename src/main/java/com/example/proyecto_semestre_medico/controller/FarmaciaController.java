@@ -8,6 +8,10 @@ import com.example.proyecto_semestre_medico.model.EstadoReceta;
 import com.example.proyecto_semestre_medico.model.Receta;
 import com.example.proyecto_semestre_medico.repository.MedicamentoRepository;
 import com.example.proyecto_semestre_medico.repository.SucursalRepository;
+import com.example.proyecto_semestre_medico.repository.InventarioMedicamentoRepository;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.dao.DataAccessException;
 import com.example.proyecto_semestre_medico.service.DespachoMedicamentoService;
 import com.example.proyecto_semestre_medico.service.RecetaService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -38,11 +42,14 @@ public class FarmaciaController {
     private final MedicamentoRepository
             medicamentoRepository;
 
+    private final InventarioMedicamentoRepository inventarioRepository;
+
     public FarmaciaController(
             RecetaService recetaService,
             DespachoMedicamentoService despachoMedicamentoService,
             SucursalRepository sucursalRepository,
-            MedicamentoRepository medicamentoRepository
+            MedicamentoRepository medicamentoRepository,
+            InventarioMedicamentoRepository inventarioRepository
     ) {
 
         this.recetaService =
@@ -56,6 +63,7 @@ public class FarmaciaController {
 
         this.medicamentoRepository =
                 medicamentoRepository;
+        this.inventarioRepository = inventarioRepository;
     }
 
     /*
@@ -64,7 +72,14 @@ public class FarmaciaController {
      * =========================================================
      */
 
-    @GetMapping
+    @InitBinder("despachoForm")
+    public void camposDespacho(WebDataBinder binder) {
+        binder.setAllowedFields("recetaId", "sucursalId", "detalles[*].recetaDetalleId",
+                "detalles[*].cantidad", "detalles[*].cantidadDespachadaPrevia",
+                "detalles[*].medicamentoDespachadoId", "detalles[*].motivoSustitucion", "detalles[*].sustituir");
+    }
+
+    @GetMapping({"", "/recetas/buscar"})
     public String listarRecetas(
             @RequestParam(
                     name = "estado",
@@ -72,12 +87,22 @@ public class FarmaciaController {
             )
             String estado,
 
+            @RequestParam(required = false) Long recetaId,
+            @RequestParam(required = false) Long consultaId,
+
             Model model
     ) {
 
-        List<Receta> recetas =
-                recetaService
-                        .listarTodas();
+        List<Receta> recetas;
+        try {
+            recetas = recetaService.buscarActivasFarmacia(recetaId, consultaId);
+        } catch (IllegalArgumentException e) {
+            recetas = List.of();
+            model.addAttribute("error", e.getMessage());
+        }
+
+        model.addAttribute("recetaId", recetaId);
+        model.addAttribute("consultaId", consultaId);
 
         if (estado != null
                 && !estado.isBlank()
@@ -170,12 +195,15 @@ public class FarmaciaController {
                     recetaService
                             .buscarPorId(id);
 
-            if (receta.getEstado()
-                    == EstadoReceta.VENCIDA) {
+            if (receta.isVencidaParaDespacho()) {
 
                 throw new IllegalArgumentException(
-                        "La receta está vencida y no puede ser despachada."
+                        receta.getMensajeVencida()
                 );
+            }
+
+            if (!Boolean.TRUE.equals(receta.getActivo())) {
+                throw new IllegalArgumentException("La receta se encuentra inactiva.");
             }
 
             if (receta.getEstado()
@@ -231,6 +259,10 @@ public class FarmaciaController {
                         detalles
                 );
 
+                model.addAttribute("inventarios", inventarioRepository
+                        .findBySucursalIdAndActivoTrueOrderByMedicamentoNombreAsc(sucursalId).stream()
+                        .collect(java.util.stream.Collectors.toMap(i -> i.getMedicamento().getId(), i -> i)));
+
                 DespachoMedicamentoDTO form =
                         new DespachoMedicamentoDTO();
 
@@ -265,6 +297,7 @@ public class FarmaciaController {
                     dto.setCantidad(
                             0
                     );
+                    dto.setCantidadDespachadaPrevia(detalle.getCantidadDespachada());
 
                     detallesForm.add(
                             dto
@@ -305,11 +338,16 @@ public class FarmaciaController {
     public String registrarDespacho(
             @ModelAttribute("despachoForm")
             DespachoMedicamentoDTO dto,
+            BindingResult bindingResult,
             Authentication authentication,
             RedirectAttributes redirectAttributes
     ) {
 
         try {
+
+            if (bindingResult.hasErrors()) {
+                throw new IllegalArgumentException("Las cantidades e identificadores del despacho deben ser números enteros válidos.");
+            }
 
             DespachoMedicamento despacho =
                     despachoMedicamentoService
@@ -320,23 +358,26 @@ public class FarmaciaController {
 
             redirectAttributes.addFlashAttribute(
                     "mensaje",
-                    "Despacho registrado correctamente. "
-                            + "Número de despacho: "
-                            + despacho.getId()
-                            + ". Monto total: Q "
-                            + despacho.getMontoTotal()
+                    "Despacho registrado exitosamente. "
+                            + despacho.getDetalles().size()
+                            + " medicamento(s) despachado(s). Total: Q"
+                            + despacho.getMontoTotal().setScale(2).toPlainString()
                             + "."
             );
 
-            return "redirect:/farmacia/recetas/"
-                    + dto.getRecetaId();
+            redirectAttributes.addFlashAttribute("avisos", despacho.getAvisos());
 
-        } catch (IllegalArgumentException e) {
+            return "redirect:/farmacia/recetas/"
+                    + dto.getRecetaId() + "/historial";
+
+        } catch (IllegalArgumentException | DataAccessException e) {
 
             redirectAttributes.addFlashAttribute(
                     "error",
-                    e.getMessage()
+                    e instanceof DataAccessException ? "No fue posible registrar el despacho. Verifique la receta y el inventario antes de reintentar." : e.getMessage()
             );
+
+            if (dto.getRecetaId() == null || dto.getSucursalId() == null) return "redirect:/farmacia";
 
             return "redirect:/farmacia/recetas/"
                     + dto.getRecetaId()
@@ -360,7 +401,7 @@ public class FarmaciaController {
 
         try {
 
-            recetaService
+            Receta receta = recetaService
                     .marcarComoNoAdquirida(
                             id,
                             authentication.getName()
@@ -368,7 +409,8 @@ public class FarmaciaController {
 
             redirectAttributes.addFlashAttribute(
                     "mensaje",
-                    "La receta fue marcada como NO ADQUIRIDA correctamente."
+                    "Se ha registrado que el paciente " + receta.getConsultaMedica().getCita().getPaciente().getNombreCompleto()
+                            + " no adquirió los medicamentos recetados en farmacia interna. Receta: " + receta.getId() + "."
             );
 
         } catch (IllegalArgumentException e) {

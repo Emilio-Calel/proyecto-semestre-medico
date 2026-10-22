@@ -233,6 +233,7 @@
     <p>
         Seleccione una sucursal y registre los medicamentos entregados.
     </p>
+    <a th:href="@{/farmacia}" style="color:white;">Volver al Panel de Farmacia</a>
 
 </header>
 
@@ -338,6 +339,7 @@
             <h3 style="margin-bottom:15px;">
                 Medicamentos pendientes
             </h3>
+            <p>Indique 0 para omitir una línea en este despacho parcial. El cobro físico se realiza fuera del sistema.</p>
 
             <div class="table-wrapper">
 
@@ -396,7 +398,8 @@
 
                         <td>
 
-                            <span
+                            <span th:if="${!detalle.inventarioRegistrado}">Sin inventario registrado</span>
+                            <span th:if="${detalle.inventarioRegistrado}"
                                     th:class="${detalle.stockDisponible == 0
                                         ? 'stock-none'
                                         : (detalle.stockMinimo != null
@@ -408,12 +411,10 @@
 
                             <div
                                     class="warning"
-                                    th:if="${detalle.stockMinimo != null
+                                    th:if="${detalle.inventarioRegistrado and detalle.stockMinimo != null
                                         and detalle.stockDisponible <= detalle.stockMinimo}">
-
-                                Stock mínimo:
-                                <span th:text="${detalle.stockMinimo}">
-                                </span>
+                                <span th:text="|${detalle.medicamento}: Stock bajo — disponible: ${detalle.stockDisponible} (mínimo: ${detalle.stockMinimo}).|"></span>
+                                <p th:text="|El stock del medicamento ${detalle.medicamento} ha alcanzado el nivel mínimo. Se requiere reorden.|"></p>
 
                             </div>
 
@@ -434,6 +435,7 @@
                             <input
                                     type="hidden"
                                     th:field="*{detalles[__${stat.index}__].recetaDetalleId}">
+                            <input type="hidden" th:field="*{detalles[__${stat.index}__].cantidadDespachadaPrevia}">
 
                             <input
                                     type="number"
@@ -450,6 +452,10 @@
 
                         <td>
 
+                            <label><input type="checkbox" class="sustituir-check"
+                                          th:field="*{detalles[__${stat.index}__].sustituir}"
+                                          th:disabled="${detalle.cantidadPendiente == 0}"> Sustitución</label>
+
                             <select
                                     th:field="*{detalles[__${stat.index}__].medicamentoDespachadoId}"
                                     class="medicamento-select"
@@ -459,19 +465,23 @@
                                 <option
                                         th:each="med : ${medicamentos}"
                                         th:value="${med.id}"
+                                        th:attr="data-precio=${med.precio},data-stock=${inventarios[med.id] != null ? inventarios[med.id].stockActual : ''},data-minimo=${med.stockMinimo},data-nombre=${med.nombre}"
                                         th:selected="${med.id == detalle.medicamentoId}"
-                                        th:text="${med.nombre}">
+                                        th:text="${med.nombre + (inventarios[med.id] == null ? ' — Sin inventario registrado' : ' — Disponible: ' + inventarios[med.id].stockActual)}">
                                 </option>
 
                             </select>
+                            <span class="stock-entregado"></span>
 
                         </td>
 
                         <td>
+                            <label>Razón de sustitución</label>
 
                             <textarea
                                     th:field="*{detalles[__${stat.index}__].motivoSustitucion}"
                                     class="motivo-input"
+                                    minlength="10"
                                     maxlength="500"
                                     placeholder="Solo si se sustituye el medicamento"
                                     th:disabled="${detalle.cantidadPendiente == 0}">
@@ -489,9 +499,9 @@
 
             <div class="total-box">
 
-                Total estimado:
+                Total del Despacho:
                 <span id="totalEstimado">
-                    Q 0.00
+                    Q0.00.
                 </span>
 
             </div>
@@ -507,7 +517,7 @@
                 <button
                         type="submit"
                         class="btn btn-primary">
-                    Confirmar despacho
+                    Confirmar Despacho
                 </button>
 
             </div>
@@ -519,163 +529,52 @@
 </main>
 
 <script>
-
-    const cantidades =
-        document.querySelectorAll(
-            ".cantidad-input"
-        );
-
-    const selects =
-        document.querySelectorAll(
-            ".medicamento-select"
-        );
-
-    const motivos =
-        document.querySelectorAll(
-            ".motivo-input"
-        );
-
-    function recalcularTotal() {
-
+    const filasDespacho = [...document.querySelectorAll('.cantidad-input')].map(input => {
+        const fila = input.closest('tr');
+        return { input, fila, select: fila.querySelector('.medicamento-select'),
+            casilla: fila.querySelector('.sustituir-check'), motivo: fila.querySelector('.motivo-input') };
+    });
+    function actualizarDespacho() {
         let total = 0;
-
-        cantidades.forEach(
-            input => {
-
-                if (input.disabled) {
-                    return;
-                }
-
-                const cantidad =
-                    Number(input.value || 0);
-
-                const precio =
-                    Number(
-                        input.dataset.precio || 0
-                    );
-
-                total +=
-                    cantidad * precio;
+        filasDespacho.forEach(({ input, fila, select, casilla, motivo }) => {
+            if (!casilla.checked) select.value = select.dataset.original;
+            select.disabled = !casilla.checked || input.disabled;
+            const cantidad = Number(input.value || 0);
+            motivo.disabled = !casilla.checked || input.disabled;
+            motivo.required = casilla.checked && cantidad > 0;
+            if (!casilla.checked) motivo.value = '';
+            select.setCustomValidity(casilla.checked && cantidad > 0 && select.value === select.dataset.original
+                ? 'Seleccione un medicamento alternativo distinto del original.' : '');
+            const opcion = select.selectedOptions[0];
+            const precio = Number(opcion?.dataset.precio || 0);
+            const stock = opcion?.dataset.stock;
+            const disponible = stock === '' || stock === undefined ? null : Number(stock);
+            input.max = Math.min(Number(input.dataset.pendiente), disponible ?? 0);
+            fila.querySelector('.price').textContent = 'Q' + precio.toFixed(2);
+            fila.querySelector('.stock-entregado').textContent = disponible === null
+                ? 'Sin inventario registrado' : 'Disponible: ' + disponible;
+            const minimo = opcion?.dataset.minimo;
+            if (disponible !== null && minimo !== undefined && minimo !== '' && disponible <= Number(minimo)) {
+                fila.querySelector('.stock-entregado').textContent = opcion.dataset.nombre
+                    + ': Stock bajo — disponible: ' + disponible + ' (mínimo: ' + minimo + '). '
+                    + 'El stock del medicamento ' + opcion.dataset.nombre + ' ha alcanzado el nivel mínimo. Se requiere reorden.';
             }
-        );
-
-        document.getElementById(
-            "totalEstimado"
-        ).textContent =
-            "Q " + total.toFixed(2);
+            if (!input.disabled) total += Math.max(0, cantidad) * precio;
+        });
+        const etiquetaTotal = document.getElementById('totalEstimado');
+        if (etiquetaTotal) etiquetaTotal.textContent = 'Q' + total.toFixed(2) + '.';
     }
-
-    function actualizarSustitucion(
-        indice
-    ) {
-
-        const select =
-            selects[indice];
-
-        const motivo =
-            motivos[indice];
-
-        if (!select || !motivo) {
-            return;
+    filasDespacho.forEach(({ input, select, casilla }) => {
+        input.addEventListener('input', actualizarDespacho);
+        select.addEventListener('change', actualizarDespacho);
+        casilla.addEventListener('change', actualizarDespacho);
+    });
+    document.getElementById('despachoForm')?.addEventListener('submit', event => {
+        if (!filasDespacho.some(({ input }) => !input.disabled && Number(input.value) > 0)) {
+            event.preventDefault(); alert('Debe indicar al menos una cantidad mayor que 0.');
         }
-
-        const original =
-            String(
-                select.dataset.original
-            );
-
-        const seleccionado =
-            String(
-                select.value
-            );
-
-        const sustituido =
-            original !== seleccionado;
-
-        motivo.required =
-            sustituido;
-
-        if (!sustituido) {
-
-            motivo.value = "";
-        }
-    }
-
-    cantidades.forEach(
-        input => {
-
-            input.addEventListener(
-                "input",
-                recalcularTotal
-            );
-        }
-    );
-
-    selects.forEach(
-        (select, indice) => {
-
-            select.addEventListener(
-                "change",
-                () => {
-
-                    actualizarSustitucion(
-                        indice
-                    );
-                }
-            );
-
-            actualizarSustitucion(
-                indice
-            );
-        }
-    );
-
-    document.getElementById(
-        "despachoForm"
-    )?.addEventListener(
-        "submit",
-        function (event) {
-
-            let algunaCantidad = false;
-
-            cantidades.forEach(
-                input => {
-
-                    if (!input.disabled
-                        && Number(
-                            input.value || 0
-                        ) > 0) {
-
-                        algunaCantidad =
-                            true;
-                    }
-                }
-            );
-
-            if (!algunaCantidad) {
-
-                event.preventDefault();
-
-                alert(
-                    "Debe indicar al menos una cantidad mayor que 0."
-                );
-
-                return;
-            }
-
-            selects.forEach(
-                (select, indice) => {
-
-                    actualizarSustitucion(
-                        indice
-                    );
-                }
-            );
-        }
-    );
-
-    recalcularTotal();
-
+    });
+    actualizarDespacho();
 </script>
 
 </body>
