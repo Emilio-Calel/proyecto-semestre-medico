@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Detalle del movimiento</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f8f9;
+            color: #1f2933;
+        }
+
+        .topbar {
+            background: linear-gradient(
+                    135deg,
+                    #0f6f7a,
+                    #1596a3
+            );
+            color: white;
+            padding: 22px 34px;
+        }
+
+        .topbar h1 {
+            margin-bottom: 5px;
+        }
+
+        .container {
+            max-width: 1250px;
+            margin: 0 auto;
+            padding: 36px 24px;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 22px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #e2ebed;
+            padding: 24px;
+            box-shadow: 0 8px 24px rgba(30,70,80,0.07);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 14px;
+            border-radius: 9px;
+            border: none;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: #0f6f7a;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #e8eef0;
+            color: #405057;
+        }
+
+        .success {
+            background: #e8f7ef;
+            border: 1px solid #b9e7ce;
+            color: #237a4b;
+            padding: 13px;
+            border-radius: 9px;
+            margin-bottom: 18px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 1px solid #edf2f3;
+            font-size: 13px;
+        }
+
+        th {
+            background: #f6fafb;
+            color: #526167;
+        }
+
+        .entrada {
+            color: #237a4b;
+            font-weight: bold;
+        }
+
+        .salida {
+            color: #b13f34;
+            font-weight: bold;
+        }
+
+        .stock {
+            font-weight: bold;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 35px;
+            color: #748389;
+        }
+
+        .error {
+            background: #fff0ef;
+            border: 1px solid #efc4c0;
+            color: #a33b31;
+            padding: 13px;
+            border-radius: 9px;
+            margin-bottom: 18px;
+        }
+
+        input { width:100%; padding:10px; border:1px solid #ccd9dc; border-radius:8px; }
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: bold;
+            color: #526167;
+            margin-bottom: 6px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+<header class="topbar"><h1 th:text="${'Movimiento #' + movimiento.id}">Detalle del movimiento</h1></header>
+<main class="container">
+ <nav class="toolbar"><a class="btn btn-secondary" th:href="@{/farmacia/inventario}">← Volver a la bitácora</a></nav>
+ <section class="card"><h2>Datos históricos</h2><table>
+<tr><th scope="row">Tipo</th><td th:text="${movimiento.tipoMovimiento}" style="white-space:pre-wrap;overflow-wrap:anywhere;"></td></tr>
+<tr><th scope="row">Medicamento</th><td th:text="${movimiento.inventario.medicamento.nombre}" style="white-space:pre-wrap;overflow-wrap:anywhere;"></td></tr>
+<tr><th scope="row">Sucursal</th><td th:text="${movimiento.inventario.sucursal.nombre}" style="white-space:pre-wrap;overflow-wrap:anywhere;"></td></tr>
+<tr><th scope="row">Cantidad</th><td th:text="${movimiento.cantidad}" style="white-space:pre-wrap;overflow-wrap:anywhere;"></td></tr>
+<tr><th scope="row">Stock anterior</th><td th:text="${movimiento.stockAnterior}" style="white-space:pre-wrap;overflow-wrap:anywhere;"></td></tr>
+<tr><th scope="row">Stock nuevo</th><td th:text="${movimiento.stockNuevo}" style="white-space:pre-wrap;overflow-wrap:anywhere;"></td></tr>
+<tr><th scope="row">Costo unitario</th><td th:text="${movimiento.costoUnitario != null ? 'Q' + #numbers.formatDecimal(movimiento.costoUnitario, 1, 2) : '—'}" style="white-space:pre-wrap;overflow-wrap:anywhere;"></td></tr>
+<tr><th scope="row">Referencia</th><td th:text="${movimiento.referencia != null ? movimiento.referencia : '—'}" style="white-space:pre-wrap;overflow-wrap:anywhere;"></td></tr>
+<tr><th scope="row">Motivo / Notas</th><td th:text="${movimiento.motivo != null ? movimiento.motivo : '—'}" style="white-space:pre-wrap;overflow-wrap:anywhere;"></td></tr>
+<tr><th scope="row">Usuario</th><td th:text="${movimiento.usuario != null ? movimiento.usuario.nombreUsuario : 'Sistema'}" style="white-space:pre-wrap;overflow-wrap:anywhere;"></td></tr>
+<tr><th scope="row">Fecha</th><td th:text="${#temporals.format(movimiento.fechaMovimiento, 'dd/MM/yyyy HH:mm:ss')}" style="white-space:pre-wrap;overflow-wrap:anywhere;"></td></tr>
+<tr><th scope="row">Estado</th><td th:text="${movimiento.activo ? 'Activo' : 'Inactivo'}" style="white-space:pre-wrap;overflow-wrap:anywhere;"></td></tr>
+ </table><p>Desactivar o reactivar este registro no modifica las existencias. Las correcciones de stock requieren otro movimiento.</p></section>
+</main></body></html>

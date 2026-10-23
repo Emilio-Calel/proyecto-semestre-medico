@@ -277,6 +277,9 @@
 
     <div th:if="${resumen != null}">
 
+        <p style="margin-bottom:18px;">Los totales incluyen registros activos e inactivos: desactivar un registro no revierte su efecto en stock.
+            El desglose por tipo muestra unidades. Las correcciones requieren un movimiento compensatorio.</p>
+
         <section class="summary">
 
             <div class="metric">
@@ -400,6 +403,11 @@
                     <th>Cantidad</th>
                     <th>Anterior</th>
                     <th>Nuevo</th>
+                    <th>Costo unitario</th>
+                    <th>Referencia</th>
+                    <th>Usuario</th>
+                    <th>Estado</th>
+                    <th>Detalle</th>
                 </tr>
 
                 </thead>
@@ -432,6 +440,11 @@
 
                     <td th:text="${mov.stockNuevo}">
                     </td>
+                    <td th:text="${mov.costoUnitario != null ? 'Q ' + #numbers.formatDecimal(mov.costoUnitario, 1, 2) : '—'}"></td>
+                    <td th:text="${mov.referencia != null ? mov.referencia : '—'}"></td>
+                    <td th:text="${mov.usuario != null ? mov.usuario.nombreUsuario : 'Sistema'}"></td>
+                    <td th:text="${mov.activo ? 'Activo' : 'Inactivo'}"></td>
+                    <td><a th:href="@{/farmacia/inventario/detalle/{id}(id=${mov.id})}">Ver</a></td>
 
                 </tr>
 

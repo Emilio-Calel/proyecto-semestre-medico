@@ -38,66 +38,39 @@ public class MovimientoInventarioController {
                 inventarioMedicamentoService;
     }
 
+    @InitBinder("movimiento")
+    public void limitarCampos(org.springframework.web.bind.WebDataBinder binder) {
+        binder.setAllowedFields("inventarioId", "tipoMovimiento", "cantidad", "costoUnitario", "referencia", "motivo");
+    }
+
+    @ModelAttribute
+    public void validarUsuarioActivo() { movimientoInventarioService.validarAcceso(); }
+
     @GetMapping
-    public String listar(
-            @RequestParam(
-                    name = "inventarioId",
-                    required = false
-            )
-            Long inventarioId,
-
-            @RequestParam(
-                    name = "tipo",
-                    required = false
-            )
-            String tipo,
-
-            @RequestParam(
-                    name = "estado",
-                    required = false
-            )
-            String estado,
-
-            Model model
-    ) {
-
-        model.addAttribute(
-                "movimientos",
-                movimientoInventarioService
-                        .listarFiltrados(
-                                inventarioId,
-                                tipo,
-                                estado
-                        )
-        );
-
-        model.addAttribute(
-                "inventarios",
-                inventarioMedicamentoService
-                        .listarTodos()
-        );
-
-        model.addAttribute(
-                "tiposMovimiento",
-                TipoMovimientoInventario.values()
-        );
-
-        model.addAttribute(
-                "inventarioSeleccionado",
-                inventarioId
-        );
-
-        model.addAttribute(
-                "tipoSeleccionado",
-                tipo
-        );
-
-        model.addAttribute(
-                "estadoSeleccionado",
-                estado
-        );
-
+    public String listar(@ModelAttribute("filtro") com.example.proyecto_semestre_medico.dto.FiltroMovimientoInventarioDTO filtro,
+            org.springframework.validation.BindingResult errores,
+            @RequestParam(defaultValue = "0") int pagina, Model model) {
+        org.springframework.data.domain.Page<com.example.proyecto_semestre_medico.model.MovimientoInventarioMedicamento> resultado;
+        try {
+            if (errores.hasErrors()) throw new IllegalArgumentException("Revise las fechas y los filtros seleccionados.");
+            resultado = movimientoInventarioService.buscar(filtro, pagina);
+        } catch (IllegalArgumentException ex) {
+            model.addAttribute("error", ex.getMessage()); resultado = org.springframework.data.domain.Page.empty();
+        }
+        model.addAttribute("pagina", resultado);
+        model.addAttribute("movimientos", resultado.getContent());
+        model.addAttribute("inventarios", inventarioMedicamentoService.listarTodos());
+        model.addAttribute("tiposMovimiento", TipoMovimientoInventario.values());
+        model.addAttribute("inventarioSeleccionado", filtro.getInventarioId());
+        model.addAttribute("tipoSeleccionado", filtro.getTipo());
+        model.addAttribute("estadoSeleccionado", filtro.getEstado());
         return "farmacia/inventario/lista";
+    }
+
+    @GetMapping("/detalle/{id}")
+    public String detalle(@PathVariable Long id, Model model) {
+        model.addAttribute("movimiento", movimientoInventarioService.buscarPorId(id));
+        return "farmacia/inventario/detalle";
     }
 
     @GetMapping("/nuevo")
@@ -133,11 +106,20 @@ public class MovimientoInventarioController {
     public String guardar(
             @ModelAttribute("movimiento")
             MovimientoInventarioDTO dto,
+            org.springframework.validation.BindingResult errores,
             Principal principal,
             Model model,
             RedirectAttributes redirectAttributes
     ) {
 
+        if (errores.hasErrors()) {
+            model.addAttribute("error", errores.hasFieldErrors("cantidad")
+                    ? "La cantidad debe ser un número entero positivo."
+                    : errores.hasFieldErrors("tipoMovimiento") ? "Debe seleccionar el tipo de movimiento."
+                    : "Revise el inventario y el costo unitario ingresados.");
+            cargarFormulario(model, dto);
+            return "farmacia/inventario/nuevo";
+        }
         try {
 
             String nombreUsuario =
@@ -145,7 +127,7 @@ public class MovimientoInventarioController {
                             ? principal.getName()
                             : null;
 
-            movimientoInventarioService
+            var registrado = movimientoInventarioService
                     .registrarMovimiento(
                             dto,
                             nombreUsuario
@@ -156,8 +138,16 @@ public class MovimientoInventarioController {
                     "Movimiento registrado correctamente."
             );
 
+            Integer minimo = registrado.getInventario().getMedicamento().getStockMinimo();
+            if (minimo != null && registrado.getStockNuevo() < minimo)
+                redirectAttributes.addFlashAttribute("alertaStock", registrado.getInventario().getMedicamento().getNombre()
+                        + ": Stock bajo — disponible: " + registrado.getStockNuevo() + " (mínimo: " + minimo + ")");
             return "redirect:/farmacia/inventario";
 
+        } catch (org.springframework.dao.OptimisticLockingFailureException e) {
+            model.addAttribute("error", "El inventario cambió durante la operación. Revise el stock e intente nuevamente.");
+            cargarFormulario(model, dto);
+            return "farmacia/inventario/nuevo";
         } catch (IllegalArgumentException e) {
 
             model.addAttribute(
@@ -306,23 +296,9 @@ public class MovimientoInventarioController {
 
         try {
 
-            model.addAttribute(
-                    "resumen",
-                    movimientoInventarioService
-                            .obtenerResumenMensual(
-                                    anioSeleccionado,
-                                    mesSeleccionado
-                            )
-            );
-
-            model.addAttribute(
-                    "movimientos",
-                    movimientoInventarioService
-                            .listarPorMes(
-                                    anioSeleccionado,
-                                    mesSeleccionado
-                            )
-            );
+            var resumen = movimientoInventarioService.obtenerResumenMensual(anioSeleccionado, mesSeleccionado);
+            model.addAttribute("resumen", resumen);
+            model.addAttribute("movimientos", resumen.getMovimientos());
 
         } catch (IllegalArgumentException e) {
 
@@ -363,7 +339,8 @@ public class MovimientoInventarioController {
                         .filter(i ->
                                 Boolean.TRUE.equals(
                                         i.getActivo()
-                                )
+                                ) && Boolean.TRUE.equals(i.getMedicamento().getActivo())
+                                  && Boolean.TRUE.equals(i.getSucursal().getActivo())
                         )
                         .toList()
         );

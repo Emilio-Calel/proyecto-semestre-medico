@@ -457,7 +457,7 @@ class CatalogosCu14Tests {
         var inv=inventarios().guardar(medicamentoId,sucursalId,10,"admin");
         autenticar("admin","ROLE_ADMINISTRADOR","CATALOG_VIEW");
         assertThrows(AccessDeniedException.class,()->contexto.getBean(MovimientoInventarioController.class)
-                .guardar(ajuste(inv.getId(),1),()->"admin",new ExtendedModelMap(),new RedirectAttributesModelMap()));
+                .guardar(ajuste(inv.getId(),1),new org.springframework.validation.BeanPropertyBindingResult(ajuste(inv.getId(),1),"movimiento"),()->"admin",new ExtendedModelMap(),new RedirectAttributesModelMap()));
         assertEquals(10,inventarios().buscarPorId(inv.getId()).getStockActual());
     }
     @Test void catalogosCentralizadosConPermisosYTodosLosAccesos() {

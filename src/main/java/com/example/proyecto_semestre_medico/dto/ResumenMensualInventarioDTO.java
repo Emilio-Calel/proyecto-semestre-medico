@@ -1,6 +1,8 @@
 package com.example.proyecto_semestre_medico.dto;
 
 import java.math.BigDecimal;
+import java.util.List;
+import com.example.proyecto_semestre_medico.model.MovimientoInventarioMedicamento;
 
 public class ResumenMensualInventarioDTO {
 
@@ -9,16 +11,24 @@ public class ResumenMensualInventarioDTO {
 
     private long totalMovimientos;
 
-    private int totalEntradas;
-    private int totalSalidas;
+    private long totalEntradas;
+    private long totalSalidas;
 
-    private int compras;
-    private int devoluciones;
-    private int ventas;
-    private int reclamos;
-    private int ajustesPositivos;
-    private int ajustesNegativos;
-    private int despachos;
+    private long compras;
+    private long devoluciones;
+    private long ventas;
+    private long reclamos;
+    private long ajustesPositivos;
+    private long ajustesNegativos;
+    private long despachos;
+
+    private List<MovimientoInventarioMedicamento> movimientos = List.of();
+
+    public List<MovimientoInventarioMedicamento> getMovimientos() { return movimientos; }
+
+    public void setMovimientos(List<MovimientoInventarioMedicamento> movimientos) {
+        this.movimientos = List.copyOf(movimientos);
+    }
 
     private BigDecimal valorTotalCompras =
             BigDecimal.ZERO;
@@ -53,91 +63,91 @@ public class ResumenMensualInventarioDTO {
                 totalMovimientos;
     }
 
-    public int getTotalEntradas() {
+    public long getTotalEntradas() {
         return totalEntradas;
     }
 
     public void setTotalEntradas(
-            int totalEntradas
+            long totalEntradas
     ) {
         this.totalEntradas =
                 totalEntradas;
     }
 
-    public int getTotalSalidas() {
+    public long getTotalSalidas() {
         return totalSalidas;
     }
 
     public void setTotalSalidas(
-            int totalSalidas
+            long totalSalidas
     ) {
         this.totalSalidas =
                 totalSalidas;
     }
 
-    public int getCompras() {
+    public long getCompras() {
         return compras;
     }
 
-    public void setCompras(int compras) {
+    public void setCompras(long compras) {
         this.compras = compras;
     }
 
-    public int getDevoluciones() {
+    public long getDevoluciones() {
         return devoluciones;
     }
 
     public void setDevoluciones(
-            int devoluciones
+            long devoluciones
     ) {
         this.devoluciones =
                 devoluciones;
     }
 
-    public int getVentas() {
+    public long getVentas() {
         return ventas;
     }
 
-    public void setVentas(int ventas) {
+    public void setVentas(long ventas) {
         this.ventas = ventas;
     }
 
-    public int getReclamos() {
+    public long getReclamos() {
         return reclamos;
     }
 
-    public void setReclamos(int reclamos) {
+    public void setReclamos(long reclamos) {
         this.reclamos = reclamos;
     }
 
-    public int getAjustesPositivos() {
+    public long getAjustesPositivos() {
         return ajustesPositivos;
     }
 
     public void setAjustesPositivos(
-            int ajustesPositivos
+            long ajustesPositivos
     ) {
         this.ajustesPositivos =
                 ajustesPositivos;
     }
 
-    public int getAjustesNegativos() {
+    public long getAjustesNegativos() {
         return ajustesNegativos;
     }
 
     public void setAjustesNegativos(
-            int ajustesNegativos
+            long ajustesNegativos
     ) {
         this.ajustesNegativos =
                 ajustesNegativos;
     }
 
-    public int getDespachos() {
+    public long getDespachos() {
         return despachos;
     }
 
     public void setDespachos(
-            int despachos
+            long despachos
     ) {
         this.despachos =
                 despachos;

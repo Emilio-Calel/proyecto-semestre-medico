@@ -71,6 +71,8 @@ class FarmaciaCu11Tests {
                 usuarios, auditorias, mock(MedicoRepository.class));
         controller = new FarmaciaController(recetaServicio, servicio, sucursales, medicamentos, inventarios);
         farmacia = new Usuario(); farmacia.setNombreUsuario("farmacia");
+        Rol rolFarmacia = new Rol(); rolFarmacia.setCodigo("FARMACEUTICO"); farmacia.setRol(rolFarmacia);
+        autenticar("FARMACEUTICO");
         doctor = new Usuario(); doctor.setNombreUsuario("doctor");
         Personal personal = new Personal(); personal.setUsuario(doctor); personal.setNombreCompleto("Médico Demo");
         Medico medico = new Medico(); medico.setPersonal(personal);
@@ -371,6 +373,7 @@ class FarmaciaCu11Tests {
             contexto.registerBean(FarmaciaController.class, () -> controller); contexto.refresh();
             var protegido = contexto.getBean(DespachoMedicamentoService.class);
             var recetasProtegidas = contexto.getBean(RecetaService.class);
+            SecurityContextHolder.clearContext();
             assertThrows(AuthenticationCredentialsNotFoundException.class, () -> protegido.registrarDespacho(form, "farmacia"));
             for (String rol : List.of("CAJERO", "MEDICO", "PACIENTE")) {
                 autenticar(rol);

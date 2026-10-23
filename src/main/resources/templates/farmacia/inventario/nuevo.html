@@ -210,6 +210,7 @@
                     <option
                             th:each="inv : ${inventarios}"
                             th:value="${inv.id}"
+                            th:data-nombre="${inv.medicamento.nombre}"
                             th:data-stock="${inv.stockActual}"
                             th:data-minimo="${inv.medicamento.stockMinimo != null
                                 ? inv.medicamento.stockMinimo
@@ -225,6 +226,7 @@
 
             </div>
 
+            <p id="direccionMovimiento" class="help" aria-live="polite"></p>
             <div class="grid">
 
                 <div class="info-box">
@@ -305,6 +307,8 @@
                         id="cantidad"
                         type="number"
                         min="1"
+                        max="2147483647"
+                        step="1"
                         required
                         th:field="*{cantidad}">
 
@@ -323,6 +327,7 @@
                         type="number"
                         step="0.01"
                         min="0.01"
+                        max="99999999.99"
                         th:field="*{costoUnitario}">
 
                 <div class="help">
@@ -333,7 +338,7 @@
 
             <div class="field">
 
-                <label for="referencia">
+                <label id="labelReferencia" for="referencia">
                     Referencia
                 </label>
 
@@ -350,7 +355,7 @@
                     id="campoMotivo"
                     class="field hidden">
 
-                <label for="motivo">
+                <label id="labelMotivo" for="motivo">
                     Motivo *
                 </label>
 
@@ -360,8 +365,8 @@
                         th:field="*{motivo}">
                 </textarea>
 
-                <div class="help">
-                    Entre 10 y 500 caracteres cuando sea obligatorio.
+                <div id="ayudaMotivo" class="help">
+                    Ajustes: entre 10 y 500 caracteres. Devoluciones y reclamos: motivo obligatorio, máximo 500.
                 </div>
 
             </div>
@@ -446,6 +451,14 @@
         const tipo =
             tipoSelect.value;
 
+        document.getElementById("labelReferencia").textContent = ({COMPRA: "Factura", DEVOLUCION: "Devolución", VENTA: "Venta", RECLAMO: "Reclamo"})[tipo] || "Referencia";
+        document.getElementById("labelMotivo").textContent = ({COMPRA: "Notas (opcional)", DEVOLUCION: "Motivo de Devolución", RECLAMO: "Motivo del Reclamo"})[tipo] || "Notas/Justificación";
+        document.getElementById("direccionMovimiento").textContent = tipo ? (esEntrada(tipo) ? "Entrada" : "Salida") : "";
+        const esAjuste = tipo === "AJUSTE_POSITIVO" || tipo === "AJUSTE_NEGATIVO";
+        document.getElementById("ayudaMotivo").textContent = esAjuste ? "Entre 10 y 500 caracteres."
+            : tipo === "COMPRA" ? "Notas opcionales, máximo 500 caracteres." : "Motivo obligatorio, máximo 500 caracteres.";
+        costoInput.disabled = tipo !== "COMPRA";
+        motivoInput.disabled = tipo === "VENTA" || !tipo;
         /*
          * COSTO
          */
@@ -465,6 +478,7 @@
             );
 
             costoInput.required = false;
+            costoInput.value = "";
         }
 
         /*
@@ -478,13 +492,12 @@
             );
 
             motivoInput.required = true;
-            motivoInput.minLength = 10;
+            motivoInput.minLength = esAjuste ? 10 : 1;
 
         } else {
 
-            campoMotivo.classList.add(
-                "hidden"
-            );
+            campoMotivo.classList.toggle("hidden", tipo !== "COMPRA");
+            motivoInput.minLength = 0;
 
             motivoInput.required = false;
         }
@@ -532,10 +545,8 @@
                 opcion.dataset.minimo || "0"
             );
 
-        const cantidad =
-            parseInt(
-                cantidadInput.value || "0"
-            );
+        const cantidad = Number(cantidadInput.value);
+        const cantidadValida = Number.isInteger(cantidad) && cantidad > 0 && cantidad <= 2147483647;
 
         const tipo =
             tipoSelect.value;
@@ -543,7 +554,7 @@
         let proyectado =
             stockActual;
 
-        if (tipo && cantidad > 0) {
+        if (tipo && cantidadValida) {
 
             if (esEntrada(tipo)) {
 
@@ -562,27 +573,32 @@
         stockActualElement.textContent =
             stockActual;
 
-        stockProyectadoElement.textContent =
-            proyectado;
+        stockProyectadoElement.textContent = tipo && cantidadValida ? proyectado : "-";
 
         stockMinimoElement.textContent =
             minimo;
 
-        if (proyectado < 0) {
+        if (!tipo || !cantidadValida) {
+            alertaStock.className = "alert";
+            alertaStock.textContent = "";
+        } else if (proyectado < 0) {
 
             alertaStock.className =
                 "alert alert-low";
 
             alertaStock.textContent =
-                "Stock insuficiente para realizar esta salida.";
+                "Stock insuficiente. El stock actual es " + stockActual + " unidades.";
 
-        } else if (proyectado <= minimo) {
+        } else if (proyectado > 2147483647) {
+            alertaStock.className = "alert alert-low";
+            alertaStock.textContent = "El stock resultante excede la capacidad permitida.";
+        } else if (proyectado < minimo) {
 
             alertaStock.className =
                 "alert alert-low";
 
             alertaStock.textContent =
-                "Advertencia: el inventario quedará en nivel mínimo o bajo.";
+                opcion.dataset.nombre + ": Stock bajo — disponible: " + proyectado + " (mínimo: " + minimo + ")";
 
         } else {
 

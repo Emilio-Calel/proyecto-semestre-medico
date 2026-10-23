@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es"
-      xmlns:th="http://www.thymeleaf.org">
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <head>
 
@@ -143,6 +144,7 @@
             margin-bottom: 18px;
         }
 
+        input { width:100%; padding:10px; border:1px solid #ccd9dc; border-radius:8px; }
         label {
             display: block;
             font-size: 12px;
@@ -191,6 +193,7 @@
 
             <a
                     class="btn btn-primary"
+                    sec:authorize="hasRole('FARMACEUTICO') or (hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_UPDATE'))"
                     th:href="@{/farmacia/inventario/nuevo}">
                 + Registrar movimiento
             </a>
@@ -208,7 +211,7 @@
                 style="
                 display:grid;
                 grid-template-columns:
-                    2fr 1fr 1fr auto;
+                    repeat(auto-fit, minmax(170px, 1fr));
                 gap:12px;
                 align-items:end;
             ">
@@ -313,6 +316,12 @@
 
             </div>
 
+            <div><label for="medicamento">Medicamento</label><input id="medicamento" name="medicamento" type="text" th:value="${filtro.medicamento}"></div>
+            <div><label for="sucursal">Sucursal</label><input id="sucursal" name="sucursal" type="text" th:value="${filtro.sucursal}"></div>
+            <div><label for="referencia">Referencia</label><input id="referencia" name="referencia" type="text" th:value="${filtro.referencia}"></div>
+            <div><label for="usuario">Usuario</label><input id="usuario" name="usuario" type="text" th:value="${filtro.usuario}"></div>
+            <div><label for="desde">Desde</label><input id="desde" name="desde" type="date" th:value="${filtro.desde}"></div>
+            <div><label for="hasta">Hasta</label><input id="hasta" name="hasta" type="date" th:value="${filtro.hasta}"></div>
             <button
                     type="submit"
                     class="btn btn-primary">
@@ -335,6 +344,7 @@
             th:text="${error}">
     </div>
 
+    <div class="error" role="status" th:if="${alertaStock}" th:text="${alertaStock}"></div>
     <section class="card">
 
         <div class="table-wrapper">
@@ -352,6 +362,7 @@
                     <th>Cantidad</th>
                     <th>Stock anterior</th>
                     <th>Stock nuevo</th>
+                    <th>Costo unitario</th><th>Referencia</th>
                     <th>Usuario</th>
                     <th>Estado</th>
                     <th>Acción</th>
@@ -400,6 +411,8 @@
                     <td th:text="${mov.stockNuevo}">
                     </td>
 
+                    <td th:text="${mov.costoUnitario != null ? 'Q' + #numbers.formatDecimal(mov.costoUnitario, 1, 2) : '—'}"></td>
+                    <td th:text="${mov.referencia != null ? mov.referencia : '—'}"></td>
                     <td th:text="${mov.usuario != null
         ? mov.usuario.nombreUsuario
         : 'Sistema'}">
@@ -431,8 +444,10 @@
                 }">
                             Historial
                         </a>
+                        <a class="btn btn-secondary" th:href="@{/farmacia/inventario/detalle/{id}(id=${mov.id})}">Ver</a>
 
                         <form
+                                sec:authorize="hasRole('FARMACEUTICO') or (hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_DISABLE'))"
                                 th:if="${mov.activo}"
                                 th:action="@{
                     /farmacia/inventario/desactivar/{id}
@@ -450,6 +465,7 @@
                         </form>
 
                         <form
+                                sec:authorize="hasRole('FARMACEUTICO') or (hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_UPDATE'))"
                                 th:if="${!mov.activo}"
                                 th:action="@{
                     /farmacia/inventario/reactivar/{id}
@@ -478,7 +494,7 @@
                     class="empty"
                     th:if="${#lists.isEmpty(movimientos)}">
 
-                No hay movimientos registrados.
+                No se encontraron resultados.
 
             </div>
 
@@ -486,6 +502,11 @@
 
     </section>
 
+    <nav class="toolbar" aria-label="Paginación" th:if="${pagina.totalPages > 0}">
+        <a class="btn btn-secondary" th:if="${pagina.hasPrevious()}" th:href="@{/farmacia/inventario(pagina=${pagina.number - 1},inventarioId=${filtro.inventarioId},tipo=${filtro.tipo},estado=${filtro.estado},medicamento=${filtro.medicamento},sucursal=${filtro.sucursal},referencia=${filtro.referencia},usuario=${filtro.usuario},desde=${filtro.desde},hasta=${filtro.hasta})}">Anterior</a>
+        <span th:text="${'Página ' + (pagina.number + 1) + ' de ' + pagina.totalPages}"></span>
+        <a class="btn btn-secondary" th:if="${pagina.hasNext()}" th:href="@{/farmacia/inventario(pagina=${pagina.number + 1},inventarioId=${filtro.inventarioId},tipo=${filtro.tipo},estado=${filtro.estado},medicamento=${filtro.medicamento},sucursal=${filtro.sucursal},referencia=${filtro.referencia},usuario=${filtro.usuario},desde=${filtro.desde},hasta=${filtro.hasta})}">Siguiente</a>
+    </nav>
 </main>
 
 </body>

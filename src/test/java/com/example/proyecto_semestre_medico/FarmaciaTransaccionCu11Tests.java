@@ -149,6 +149,11 @@ class FarmaciaTransaccionCu11Tests {
         assertEquals(3, stock(originalId)); assertEquals("PARCIAL", estado());
         assertEquals(1, contar("despacho_medicamento")); assertEquals(1, contar("despacho_medicamento_detalle"));
         assertEquals(1, contar("movimiento_inventario_medicamento")); assertEquals(0, contar("pago")); assertEquals(0, contar("pago_laboratorio"));
+        var movimiento = contexto.getBean(MovimientoInventarioService.class).listarTodos().get(0);
+        assertEquals(TipoMovimientoInventario.DESPACHO, movimiento.getTipoMovimiento());
+        assertEquals(5, movimiento.getStockAnterior()); assertEquals(3, movimiento.getStockNuevo());
+        assertEquals(2, movimiento.getCantidad()); assertEquals("farmacia", movimiento.getUsuario().getNombreUsuario());
+        assertEquals("RECETA-" + recetaId, movimiento.getReferencia()); assertNotNull(movimiento.getFechaMovimiento());
         var historia = servicio.listarDespachosPorReceta(recetaId);
         assertEquals("Original", historia.get(0).getDetalles().get(0).getMedicamentoDespachado().getNombre());
         assertEquals(new BigDecimal("20.00"), historia.get(0).getMontoTotal());

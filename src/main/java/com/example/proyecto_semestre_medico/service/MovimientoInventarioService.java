@@ -7,6 +7,10 @@ import com.example.proyecto_semestre_medico.dto.ResumenMensualInventarioDTO;
 import java.util.List;
 
 public interface MovimientoInventarioService {
+    void validarAcceso();
+    org.springframework.data.domain.Page<MovimientoInventarioMedicamento> buscar(
+            com.example.proyecto_semestre_medico.dto.FiltroMovimientoInventarioDTO filtro, int pagina);
+
 
     List<MovimientoInventarioMedicamento>
     listarTodos();
