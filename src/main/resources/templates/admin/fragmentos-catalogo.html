@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"><body>
+<form th:fragment="filtro" method="get">
+    <label>Buscar por ID o nombre <input name="q" th:value="${q}" maxlength="200"></label>
+    <button type="submit">Buscar</button>
+</form>
+<nav th:fragment="paginacion" aria-label="Paginación">
+    <p th:text="'Registros: ' + ${totalElementos}"></p>
+    <a th:if="${pagina > 0}" th:href="@{''(q=${q},pagina=${pagina - 1})}">Anterior</a>
+    <span th:text="'Página ' + ${pagina + 1} + ' de ' + ${totalPaginas}"></span>
+    <a th:if="${pagina + 1 < totalPaginas}" th:href="@{''(q=${q},pagina=${pagina + 1})}">Siguiente</a>
+</nav>
+</body></html>

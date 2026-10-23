@@ -85,10 +85,8 @@ public class CitaCatalogoServiceImpl
 
         boolean relacionValida =
                 sucursalEspecialidadRepository
-                        .existsBySucursalIdAndEspecialidadIdAndActivoTrue(
-                                sucursalId,
-                                especialidadId
-                        );
+                        .listarEspecialidadesActivasPorSucursal(sucursalId)
+                        .stream().anyMatch(e -> e.getId().equals(especialidadId));
 
         if (!relacionValida) {
 

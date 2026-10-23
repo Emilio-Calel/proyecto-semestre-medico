@@ -18,6 +18,8 @@ import java.util.Optional;
 public class MedicamentoServiceImpl
         implements MedicamentoService {
 
+    private final ControlCatalogo control;
+
     private final MedicamentoRepository
             medicamentoRepository;
 
@@ -30,8 +32,10 @@ public class MedicamentoServiceImpl
     public MedicamentoServiceImpl(
             MedicamentoRepository medicamentoRepository,
             UsuarioRepository usuarioRepository,
-            AuditoriaRepository auditoriaRepository
+            AuditoriaRepository auditoriaRepository,
+            ControlCatalogo control
     ) {
+        this.control = control;
         this.medicamentoRepository =
                 medicamentoRepository;
 
@@ -79,8 +83,10 @@ public class MedicamentoServiceImpl
             Medicamento medicamento,
             String nombreUsuario
     ) {
+        control.iniciar(nombreUsuario, medicamento != null && medicamento.getId() != null ? "CATALOG_UPDATE" : "CATALOG_CREATE");
 
         validar(medicamento);
+        control.nombreUnico(Medicamento.class, medicamento.getId(), medicamento.getNombre());
 
         String nombreNormalizado =
                 medicamento
@@ -88,10 +94,7 @@ public class MedicamentoServiceImpl
                         .trim();
 
         Optional<Medicamento> existente =
-                medicamentoRepository
-                        .findByNombreIgnoreCase(
-                                nombreNormalizado
-                        );
+                control.porNombre(Medicamento.class, nombreNormalizado);
 
         if (medicamento.getId() == null) {
 
@@ -278,6 +281,7 @@ public class MedicamentoServiceImpl
             Long id,
             String nombreUsuario
     ) {
+        control.iniciar(nombreUsuario, "CATALOG_DISABLE");
 
         Medicamento medicamento =
                 buscarPorId(id);
@@ -311,6 +315,9 @@ public class MedicamentoServiceImpl
             Long id,
             String nombreUsuario
     ) {
+        control.iniciar(nombreUsuario, "CATALOG_UPDATE");
+        var registro = buscarPorId(id);
+        control.nombreUnico(Medicamento.class, id, registro.getNombre());
 
         Medicamento medicamento =
                 buscarPorId(id);
@@ -404,6 +411,9 @@ public class MedicamentoServiceImpl
             );
         }
 
+        if (precio.compareTo(new BigDecimal("99999999.99")) > 0) {
+            throw new IllegalArgumentException("El precio excede la capacidad de 10 dígitos y 2 decimales.");
+        }
         if (precio.scale() > 2) {
 
             throw new IllegalArgumentException(
@@ -449,18 +459,8 @@ public class MedicamentoServiceImpl
             String detalle
     ) {
 
-        Usuario usuario = null;
-
-        if (nombreUsuario != null
-                && !nombreUsuario.isBlank()) {
-
-            usuario =
-                    usuarioRepository
-                            .findByNombreUsuarioIgnoreCase(
-                                    nombreUsuario
-                            )
-                            .orElse(null);
-        }
+        Usuario usuario = control.usuario(nombreUsuario);
+        control.invalidarTrasCommit();
 
         Auditoria auditoria =
                 new Auditoria();

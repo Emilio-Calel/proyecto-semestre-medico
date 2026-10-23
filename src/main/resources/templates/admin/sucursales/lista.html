@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"
+<html xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="es"
       xmlns:th="http://www.thymeleaf.org">
 
 <head>
@@ -200,9 +200,9 @@
 
         <h2>Sucursales registradas</h2>
 
-        <a class="btn btn-primary"
+        <a sec:authorize="hasAuthority('CATALOG_CREATE')" class="btn btn-primary"
            th:href="@{/admin/sucursales/nueva}">
-            + Nueva sucursal
+            Crear
         </a>
 
     </div>
@@ -221,6 +221,7 @@
 
     <section class="card">
 
+        <div th:replace="~{admin/fragmentos-catalogo :: filtro}"></div>
         <div class="table-wrapper">
 
             <table th:if="${!#lists.isEmpty(sucursales)}">
@@ -282,7 +283,7 @@
 
                         <div class="actions">
 
-                            <a
+                            <a sec:authorize="hasAuthority('CATALOG_UPDATE')"
                                     class="btn btn-secondary"
                                     th:href="@{
                                         /admin/sucursales/editar/{id}
@@ -291,26 +292,23 @@
                                 Editar
                             </a>
 
-                            <form
+                            <form sec:authorize="hasAuthority('CATALOG_DISABLE')"
                                     th:if="${sucursal.activo}"
                                     th:action="@{
                                         /admin/sucursales/desactivar/{id}
                                         (id=${sucursal.id})
                                     }"
                                     method="post"
-                                    onsubmit="return confirm(
-                                        '¿Desea desactivar esta sucursal?'
-                                    );">
+                                    th:attr="data-nombre=${sucursal.nombre}"
+                                onsubmit="return confirm('¿Está seguro que desea eliminar el registro ' + this.dataset.nombre + '? Esta acción no se puede deshacer.');">
 
                                 <button
                                         type="submit"
-                                        class="btn btn-danger">
-                                    Desactivar
-                                </button>
+                                        class="btn btn-danger">Eliminar</button>
 
                             </form>
 
-                            <form
+                            <form sec:authorize="hasAuthority('CATALOG_UPDATE')"
                                     th:unless="${sucursal.activo}"
                                     th:action="@{
                                         /admin/sucursales/reactivar/{id}
@@ -335,12 +333,13 @@
                 </tbody>
 
             </table>
+        <div th:replace="~{admin/fragmentos-catalogo :: paginacion}"></div>
 
             <div
                     class="empty"
                     th:if="${#lists.isEmpty(sucursales)}">
 
-                No hay sucursales registradas.
+                No se encontraron resultados.
 
             </div>
 
@@ -352,8 +351,8 @@
 
         <a
                 class="btn btn-secondary"
-                th:href="@{/}">
-            ← Volver al panel principal
+                th:href="@{/admin/catalogos}">
+            ← Volver a catálogos
         </a>
 
     </div>

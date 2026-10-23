@@ -11,6 +11,9 @@ import com.example.proyecto_semestre_medico.repository.MedicamentoRepository;
 import com.example.proyecto_semestre_medico.repository.SucursalRepository;
 import com.example.proyecto_semestre_medico.repository.UsuarioRepository;
 import com.example.proyecto_semestre_medico.service.InventarioMedicamentoService;
+import com.example.proyecto_semestre_medico.dto.MovimientoInventarioDTO;
+import com.example.proyecto_semestre_medico.model.TipoMovimientoInventario;
+import com.example.proyecto_semestre_medico.service.MovimientoInventarioService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +23,9 @@ import java.util.Optional;
 @Service
 public class InventarioMedicamentoServiceImpl
         implements InventarioMedicamentoService {
+
+    private final ControlCatalogo control;
+    private final MovimientoInventarioService movimientos;
 
     private final InventarioMedicamentoRepository
             inventarioRepository;
@@ -41,8 +47,11 @@ public class InventarioMedicamentoServiceImpl
             MedicamentoRepository medicamentoRepository,
             SucursalRepository sucursalRepository,
             UsuarioRepository usuarioRepository,
-            AuditoriaRepository auditoriaRepository
+            AuditoriaRepository auditoriaRepository,
+            ControlCatalogo control, MovimientoInventarioService movimientos
     ) {
+        this.control = control;
+        this.movimientos = movimientos;
         this.inventarioRepository =
                 inventarioRepository;
 
@@ -91,6 +100,7 @@ public class InventarioMedicamentoServiceImpl
             Integer stockActual,
             String nombreUsuario
     ) {
+        control.iniciar(nombreUsuario, "CATALOG_CREATE");
 
         if (medicamentoId == null) {
 
@@ -173,13 +183,12 @@ public class InventarioMedicamentoServiceImpl
             }
 
             inventario.setActivo(true);
-            inventario.setStockActual(
-                    stockActual
-            );
+
 
             inventario =
                     inventarioRepository
                             .save(inventario);
+            ajustarExistencia(inventario, stockActual, nombreUsuario);
 
             registrarAuditoria(
                     nombreUsuario,
@@ -207,15 +216,14 @@ public class InventarioMedicamentoServiceImpl
                 sucursal
         );
 
-        inventario.setStockActual(
-                stockActual
-        );
+        inventario.setStockActual(0);
 
         inventario.setActivo(true);
 
         inventario =
                 inventarioRepository
                         .save(inventario);
+            ajustarExistencia(inventario, stockActual, nombreUsuario);
 
         registrarAuditoria(
                 nombreUsuario,
@@ -238,6 +246,7 @@ public class InventarioMedicamentoServiceImpl
             Long id,
             String nombreUsuario
     ) {
+        control.iniciar(nombreUsuario, "CATALOG_DISABLE");
 
         InventarioMedicamento inventario =
                 buscarPorId(id);
@@ -277,6 +286,7 @@ public class InventarioMedicamentoServiceImpl
             Long id,
             String nombreUsuario
     ) {
+        control.iniciar(nombreUsuario, "CATALOG_UPDATE");
 
         InventarioMedicamento inventario =
                 buscarPorId(id);
@@ -290,6 +300,10 @@ public class InventarioMedicamentoServiceImpl
             );
         }
 
+        if (!Boolean.TRUE.equals(inventario.getMedicamento().getActivo())
+                || !Boolean.TRUE.equals(inventario.getSucursal().getActivo())) {
+            throw new IllegalArgumentException("El medicamento y la sucursal deben estar activos.");
+        }
         inventario.setActivo(true);
 
         inventarioRepository
@@ -310,6 +324,18 @@ public class InventarioMedicamentoServiceImpl
         );
     }
 
+    private void ajustarExistencia(InventarioMedicamento inventario, int solicitado, String usuario) {
+        int diferencia = solicitado - inventario.getStockActual();
+        if (diferencia == 0) return;
+        MovimientoInventarioDTO dto = new MovimientoInventarioDTO();
+        dto.setInventarioId(inventario.getId());
+        dto.setTipoMovimiento(diferencia > 0 ? TipoMovimientoInventario.AJUSTE_POSITIVO : TipoMovimientoInventario.AJUSTE_NEGATIVO);
+        dto.setCantidad(Math.abs(diferencia));
+        dto.setMotivo("Existencia registrada al crear o reactivar el inventario desde catálogos.");
+        dto.setReferencia("CU-14");
+        movimientos.registrarMovimiento(dto, usuario);
+    }
+
     private void registrarAuditoria(
             String nombreUsuario,
             String accion,
@@ -317,18 +343,7 @@ public class InventarioMedicamentoServiceImpl
             String detalle
     ) {
 
-        Usuario usuario = null;
-
-        if (nombreUsuario != null
-                && !nombreUsuario.isBlank()) {
-
-            usuario =
-                    usuarioRepository
-                            .findByNombreUsuarioIgnoreCase(
-                                    nombreUsuario
-                            )
-                            .orElse(null);
-        }
+        Usuario usuario = control.usuario(nombreUsuario);
 
         Auditoria auditoria =
                 new Auditoria();

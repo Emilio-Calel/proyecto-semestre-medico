@@ -91,6 +91,18 @@ public class MovimientoInventarioServiceImpl
             MovimientoInventarioDTO dto,
             String nombreUsuario
     ) {
+        var autenticacion = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (autenticacion == null || !autenticacion.isAuthenticated() || !autenticacion.getName().equals(nombreUsuario)
+                || autenticacion.getAuthorities().stream().noneMatch(a ->
+                    a.getAuthority().equals("ROLE_ADMINISTRADOR") || a.getAuthority().equals("ROLE_FARMACEUTICO"))) {
+            throw new org.springframework.security.access.AccessDeniedException("Usuario no autorizado para registrar movimientos.");
+        }
+        Usuario operador = buscarUsuario(nombreUsuario);
+        if (operador == null || !Boolean.TRUE.equals(operador.getActivo()) || operador.getRol() == null
+                || !Boolean.TRUE.equals(operador.getRol().getActivo())
+                || !java.util.Set.of("ADMINISTRADOR", "FARMACEUTICO").contains(operador.getRol().getCodigo())) {
+            throw new org.springframework.security.access.AccessDeniedException("El movimiento requiere un usuario interno activo.");
+        }
 
         validar(dto);
 
@@ -161,9 +173,10 @@ public class MovimientoInventarioServiceImpl
 
         if (esEntrada(tipo)) {
 
-            stockNuevo =
-                    stockAnterior
-                            + cantidad;
+            if (cantidad > Integer.MAX_VALUE - stockAnterior) {
+                throw new IllegalArgumentException("El stock resultante excede la capacidad permitida.");
+            }
+            stockNuevo = stockAnterior + cantidad;
 
         } else {
 

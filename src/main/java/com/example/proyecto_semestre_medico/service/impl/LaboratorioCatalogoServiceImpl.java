@@ -17,6 +17,8 @@ import java.util.Optional;
 public class LaboratorioCatalogoServiceImpl
         implements LaboratorioCatalogoService {
 
+    private final ControlCatalogo control;
+
     private final LaboratorioRepository
             laboratorioRepository;
 
@@ -29,8 +31,10 @@ public class LaboratorioCatalogoServiceImpl
     public LaboratorioCatalogoServiceImpl(
             LaboratorioRepository laboratorioRepository,
             UsuarioRepository usuarioRepository,
-            AuditoriaRepository auditoriaRepository
+            AuditoriaRepository auditoriaRepository,
+            ControlCatalogo control
     ) {
+        this.control = control;
         this.laboratorioRepository =
                 laboratorioRepository;
 
@@ -78,8 +82,10 @@ public class LaboratorioCatalogoServiceImpl
             Laboratorio laboratorio,
             String nombreUsuario
     ) {
+        control.iniciar(nombreUsuario, laboratorio != null && laboratorio.getId() != null ? "CATALOG_UPDATE" : "CATALOG_CREATE");
 
         validar(laboratorio);
+        control.nombreUnico(Laboratorio.class, laboratorio.getId(), laboratorio.getNombre());
 
         String nombre =
                 laboratorio
@@ -87,10 +93,7 @@ public class LaboratorioCatalogoServiceImpl
                         .trim();
 
         Optional<Laboratorio> existente =
-                laboratorioRepository
-                        .findByNombreIgnoreCase(
-                                nombre
-                        );
+                control.porNombre(Laboratorio.class, nombre);
 
         if (laboratorio.getId() == null) {
 
@@ -224,6 +227,7 @@ public class LaboratorioCatalogoServiceImpl
             Long id,
             String nombreUsuario
     ) {
+        control.iniciar(nombreUsuario, "CATALOG_DISABLE");
 
         Laboratorio laboratorio =
                 buscarPorId(id);
@@ -257,6 +261,9 @@ public class LaboratorioCatalogoServiceImpl
             Long id,
             String nombreUsuario
     ) {
+        control.iniciar(nombreUsuario, "CATALOG_UPDATE");
+        var registro = buscarPorId(id);
+        control.nombreUnico(Laboratorio.class, id, registro.getNombre());
 
         Laboratorio laboratorio =
                 buscarPorId(id);
@@ -348,18 +355,8 @@ public class LaboratorioCatalogoServiceImpl
             String detalle
     ) {
 
-        Usuario usuario = null;
-
-        if (nombreUsuario != null
-                && !nombreUsuario.isBlank()) {
-
-            usuario =
-                    usuarioRepository
-                            .findByNombreUsuarioIgnoreCase(
-                                    nombreUsuario
-                            )
-                            .orElse(null);
-        }
+        Usuario usuario = control.usuario(nombreUsuario);
+        control.invalidarTrasCommit();
 
         Auditoria auditoria =
                 new Auditoria();

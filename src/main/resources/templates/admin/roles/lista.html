@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"
+<html xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="es"
       xmlns:th="http://www.thymeleaf.org">
 
 <head>
@@ -208,9 +208,9 @@
 
     <h2>Roles registrados</h2>
 
-    <a class="btn btn-primary"
+    <a sec:authorize="hasAuthority('CATALOG_CREATE')" class="btn btn-primary"
        th:href="@{/admin/roles/nuevo}">
-      + Nuevo rol
+      Crear
     </a>
 
   </div>
@@ -229,7 +229,8 @@
 
   <section class="card">
 
-    <div class="table-wrapper">
+            <div th:replace="~{admin/fragmentos-catalogo :: filtro}"></div>
+<div class="table-wrapper">
 
       <table th:if="${!#lists.isEmpty(roles)}">
 
@@ -302,7 +303,7 @@
 
             <div class="actions">
 
-              <a
+              <a sec:authorize="hasAuthority('CATALOG_UPDATE')"
                       class="btn btn-secondary"
                       th:href="@{
                                         /admin/roles/editar/{id}
@@ -311,7 +312,7 @@
                 Editar
               </a>
 
-              <form
+              <form sec:authorize="hasAuthority('CATALOG_DISABLE')"
                       th:if="${rol.activo
                                         and rol.codigo != 'ADMINISTRADOR'
                                         and rol.codigo != 'PACIENTE'}"
@@ -320,19 +321,16 @@
                                         (id=${rol.id})
                                     }"
                       method="post"
-                      onsubmit="return confirm(
-                                        '¿Desea desactivar este rol?'
-                                    );">
+                      th:attr="data-nombre=${rol.nombre}"
+                                onsubmit="return confirm('¿Está seguro que desea eliminar el registro ' + this.dataset.nombre + '? Esta acción no se puede deshacer.');">
 
                 <button
                         type="submit"
-                        class="btn btn-danger">
-                  Desactivar
-                </button>
+                        class="btn btn-danger">Eliminar</button>
 
               </form>
 
-              <form
+              <form sec:authorize="hasAuthority('CATALOG_UPDATE')"
                       th:if="${!rol.activo}"
                       th:action="@{
                                         /admin/roles/reactivar/{id}
@@ -357,11 +355,12 @@
         </tbody>
 
       </table>
+        <div th:replace="~{admin/fragmentos-catalogo :: paginacion}"></div>
 
       <div
               class="empty"
               th:if="${#lists.isEmpty(roles)}">
-        No hay roles registrados.
+        No se encontraron resultados.
       </div>
 
     </div>
@@ -372,8 +371,8 @@
 
     <a
             class="btn btn-secondary"
-            th:href="@{/}">
-      ← Volver al panel principal
+            th:href="@{/admin/catalogos}">
+      ← Volver a catálogos
     </a>
 
   </div>

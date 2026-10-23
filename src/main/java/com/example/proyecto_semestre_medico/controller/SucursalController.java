@@ -15,6 +15,11 @@ import java.security.Principal;
 
 public class SucursalController {
 
+    @InitBinder("sucursal")
+    public void camposEditables(org.springframework.web.bind.WebDataBinder binder) {
+        binder.setAllowedFields("id", "nombre", "descripcion", "telefono", "direccion");
+    }
+
     private final SucursalService sucursalService;
 
     public SucursalController(
@@ -24,21 +29,21 @@ public class SucursalController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('CATALOG_VIEW')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_VIEW')")
     public String listar(
+            @RequestParam(defaultValue = "") String q,
+            @RequestParam(defaultValue = "0") int pagina,
             Model model
     ) {
 
-        model.addAttribute(
-                "sucursales",
-                sucursalService.listarTodas()
-        );
+        CatalogoListado.cargar(model, "sucursales", sucursalService.listarTodas(), q, pagina,
+                r -> r.getId() + " " + r.getNombre());
 
         return "admin/sucursales/lista";
     }
 
     @GetMapping("/nueva")
-    @PreAuthorize("hasAuthority('CATALOG_CREATE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_CREATE')")
     public String nueva(
             Model model
     ) {
@@ -52,7 +57,7 @@ public class SucursalController {
     }
 
     @GetMapping("/editar/{id}")
-    @PreAuthorize("hasAuthority('CATALOG_UPDATE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_UPDATE')")
     public String editar(
             @PathVariable Long id,
             Model model
@@ -68,11 +73,12 @@ public class SucursalController {
 
     @PostMapping("/guardar")
     @PreAuthorize(
-            "hasAuthority('CATALOG_CREATE') or hasAuthority('CATALOG_UPDATE')"
+            "hasRole('ADMINISTRADOR') and ((#sucursal.id == null and hasAuthority('CATALOG_CREATE')) or (#sucursal.id != null and hasAuthority('CATALOG_UPDATE')))"
     )
     public String guardar(
             @ModelAttribute("sucursal")
             Sucursal sucursal,
+            org.springframework.validation.BindingResult errores,
 
             Principal principal,
 
@@ -82,6 +88,7 @@ public class SucursalController {
     ) {
 
         try {
+            if (errores.hasErrors()) throw new IllegalArgumentException("Revise el formato de los campos ingresados.");
 
             String nombreUsuario =
                     principal != null
@@ -91,7 +98,7 @@ public class SucursalController {
             boolean nueva =
                     sucursal.getId() == null;
 
-            sucursalService.guardar(
+            sucursal = sucursalService.guardar(
                     sucursal,
                     nombreUsuario
             );
@@ -99,8 +106,8 @@ public class SucursalController {
             redirectAttributes.addFlashAttribute(
                     "mensaje",
                     nueva
-                            ? "Sucursal creada correctamente."
-                            : "Sucursal actualizada correctamente."
+                            ? "El registro " + sucursal.getNombre() + " ha sido creado exitosamente."
+                                    : "El registro " + sucursal.getNombre() + " ha sido actualizado correctamente."
             );
 
             return "redirect:/admin/sucursales";
@@ -117,7 +124,7 @@ public class SucursalController {
     }
 
     @PostMapping("/desactivar/{id}")
-    @PreAuthorize("hasAuthority('CATALOG_DISABLE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_DISABLE')")
     public String desactivar(
             @PathVariable Long id,
             Principal principal,
@@ -138,7 +145,7 @@ public class SucursalController {
 
             redirectAttributes.addFlashAttribute(
                     "mensaje",
-                    "Sucursal desactivada correctamente."
+                    "El registro " + sucursalService.buscarPorId(id).getNombre() + " ha sido eliminado correctamente."
             );
 
         } catch (IllegalArgumentException e) {
@@ -153,7 +160,7 @@ public class SucursalController {
     }
 
     @PostMapping("/reactivar/{id}")
-    @PreAuthorize("hasAuthority('CATALOG_UPDATE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_UPDATE')")
     public String reactivar(
             @PathVariable Long id,
             Principal principal,
@@ -174,7 +181,7 @@ public class SucursalController {
 
             redirectAttributes.addFlashAttribute(
                     "mensaje",
-                    "Sucursal reactivada correctamente."
+                    "El registro " + sucursalService.buscarPorId(id).getNombre() + " ha sido actualizado correctamente."
             );
 
         } catch (IllegalArgumentException e) {

@@ -7,7 +7,6 @@ import com.example.proyecto_semestre_medico.repository.AuditoriaRepository;
 import com.example.proyecto_semestre_medico.repository.EspecialidadRepository;
 import com.example.proyecto_semestre_medico.repository.UsuarioRepository;
 import com.example.proyecto_semestre_medico.service.EspecialidadService;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +17,8 @@ import java.util.Optional;
 @Service
 public class EspecialidadServiceImpl
         implements EspecialidadService {
+
+    private final ControlCatalogo control;
 
     private final EspecialidadRepository
             especialidadRepository;
@@ -31,8 +32,10 @@ public class EspecialidadServiceImpl
     public EspecialidadServiceImpl(
             EspecialidadRepository especialidadRepository,
             UsuarioRepository usuarioRepository,
-            AuditoriaRepository auditoriaRepository
+            AuditoriaRepository auditoriaRepository,
+            ControlCatalogo control
     ) {
+        this.control = control;
         this.especialidadRepository =
                 especialidadRepository;
 
@@ -82,20 +85,14 @@ public class EspecialidadServiceImpl
 
     @Override
     @Transactional
-    @CacheEvict(
-            value = {
-                    "especialidadesActivas",
-                    "citaEspecialidadesPorSucursal",
-                    "citaMedicosPorSucursalEspecialidad"
-            },
-            allEntries = true
-    )
     public Especialidad guardar(
             Especialidad especialidad,
             String nombreUsuario
     ) {
+        control.iniciar(nombreUsuario, especialidad != null && especialidad.getId() != null ? "CATALOG_UPDATE" : "CATALOG_CREATE");
 
         validar(especialidad);
+        control.nombreUnico(Especialidad.class, especialidad.getId(), especialidad.getNombre());
 
         String nombre =
                 especialidad
@@ -129,10 +126,7 @@ public class EspecialidadServiceImpl
              * reutilizamos el mismo registro.
              */
             Optional<Especialidad> inactiva =
-                    especialidadRepository
-                            .findFirstByNombreIgnoreCaseAndActivoFalse(
-                                    nombre
-                            );
+                    control.inactivo(Especialidad.class, nombre);
 
             if (inactiva.isPresent()) {
 
@@ -256,18 +250,11 @@ public class EspecialidadServiceImpl
 
     @Override
     @Transactional
-    @CacheEvict(
-            value = {
-                    "especialidadesActivas",
-                    "citaEspecialidadesPorSucursal",
-                    "citaMedicosPorSucursalEspecialidad"
-            },
-            allEntries = true
-    )
     public void desactivar(
             Long id,
             String nombreUsuario
     ) {
+        control.iniciar(nombreUsuario, "CATALOG_DISABLE");
 
         Especialidad especialidad =
                 buscarPorId(id);
@@ -297,18 +284,13 @@ public class EspecialidadServiceImpl
 
     @Override
     @Transactional
-    @CacheEvict(
-            value = {
-                    "especialidadesActivas",
-                    "citaEspecialidadesPorSucursal",
-                    "citaMedicosPorSucursalEspecialidad"
-            },
-            allEntries = true
-    )
     public void reactivar(
             Long id,
             String nombreUsuario
     ) {
+        control.iniciar(nombreUsuario, "CATALOG_UPDATE");
+        var registro = buscarPorId(id);
+        control.nombreUnico(Especialidad.class, id, registro.getNombre());
 
         Especialidad especialidad =
                 buscarPorId(id);
@@ -418,18 +400,8 @@ public class EspecialidadServiceImpl
             String detalle
     ) {
 
-        Usuario usuario = null;
-
-        if (nombreUsuario != null
-                && !nombreUsuario.isBlank()) {
-
-            usuario =
-                    usuarioRepository
-                            .findByNombreUsuarioIgnoreCase(
-                                    nombreUsuario
-                            )
-                            .orElse(null);
-        }
+        Usuario usuario = control.usuario(nombreUsuario);
+        control.invalidarTrasCommit("especialidadesActivas", "citaEspecialidadesPorSucursal", "citaMedicosPorSucursalEspecialidad");
 
         Auditoria auditoria =
                 new Auditoria();

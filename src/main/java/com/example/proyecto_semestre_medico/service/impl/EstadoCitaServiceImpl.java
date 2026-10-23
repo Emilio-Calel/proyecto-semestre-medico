@@ -7,7 +7,6 @@ import com.example.proyecto_semestre_medico.repository.AuditoriaRepository;
 import com.example.proyecto_semestre_medico.repository.EstadoCitaRepository;
 import com.example.proyecto_semestre_medico.repository.UsuarioRepository;
 import com.example.proyecto_semestre_medico.service.EstadoCitaService;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +17,8 @@ import java.util.Optional;
 @Service
 public class EstadoCitaServiceImpl
         implements EstadoCitaService {
+
+    private final ControlCatalogo control;
 
     private final EstadoCitaRepository
             estadoCitaRepository;
@@ -31,8 +32,10 @@ public class EstadoCitaServiceImpl
     public EstadoCitaServiceImpl(
             EstadoCitaRepository estadoCitaRepository,
             UsuarioRepository usuarioRepository,
-            AuditoriaRepository auditoriaRepository
+            AuditoriaRepository auditoriaRepository,
+            ControlCatalogo control
     ) {
+        this.control = control;
         this.estadoCitaRepository =
                 estadoCitaRepository;
 
@@ -97,19 +100,14 @@ public class EstadoCitaServiceImpl
 
     @Override
     @Transactional
-    @CacheEvict(
-            value = {
-                    "estadosCitaActivos",
-                    "estadoCitaPorCodigo"
-            },
-            allEntries = true
-    )
     public EstadoCita guardar(
             EstadoCita estadoCita,
             String nombreUsuario
     ) {
+        control.iniciar(nombreUsuario, estadoCita != null && estadoCita.getId() != null ? "CATALOG_UPDATE" : "CATALOG_CREATE");
 
         validar(estadoCita);
+        control.nombreUnico(EstadoCita.class, estadoCita.getId(), estadoCita.getNombre());
 
         String codigo =
                 estadoCita
@@ -129,10 +127,7 @@ public class EstadoCitaServiceImpl
                         );
 
         Optional<EstadoCita> porNombre =
-                estadoCitaRepository
-                        .findByNombreIgnoreCase(
-                                nombre
-                        );
+                control.porNombre(EstadoCita.class, nombre);
 
         /*
          * =====================================================
@@ -140,6 +135,20 @@ public class EstadoCitaServiceImpl
          * =====================================================
          */
         if (estadoCita.getId() == null) {
+            var inactivo = control.inactivo(EstadoCita.class, nombre);
+            if (inactivo.isPresent()) {
+                var anterior = inactivo.get();
+                if (!anterior.getCodigo().equalsIgnoreCase(codigo)) {
+                    throw new IllegalArgumentException("Existe un registro inactivo con este nombre. Conserve su código para reactivarlo.");
+                }
+                anterior.setNombre(nombre);
+                anterior.setDescripcion(normalizarOpcional(estadoCita.getDescripcion()));
+                anterior.setActivo(true);
+                estadoCitaRepository.save(anterior);
+                registrarAuditoria(nombreUsuario, "REACTIVAR_ESTADO_CITA", anterior, "Se reactivó el registro: " + nombre);
+                return anterior;
+            }
+
 
             if (porCodigo.isPresent()) {
 
@@ -264,17 +273,11 @@ public class EstadoCitaServiceImpl
 
     @Override
     @Transactional
-    @CacheEvict(
-            value = {
-                    "estadosCitaActivos",
-                    "estadoCitaPorCodigo"
-            },
-            allEntries = true
-    )
     public void desactivar(
             Long id,
             String nombreUsuario
     ) {
+        control.iniciar(nombreUsuario, "CATALOG_DISABLE");
 
         EstadoCita estado =
                 buscarPorId(id);
@@ -306,17 +309,13 @@ public class EstadoCitaServiceImpl
 
     @Override
     @Transactional
-    @CacheEvict(
-            value = {
-                    "estadosCitaActivos",
-                    "estadoCitaPorCodigo"
-            },
-            allEntries = true
-    )
     public void reactivar(
             Long id,
             String nombreUsuario
     ) {
+        control.iniciar(nombreUsuario, "CATALOG_UPDATE");
+        var registro = buscarPorId(id);
+        control.nombreUnico(EstadoCita.class, id, registro.getNombre());
 
         EstadoCita estado =
                 buscarPorId(id);
@@ -331,10 +330,7 @@ public class EstadoCitaServiceImpl
         }
 
         Optional<EstadoCita> mismoNombre =
-                estadoCitaRepository
-                        .findByNombreIgnoreCase(
-                                estado.getNombre()
-                        );
+                control.porNombre(EstadoCita.class, estado.getNombre());
 
         if (mismoNombre.isPresent()
                 && !mismoNombre
@@ -474,18 +470,8 @@ public class EstadoCitaServiceImpl
             String detalle
     ) {
 
-        Usuario usuario = null;
-
-        if (nombreUsuario != null
-                && !nombreUsuario.isBlank()) {
-
-            usuario =
-                    usuarioRepository
-                            .findByNombreUsuarioIgnoreCase(
-                                    nombreUsuario
-                            )
-                            .orElse(null);
-        }
+        Usuario usuario = control.usuario(nombreUsuario);
+        control.invalidarTrasCommit("estadosCitaActivos", "estadoCitaPorCodigo");
 
         Auditoria auditoria =
                 new Auditoria();

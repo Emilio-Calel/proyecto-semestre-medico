@@ -15,6 +15,11 @@ import java.security.Principal;
 
 public class CatalogoExamenController {
 
+    @InitBinder("examen")
+    public void camposEditables(org.springframework.web.bind.WebDataBinder binder) {
+        binder.setAllowedFields("id", "codigo", "nombre", "descripcion", "precio", "unidadReferencia", "rangoReferencia");
+    }
+
     private final CatalogoExamenService
             catalogoExamenService;
 
@@ -26,22 +31,21 @@ public class CatalogoExamenController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('CATALOG_VIEW')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_VIEW')")
     public String listar(
+            @RequestParam(defaultValue = "") String q,
+            @RequestParam(defaultValue = "0") int pagina,
             Model model
     ) {
 
-        model.addAttribute(
-                "examenes",
-                catalogoExamenService
-                        .listarTodos()
-        );
+        CatalogoListado.cargar(model, "examenes", catalogoExamenService.listarTodos(), q, pagina,
+                r -> r.getId() + " " + r.getNombre());
 
         return "admin/examenes-laboratorio/lista";
     }
 
     @GetMapping("/nuevo")
-    @PreAuthorize("hasAuthority('CATALOG_CREATE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_CREATE')")
     public String nuevo(
             Model model
     ) {
@@ -61,7 +65,7 @@ public class CatalogoExamenController {
     }
 
     @GetMapping("/editar/{id}")
-    @PreAuthorize("hasAuthority('CATALOG_UPDATE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_UPDATE')")
     public String editar(
             @PathVariable Long id,
             Model model
@@ -93,11 +97,12 @@ public class CatalogoExamenController {
 
     @PostMapping("/guardar")
     @PreAuthorize(
-            "hasAuthority('CATALOG_CREATE') or hasAuthority('CATALOG_UPDATE')"
+            "hasRole('ADMINISTRADOR') and ((#examen.id == null and hasAuthority('CATALOG_CREATE')) or (#examen.id != null and hasAuthority('CATALOG_UPDATE')))"
     )
     public String guardar(
             @ModelAttribute("examen")
             CatalogoExamen examen,
+            org.springframework.validation.BindingResult errores,
 
             @RequestParam(
                     name = "laboratorioId",
@@ -114,6 +119,7 @@ public class CatalogoExamenController {
     ) {
 
         try {
+            if (errores.hasErrors()) throw new IllegalArgumentException("Revise el formato de los campos ingresados.");
 
             String nombreUsuario =
                     principal != null
@@ -123,7 +129,7 @@ public class CatalogoExamenController {
             boolean nuevo =
                     examen.getId() == null;
 
-            catalogoExamenService
+            examen = catalogoExamenService
                     .guardar(
                             examen,
                             laboratorioId,
@@ -134,8 +140,8 @@ public class CatalogoExamenController {
                     .addFlashAttribute(
                             "mensaje",
                             nuevo
-                                    ? "Examen creado correctamente."
-                                    : "Examen actualizado correctamente."
+                                    ? "El registro " + examen.getNombre() + " ha sido creado exitosamente."
+                                    : "El registro " + examen.getNombre() + " ha sido actualizado correctamente."
                     );
 
             return "redirect:/admin/examenes-laboratorio";
@@ -163,7 +169,7 @@ public class CatalogoExamenController {
     }
 
     @PostMapping("/desactivar/{id}")
-    @PreAuthorize("hasAuthority('CATALOG_DISABLE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_DISABLE')")
     public String desactivar(
             @PathVariable Long id,
             Principal principal,
@@ -187,7 +193,7 @@ public class CatalogoExamenController {
             redirectAttributes
                     .addFlashAttribute(
                             "mensaje",
-                            "Examen desactivado correctamente."
+                            "El registro " + catalogoExamenService.buscarPorId(id).getNombre() + " ha sido eliminado correctamente."
                     );
 
         } catch (IllegalArgumentException e) {
@@ -203,7 +209,7 @@ public class CatalogoExamenController {
     }
 
     @PostMapping("/reactivar/{id}")
-    @PreAuthorize("hasAuthority('CATALOG_UPDATE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_UPDATE')")
     public String reactivar(
             @PathVariable Long id,
             Principal principal,
@@ -227,7 +233,7 @@ public class CatalogoExamenController {
             redirectAttributes
                     .addFlashAttribute(
                             "mensaje",
-                            "Examen reactivado correctamente."
+                            "El registro " + catalogoExamenService.buscarPorId(id).getNombre() + " ha sido actualizado correctamente."
                     );
 
         } catch (IllegalArgumentException e) {

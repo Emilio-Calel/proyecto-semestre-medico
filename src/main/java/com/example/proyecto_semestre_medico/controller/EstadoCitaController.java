@@ -15,6 +15,11 @@ import java.security.Principal;
 
 public class EstadoCitaController {
 
+    @InitBinder("estado")
+    public void camposEditables(org.springframework.web.bind.WebDataBinder binder) {
+        binder.setAllowedFields("id", "codigo", "nombre", "descripcion");
+    }
+
     private final EstadoCitaService estadoCitaService;
 
     public EstadoCitaController(
@@ -24,21 +29,21 @@ public class EstadoCitaController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('CATALOG_VIEW')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_VIEW')")
     public String listar(
+            @RequestParam(defaultValue = "") String q,
+            @RequestParam(defaultValue = "0") int pagina,
             Model model
     ) {
 
-        model.addAttribute(
-                "estados",
-                estadoCitaService.listarTodos()
-        );
+        CatalogoListado.cargar(model, "estados", estadoCitaService.listarTodos(), q, pagina,
+                r -> r.getId() + " " + r.getNombre());
 
         return "admin/estados-cita/lista";
     }
 
     @GetMapping("/nuevo")
-    @PreAuthorize("hasAuthority('CATALOG_CREATE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_CREATE')")
     public String nuevo(
             Model model
     ) {
@@ -52,7 +57,7 @@ public class EstadoCitaController {
     }
 
     @GetMapping("/editar/{id}")
-    @PreAuthorize("hasAuthority('CATALOG_UPDATE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_UPDATE')")
     public String editar(
             @PathVariable Long id,
             Model model
@@ -68,11 +73,12 @@ public class EstadoCitaController {
 
     @PostMapping("/guardar")
     @PreAuthorize(
-            "hasAuthority('CATALOG_CREATE') or hasAuthority('CATALOG_UPDATE')"
+            "hasRole('ADMINISTRADOR') and ((#estado.id == null and hasAuthority('CATALOG_CREATE')) or (#estado.id != null and hasAuthority('CATALOG_UPDATE')))"
     )
     public String guardar(
             @ModelAttribute("estado")
             EstadoCita estado,
+            org.springframework.validation.BindingResult errores,
 
             Principal principal,
 
@@ -82,6 +88,7 @@ public class EstadoCitaController {
     ) {
 
         try {
+            if (errores.hasErrors()) throw new IllegalArgumentException("Revise el formato de los campos ingresados.");
 
             String nombreUsuario =
                     principal != null
@@ -91,7 +98,7 @@ public class EstadoCitaController {
             boolean nuevo =
                     estado.getId() == null;
 
-            estadoCitaService.guardar(
+            estado = estadoCitaService.guardar(
                     estado,
                     nombreUsuario
             );
@@ -99,8 +106,8 @@ public class EstadoCitaController {
             redirectAttributes.addFlashAttribute(
                     "mensaje",
                     nuevo
-                            ? "Estado de cita creado correctamente."
-                            : "Estado de cita actualizado correctamente."
+                            ? "El registro " + estado.getNombre() + " ha sido creado exitosamente."
+                                    : "El registro " + estado.getNombre() + " ha sido actualizado correctamente."
             );
 
             return "redirect:/admin/estados-cita";
@@ -117,7 +124,7 @@ public class EstadoCitaController {
     }
 
     @PostMapping("/desactivar/{id}")
-    @PreAuthorize("hasAuthority('CATALOG_DISABLE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_DISABLE')")
     public String desactivar(
             @PathVariable Long id,
             Principal principal,
@@ -138,7 +145,7 @@ public class EstadoCitaController {
 
             redirectAttributes.addFlashAttribute(
                     "mensaje",
-                    "Estado de cita desactivado correctamente."
+                    "El registro " + estadoCitaService.buscarPorId(id).getNombre() + " ha sido eliminado correctamente."
             );
 
         } catch (IllegalArgumentException e) {
@@ -153,7 +160,7 @@ public class EstadoCitaController {
     }
 
     @PostMapping("/reactivar/{id}")
-    @PreAuthorize("hasAuthority('CATALOG_UPDATE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_UPDATE')")
     public String reactivar(
             @PathVariable Long id,
             Principal principal,
@@ -174,7 +181,7 @@ public class EstadoCitaController {
 
             redirectAttributes.addFlashAttribute(
                     "mensaje",
-                    "Estado de cita reactivado correctamente."
+                    "El registro " + estadoCitaService.buscarPorId(id).getNombre() + " ha sido actualizado correctamente."
             );
 
         } catch (IllegalArgumentException e) {

@@ -15,6 +15,11 @@ import java.security.Principal;
 
 public class EspecialidadController {
 
+    @InitBinder("especialidad")
+    public void camposEditables(org.springframework.web.bind.WebDataBinder binder) {
+        binder.setAllowedFields("id", "nombre", "descripcion");
+    }
+
     private final EspecialidadService
             especialidadService;
 
@@ -26,22 +31,21 @@ public class EspecialidadController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('CATALOG_VIEW')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_VIEW')")
     public String listar(
+            @RequestParam(defaultValue = "") String q,
+            @RequestParam(defaultValue = "0") int pagina,
             Model model
     ) {
 
-        model.addAttribute(
-                "especialidades",
-                especialidadService
-                        .listarTodas()
-        );
+        CatalogoListado.cargar(model, "especialidades", especialidadService.listarTodas(), q, pagina,
+                r -> r.getId() + " " + r.getNombre());
 
         return "admin/especialidades/lista";
     }
 
     @GetMapping("/nueva")
-    @PreAuthorize("hasAuthority('CATALOG_CREATE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_CREATE')")
     public String nueva(
             Model model
     ) {
@@ -55,7 +59,7 @@ public class EspecialidadController {
     }
 
     @GetMapping("/editar/{id}")
-    @PreAuthorize("hasAuthority('CATALOG_UPDATE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_UPDATE')")
     public String editar(
             @PathVariable Long id,
             Model model
@@ -72,11 +76,12 @@ public class EspecialidadController {
 
     @PostMapping("/guardar")
     @PreAuthorize(
-            "hasAuthority('CATALOG_CREATE') or hasAuthority('CATALOG_UPDATE')"
+            "hasRole('ADMINISTRADOR') and ((#especialidad.id == null and hasAuthority('CATALOG_CREATE')) or (#especialidad.id != null and hasAuthority('CATALOG_UPDATE')))"
     )
     public String guardar(
             @ModelAttribute("especialidad")
             Especialidad especialidad,
+            org.springframework.validation.BindingResult errores,
 
             Principal principal,
 
@@ -87,6 +92,7 @@ public class EspecialidadController {
     ) {
 
         try {
+            if (errores.hasErrors()) throw new IllegalArgumentException("Revise el formato de los campos ingresados.");
 
             String nombreUsuario =
                     principal != null
@@ -96,7 +102,7 @@ public class EspecialidadController {
             boolean nueva =
                     especialidad.getId() == null;
 
-            especialidadService
+            especialidad = especialidadService
                     .guardar(
                             especialidad,
                             nombreUsuario
@@ -106,8 +112,8 @@ public class EspecialidadController {
                     .addFlashAttribute(
                             "mensaje",
                             nueva
-                                    ? "Especialidad creada correctamente."
-                                    : "Especialidad actualizada correctamente."
+                                    ? "El registro " + especialidad.getNombre() + " ha sido creado exitosamente."
+                                    : "El registro " + especialidad.getNombre() + " ha sido actualizado correctamente."
                     );
 
             return "redirect:/admin/especialidades";
@@ -124,7 +130,7 @@ public class EspecialidadController {
     }
 
     @PostMapping("/desactivar/{id}")
-    @PreAuthorize("hasAuthority('CATALOG_DISABLE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_DISABLE')")
     public String desactivar(
             @PathVariable Long id,
             Principal principal,
@@ -147,7 +153,7 @@ public class EspecialidadController {
             redirectAttributes
                     .addFlashAttribute(
                             "mensaje",
-                            "Especialidad desactivada correctamente."
+                            "El registro " + especialidadService.buscarPorId(id).getNombre() + " ha sido eliminado correctamente."
                     );
 
         } catch (IllegalArgumentException e) {
@@ -163,7 +169,7 @@ public class EspecialidadController {
     }
 
     @PostMapping("/reactivar/{id}")
-    @PreAuthorize("hasAuthority('CATALOG_UPDATE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_UPDATE')")
     public String reactivar(
             @PathVariable Long id,
             Principal principal,
@@ -186,7 +192,7 @@ public class EspecialidadController {
             redirectAttributes
                     .addFlashAttribute(
                             "mensaje",
-                            "Especialidad reactivada correctamente."
+                            "El registro " + especialidadService.buscarPorId(id).getNombre() + " ha sido actualizado correctamente."
                     );
 
         } catch (IllegalArgumentException e) {

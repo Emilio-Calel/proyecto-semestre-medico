@@ -40,22 +40,21 @@ public class InventarioMedicamentoController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('CATALOG_VIEW')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_VIEW')")
     public String listar(
+            @RequestParam(defaultValue = "") String q,
+            @RequestParam(defaultValue = "0") int pagina,
             Model model
     ) {
 
-        model.addAttribute(
-                "inventarios",
-                inventarioMedicamentoService
-                        .listarTodos()
-        );
+        CatalogoListado.cargar(model, "inventarios", inventarioMedicamentoService.listarTodos(), q, pagina,
+                r -> r.getId() + " " + r.getMedicamento().getNombre() + " " + r.getSucursal().getNombre());
 
         return "admin/inventario-medicamentos/lista";
     }
 
     @GetMapping("/nuevo")
-    @PreAuthorize("hasAuthority('CATALOG_CREATE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_CREATE')")
     public String nuevo(
             Model model
     ) {
@@ -66,7 +65,7 @@ public class InventarioMedicamentoController {
     }
 
     @PostMapping("/guardar")
-    @PreAuthorize("hasAuthority('CATALOG_CREATE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_CREATE')")
     public String guardar(
             @RequestParam(
                     name = "medicamentoId",
@@ -101,7 +100,7 @@ public class InventarioMedicamentoController {
                             ? principal.getName()
                             : null;
 
-            inventarioMedicamentoService
+            var inventario = inventarioMedicamentoService
                     .guardar(
                             medicamentoId,
                             sucursalId,
@@ -112,7 +111,8 @@ public class InventarioMedicamentoController {
             redirectAttributes
                     .addFlashAttribute(
                             "mensaje",
-                            "Inventario registrado correctamente."
+                            "El registro " + inventario.getMedicamento().getNombre() + " / "
+                                    + inventario.getSucursal().getNombre() + " ha sido creado exitosamente."
                     );
 
             return "redirect:/admin/inventario-medicamentos";
@@ -146,7 +146,7 @@ public class InventarioMedicamentoController {
     }
 
     @PostMapping("/desactivar/{id}")
-    @PreAuthorize("hasAuthority('CATALOG_DISABLE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_DISABLE')")
     public String desactivar(
             @PathVariable Long id,
             Principal principal,
@@ -170,7 +170,7 @@ public class InventarioMedicamentoController {
             redirectAttributes
                     .addFlashAttribute(
                             "mensaje",
-                            "Inventario desactivado correctamente."
+                            "El registro " + nombreInventario(id) + " ha sido eliminado correctamente."
                     );
 
         } catch (IllegalArgumentException e) {
@@ -186,7 +186,7 @@ public class InventarioMedicamentoController {
     }
 
     @PostMapping("/reactivar/{id}")
-    @PreAuthorize("hasAuthority('CATALOG_UPDATE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_UPDATE')")
     public String reactivar(
             @PathVariable Long id,
             Principal principal,
@@ -210,7 +210,7 @@ public class InventarioMedicamentoController {
             redirectAttributes
                     .addFlashAttribute(
                             "mensaje",
-                            "Inventario reactivado correctamente."
+                            "El registro " + nombreInventario(id) + " ha sido actualizado correctamente."
                     );
 
         } catch (IllegalArgumentException e) {
@@ -223,6 +223,11 @@ public class InventarioMedicamentoController {
         }
 
         return "redirect:/admin/inventario-medicamentos";
+    }
+
+    private String nombreInventario(Long id) {
+        var inventario = inventarioMedicamentoService.buscarPorId(id);
+        return inventario.getMedicamento().getNombre() + " / " + inventario.getSucursal().getNombre();
     }
 
     private void cargarCatalogos(

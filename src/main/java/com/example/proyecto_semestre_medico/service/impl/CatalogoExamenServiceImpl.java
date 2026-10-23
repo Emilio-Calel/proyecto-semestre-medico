@@ -20,6 +20,8 @@ import java.util.Optional;
 public class CatalogoExamenServiceImpl
         implements CatalogoExamenService {
 
+    private final ControlCatalogo control;
+
     private final CatalogoExamenRepository catalogoExamenRepository;
     private final LaboratorioRepository laboratorioRepository;
     private final UsuarioRepository usuarioRepository;
@@ -29,8 +31,10 @@ public class CatalogoExamenServiceImpl
             CatalogoExamenRepository catalogoExamenRepository,
             LaboratorioRepository laboratorioRepository,
             UsuarioRepository usuarioRepository,
-            AuditoriaRepository auditoriaRepository
+            AuditoriaRepository auditoriaRepository,
+            ControlCatalogo control
     ) {
+        this.control = control;
         this.catalogoExamenRepository = catalogoExamenRepository;
         this.laboratorioRepository = laboratorioRepository;
         this.usuarioRepository = usuarioRepository;
@@ -76,8 +80,10 @@ public class CatalogoExamenServiceImpl
             Long laboratorioId,
             String nombreUsuario
     ) {
+        control.iniciar(nombreUsuario, examen != null && examen.getId() != null ? "CATALOG_UPDATE" : "CATALOG_CREATE");
 
         validar(examen);
+        control.nombreUnico(CatalogoExamen.class, examen.getId(), examen.getNombre());
 
         if (laboratorioId == null) {
             throw new IllegalArgumentException(
@@ -116,10 +122,27 @@ public class CatalogoExamenServiceImpl
                         .findByCodigoIgnoreCase(codigo);
 
         Optional<CatalogoExamen> porNombre =
-                catalogoExamenRepository
-                        .findByNombreIgnoreCase(nombre);
+                control.porNombre(CatalogoExamen.class, nombre);
 
         if (examen.getId() == null) {
+            var inactivo = control.inactivo(CatalogoExamen.class, nombre);
+            if (inactivo.isPresent()) {
+                var anterior = inactivo.get();
+                if (!anterior.getCodigo().equalsIgnoreCase(codigo)) {
+                    throw new IllegalArgumentException("Existe un registro inactivo con este nombre. Conserve su código para reactivarlo.");
+                }
+                anterior.setNombre(nombre);
+                anterior.setDescripcion(normalizarOpcional(examen.getDescripcion()));
+                anterior.setPrecio(examen.getPrecio());
+                anterior.setLaboratorio(laboratorio);
+                anterior.setUnidadReferencia(normalizarOpcional(examen.getUnidadReferencia()));
+                anterior.setRangoReferencia(normalizarOpcional(examen.getRangoReferencia()));
+                anterior.setActivo(true);
+                catalogoExamenRepository.save(anterior);
+                registrarAuditoria(nombreUsuario, "REACTIVAR_EXAMEN_LABORATORIO", anterior, "Se reactivó el registro: " + nombre);
+                return anterior;
+            }
+
 
             if (porCodigo.isPresent()) {
                 throw new IllegalArgumentException(
@@ -255,6 +278,7 @@ public class CatalogoExamenServiceImpl
             Long id,
             String nombreUsuario
     ) {
+        control.iniciar(nombreUsuario, "CATALOG_DISABLE");
 
         CatalogoExamen examen =
                 buscarPorId(id);
@@ -288,6 +312,9 @@ public class CatalogoExamenServiceImpl
             Long id,
             String nombreUsuario
     ) {
+        control.iniciar(nombreUsuario, "CATALOG_UPDATE");
+        var registro = buscarPorId(id);
+        control.nombreUnico(CatalogoExamen.class, id, registro.getNombre());
 
         CatalogoExamen examen =
                 buscarPorId(id);
@@ -395,6 +422,9 @@ public class CatalogoExamenServiceImpl
             );
         }
 
+        if (precio.compareTo(new BigDecimal("99999999.99")) > 0) {
+            throw new IllegalArgumentException("El precio excede la capacidad de 10 dígitos y 2 decimales.");
+        }
         if (precio.scale() > 2) {
 
             throw new IllegalArgumentException(
@@ -443,18 +473,8 @@ public class CatalogoExamenServiceImpl
             String detalle
     ) {
 
-        Usuario usuario = null;
-
-        if (nombreUsuario != null
-                && !nombreUsuario.isBlank()) {
-
-            usuario =
-                    usuarioRepository
-                            .findByNombreUsuarioIgnoreCase(
-                                    nombreUsuario
-                            )
-                            .orElse(null);
-        }
+        Usuario usuario = control.usuario(nombreUsuario);
+        control.invalidarTrasCommit();
 
         Auditoria auditoria =
                 new Auditoria();

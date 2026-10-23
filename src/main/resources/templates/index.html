@@ -592,6 +592,12 @@
 
         <article class="module-card" sec:authorize="hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_VIEW')">
             <div class="module-icon">&#9881;</div>
+            <h2>Catálogos del sistema</h2>
+            <p>Administre los catálogos base y el inventario de medicamentos.</p>
+            <a class="module-link" th:href="@{/admin/catalogos}"><span>Administrar catálogos</span><span class="arrow">&#8594;</span></a>
+        </article>
+        <article class="module-card" sec:authorize="hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_VIEW')">
+            <div class="module-icon">&#9881;</div>
             <h2>Especialidades por Sede</h2>
             <p>Configure las especialidades disponibles en cada sucursal.</p>
             <a class="module-link" th:href="@{/admin/sucursal-especialidad}">

@@ -15,6 +15,11 @@ import java.security.Principal;
 
 public class MedicamentoController {
 
+    @InitBinder("medicamento")
+    public void camposEditables(org.springframework.web.bind.WebDataBinder binder) {
+        binder.setAllowedFields("id", "nombre", "descripcion", "precio", "unidad", "esControlado", "stockMinimo");
+    }
+
     private final MedicamentoService medicamentoService;
 
     public MedicamentoController(
@@ -25,22 +30,21 @@ public class MedicamentoController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('CATALOG_VIEW')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_VIEW')")
     public String listar(
+            @RequestParam(defaultValue = "") String q,
+            @RequestParam(defaultValue = "0") int pagina,
             Model model
     ) {
 
-        model.addAttribute(
-                "medicamentos",
-                medicamentoService
-                        .listarTodos()
-        );
+        CatalogoListado.cargar(model, "medicamentos", medicamentoService.listarTodos(), q, pagina,
+                r -> r.getId() + " " + r.getNombre());
 
         return "admin/medicamentos/lista";
     }
 
     @GetMapping("/nuevo")
-    @PreAuthorize("hasAuthority('CATALOG_CREATE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_CREATE')")
     public String nuevo(
             Model model
     ) {
@@ -54,7 +58,7 @@ public class MedicamentoController {
     }
 
     @GetMapping("/editar/{id}")
-    @PreAuthorize("hasAuthority('CATALOG_UPDATE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_UPDATE')")
     public String editar(
             @PathVariable Long id,
             Model model
@@ -71,11 +75,12 @@ public class MedicamentoController {
 
     @PostMapping("/guardar")
     @PreAuthorize(
-            "hasAuthority('CATALOG_CREATE') or hasAuthority('CATALOG_UPDATE')"
+            "hasRole('ADMINISTRADOR') and ((#medicamento.id == null and hasAuthority('CATALOG_CREATE')) or (#medicamento.id != null and hasAuthority('CATALOG_UPDATE')))"
     )
     public String guardar(
             @ModelAttribute("medicamento")
             Medicamento medicamento,
+            org.springframework.validation.BindingResult errores,
 
             Principal principal,
 
@@ -86,6 +91,7 @@ public class MedicamentoController {
     ) {
 
         try {
+            if (errores.hasErrors()) throw new IllegalArgumentException("Revise el formato de los campos ingresados.");
 
             String nombreUsuario =
                     principal != null
@@ -95,7 +101,7 @@ public class MedicamentoController {
             boolean esNuevo =
                     medicamento.getId() == null;
 
-            medicamentoService.guardar(
+            medicamento = medicamentoService.guardar(
                     medicamento,
                     nombreUsuario
             );
@@ -104,8 +110,8 @@ public class MedicamentoController {
                     .addFlashAttribute(
                             "mensaje",
                             esNuevo
-                                    ? "Medicamento creado correctamente."
-                                    : "Medicamento actualizado correctamente."
+                                    ? "El registro " + medicamento.getNombre() + " ha sido creado exitosamente."
+                                    : "El registro " + medicamento.getNombre() + " ha sido actualizado correctamente."
                     );
 
             return "redirect:/admin/medicamentos";
@@ -122,7 +128,7 @@ public class MedicamentoController {
     }
 
     @PostMapping("/desactivar/{id}")
-    @PreAuthorize("hasAuthority('CATALOG_DISABLE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_DISABLE')")
     public String desactivar(
             @PathVariable Long id,
             Principal principal,
@@ -146,7 +152,7 @@ public class MedicamentoController {
             redirectAttributes
                     .addFlashAttribute(
                             "mensaje",
-                            "Medicamento desactivado correctamente."
+                            "El registro " + medicamentoService.buscarPorId(id).getNombre() + " ha sido eliminado correctamente."
                     );
 
         } catch (IllegalArgumentException e) {
@@ -162,7 +168,7 @@ public class MedicamentoController {
     }
 
     @PostMapping("/reactivar/{id}")
-    @PreAuthorize("hasAuthority('CATALOG_UPDATE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_UPDATE')")
     public String reactivar(
             @PathVariable Long id,
             Principal principal,
@@ -186,7 +192,7 @@ public class MedicamentoController {
             redirectAttributes
                     .addFlashAttribute(
                             "mensaje",
-                            "Medicamento reactivado correctamente."
+                            "El registro " + medicamentoService.buscarPorId(id).getNombre() + " ha sido actualizado correctamente."
                     );
 
         } catch (IllegalArgumentException e) {

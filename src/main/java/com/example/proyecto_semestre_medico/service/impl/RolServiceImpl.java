@@ -7,7 +7,6 @@ import com.example.proyecto_semestre_medico.repository.AuditoriaRepository;
 import com.example.proyecto_semestre_medico.repository.RolRepository;
 import com.example.proyecto_semestre_medico.repository.UsuarioRepository;
 import com.example.proyecto_semestre_medico.service.RolService;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +17,8 @@ import java.util.Optional;
 @Service
 public class RolServiceImpl
         implements RolService {
+
+    private final ControlCatalogo control;
 
     private final RolRepository
             rolRepository;
@@ -31,8 +32,10 @@ public class RolServiceImpl
     public RolServiceImpl(
             RolRepository rolRepository,
             UsuarioRepository usuarioRepository,
-            AuditoriaRepository auditoriaRepository
+            AuditoriaRepository auditoriaRepository,
+            ControlCatalogo control
     ) {
+        this.control = control;
         this.rolRepository =
                 rolRepository;
 
@@ -88,19 +91,14 @@ public class RolServiceImpl
 
     @Override
     @Transactional
-    @CacheEvict(
-            value = {
-                    "rolesActivos",
-                    "rolesInternosActivos"
-            },
-            allEntries = true
-    )
     public Rol guardar(
             Rol rol,
             String nombreUsuario
     ) {
+        control.iniciar(nombreUsuario, rol != null && rol.getId() != null ? "CATALOG_UPDATE" : "CATALOG_CREATE");
 
         validar(rol);
+        control.nombreUnico(Rol.class, rol.getId(), rol.getNombre());
 
         String codigo =
                 rol.getCodigo()
@@ -118,10 +116,7 @@ public class RolServiceImpl
                         );
 
         Optional<Rol> porNombre =
-                rolRepository
-                        .findByNombreIgnoreCase(
-                                nombre
-                        );
+                control.porNombre(Rol.class, nombre);
 
         /*
          * ============================================
@@ -129,6 +124,20 @@ public class RolServiceImpl
          * ============================================
          */
         if (rol.getId() == null) {
+            var inactivo = control.inactivo(Rol.class, nombre);
+            if (inactivo.isPresent()) {
+                var anterior = inactivo.get();
+                if (!anterior.getCodigo().equalsIgnoreCase(codigo)) {
+                    throw new IllegalArgumentException("Existe un registro inactivo con este nombre. Conserve su código para reactivarlo.");
+                }
+                anterior.setNombre(nombre);
+                anterior.setDescripcion(normalizarOpcional(rol.getDescripcion()));
+                anterior.setActivo(true);
+                rolRepository.save(anterior);
+                registrarAuditoria(nombreUsuario, "REACTIVAR_ROL", anterior, "Se reactivó el registro: " + nombre);
+                return anterior;
+            }
+
 
             if (porCodigo.isPresent()) {
 
@@ -166,6 +175,7 @@ public class RolServiceImpl
             );
 
             rol.setActivo(true);
+            rol.setPermisos(new java.util.HashSet<>());
 
             Rol creado =
                     rolRepository.save(rol);
@@ -250,17 +260,11 @@ public class RolServiceImpl
 
     @Override
     @Transactional
-    @CacheEvict(
-            value = {
-                    "rolesActivos",
-                    "rolesInternosActivos"
-            },
-            allEntries = true
-    )
     public void desactivar(
             Long id,
             String nombreUsuario
     ) {
+        control.iniciar(nombreUsuario, "CATALOG_DISABLE");
 
         Rol rol =
                 buscarPorId(id);
@@ -302,6 +306,10 @@ public class RolServiceImpl
             );
         }
 
+        if (java.util.Set.of("MEDICO", "ENFERMERO", "RECEPCIONISTA", "CAJERO", "LABORATORISTA", "FARMACEUTICO").contains(rol.getCodigo())
+                || usuarioRepository.countByRolCodigoAndActivoTrue(rol.getCodigo()) > 0) {
+            throw new IllegalArgumentException("No se puede desactivar un rol estructural o asignado a usuarios activos.");
+        }
         rol.setActivo(false);
 
         rolRepository.save(rol);
@@ -319,17 +327,13 @@ public class RolServiceImpl
 
     @Override
     @Transactional
-    @CacheEvict(
-            value = {
-                    "rolesActivos",
-                    "rolesInternosActivos"
-            },
-            allEntries = true
-    )
     public void reactivar(
             Long id,
             String nombreUsuario
     ) {
+        control.iniciar(nombreUsuario, "CATALOG_UPDATE");
+        var registro = buscarPorId(id);
+        control.nombreUnico(Rol.class, id, registro.getNombre());
 
         Rol rol =
                 buscarPorId(id);
@@ -344,10 +348,7 @@ public class RolServiceImpl
         }
 
         Optional<Rol> mismoNombre =
-                rolRepository
-                        .findByNombreIgnoreCase(
-                                rol.getNombre()
-                        );
+                control.porNombre(Rol.class, rol.getNombre());
 
         if (mismoNombre.isPresent()
                 && !mismoNombre
@@ -467,18 +468,8 @@ public class RolServiceImpl
             String detalle
     ) {
 
-        Usuario usuario = null;
-
-        if (nombreUsuario != null
-                && !nombreUsuario.isBlank()) {
-
-            usuario =
-                    usuarioRepository
-                            .findByNombreUsuarioIgnoreCase(
-                                    nombreUsuario
-                            )
-                            .orElse(null);
-        }
+        Usuario usuario = control.usuario(nombreUsuario);
+        control.invalidarTrasCommit("rolesActivos", "rolesInternosActivos");
 
         Auditoria auditoria =
                 new Auditoria();

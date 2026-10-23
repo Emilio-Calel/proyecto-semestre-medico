@@ -15,6 +15,11 @@ import java.security.Principal;
 
 public class RolController {
 
+    @InitBinder("rol")
+    public void camposEditables(org.springframework.web.bind.WebDataBinder binder) {
+        binder.setAllowedFields("id", "codigo", "nombre", "descripcion");
+    }
+
     private final RolService rolService;
 
     public RolController(
@@ -24,19 +29,19 @@ public class RolController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('CATALOG_VIEW')")
-    public String listar(Model model) {
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_VIEW')")
+    public String listar(@RequestParam(defaultValue = "") String q,
+            @RequestParam(defaultValue = "0") int pagina,
+            Model model) {
 
-        model.addAttribute(
-                "roles",
-                rolService.listarTodos()
-        );
+        CatalogoListado.cargar(model, "roles", rolService.listarTodos(), q, pagina,
+                r -> r.getId() + " " + r.getNombre());
 
         return "admin/roles/lista";
     }
 
     @GetMapping("/nuevo")
-    @PreAuthorize("hasAuthority('CATALOG_CREATE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_CREATE')")
     public String nuevo(Model model) {
 
         model.addAttribute(
@@ -48,7 +53,7 @@ public class RolController {
     }
 
     @GetMapping("/editar/{id}")
-    @PreAuthorize("hasAuthority('CATALOG_UPDATE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_UPDATE')")
     public String editar(
             @PathVariable Long id,
             Model model
@@ -64,11 +69,12 @@ public class RolController {
 
     @PostMapping("/guardar")
     @PreAuthorize(
-            "hasAuthority('CATALOG_CREATE') or hasAuthority('CATALOG_UPDATE')"
+            "hasRole('ADMINISTRADOR') and ((#rol.id == null and hasAuthority('CATALOG_CREATE')) or (#rol.id != null and hasAuthority('CATALOG_UPDATE')))"
     )
     public String guardar(
             @ModelAttribute("rol")
             Rol rol,
+            org.springframework.validation.BindingResult errores,
 
             Principal principal,
 
@@ -78,6 +84,7 @@ public class RolController {
     ) {
 
         try {
+            if (errores.hasErrors()) throw new IllegalArgumentException("Revise el formato de los campos ingresados.");
 
             String nombreUsuario =
                     principal != null
@@ -87,7 +94,7 @@ public class RolController {
             boolean nuevo =
                     rol.getId() == null;
 
-            rolService.guardar(
+            rol = rolService.guardar(
                     rol,
                     nombreUsuario
             );
@@ -95,8 +102,8 @@ public class RolController {
             redirectAttributes.addFlashAttribute(
                     "mensaje",
                     nuevo
-                            ? "Rol creado correctamente."
-                            : "Rol actualizado correctamente."
+                            ? "El registro " + rol.getNombre() + " ha sido creado exitosamente."
+                                    : "El registro " + rol.getNombre() + " ha sido actualizado correctamente."
             );
 
             return "redirect:/admin/roles";
@@ -113,7 +120,7 @@ public class RolController {
     }
 
     @PostMapping("/desactivar/{id}")
-    @PreAuthorize("hasAuthority('CATALOG_DISABLE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_DISABLE')")
     public String desactivar(
             @PathVariable Long id,
             Principal principal,
@@ -134,7 +141,7 @@ public class RolController {
 
             redirectAttributes.addFlashAttribute(
                     "mensaje",
-                    "Rol desactivado correctamente."
+                    "El registro " + rolService.buscarPorId(id).getNombre() + " ha sido eliminado correctamente."
             );
 
         } catch (IllegalArgumentException e) {
@@ -149,7 +156,7 @@ public class RolController {
     }
 
     @PostMapping("/reactivar/{id}")
-    @PreAuthorize("hasAuthority('CATALOG_UPDATE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_UPDATE')")
     public String reactivar(
             @PathVariable Long id,
             Principal principal,
@@ -170,7 +177,7 @@ public class RolController {
 
             redirectAttributes.addFlashAttribute(
                     "mensaje",
-                    "Rol reactivado correctamente."
+                    "El registro " + rolService.buscarPorId(id).getNombre() + " ha sido actualizado correctamente."
             );
 
         } catch (IllegalArgumentException e) {

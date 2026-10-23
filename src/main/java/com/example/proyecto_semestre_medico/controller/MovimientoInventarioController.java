@@ -17,7 +17,7 @@ import java.time.LocalDate;
 @Controller
 @RequestMapping("/farmacia/inventario")
 @PreAuthorize(
-        "hasRole('ADMINISTRADOR') or hasRole('FARMACEUTICO')"
+        "hasRole('FARMACEUTICO') or (hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_VIEW'))"
 )
 public class MovimientoInventarioController {
 
@@ -101,6 +101,7 @@ public class MovimientoInventarioController {
     }
 
     @GetMapping("/nuevo")
+    @PreAuthorize("hasRole('FARMACEUTICO') or (hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_UPDATE'))")
     public String nuevo(
             @RequestParam(
                     name = "inventarioId",
@@ -128,6 +129,7 @@ public class MovimientoInventarioController {
     }
 
     @PostMapping("/guardar")
+    @PreAuthorize("hasRole('FARMACEUTICO') or (hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_UPDATE'))")
     public String guardar(
             @ModelAttribute("movimiento")
             MovimientoInventarioDTO dto,
@@ -173,6 +175,7 @@ public class MovimientoInventarioController {
     }
 
     @PostMapping("/desactivar/{id}")
+    @PreAuthorize("hasRole('FARMACEUTICO') or (hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_DISABLE'))")
     public String desactivar(
             @PathVariable Long id,
             Principal principal,
@@ -209,6 +212,7 @@ public class MovimientoInventarioController {
     }
 
     @PostMapping("/reactivar/{id}")
+    @PreAuthorize("hasRole('FARMACEUTICO') or (hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_UPDATE'))")
     public String reactivar(
             @PathVariable Long id,
             Principal principal,

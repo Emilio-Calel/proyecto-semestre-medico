@@ -7,7 +7,6 @@ import com.example.proyecto_semestre_medico.repository.AuditoriaRepository;
 import com.example.proyecto_semestre_medico.repository.SucursalRepository;
 import com.example.proyecto_semestre_medico.repository.UsuarioRepository;
 import com.example.proyecto_semestre_medico.service.SucursalService;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +17,8 @@ import java.util.Optional;
 @Service
 public class SucursalServiceImpl
         implements SucursalService {
+
+    private final ControlCatalogo control;
 
     private final SucursalRepository
             sucursalRepository;
@@ -31,8 +32,10 @@ public class SucursalServiceImpl
     public SucursalServiceImpl(
             SucursalRepository sucursalRepository,
             UsuarioRepository usuarioRepository,
-            AuditoriaRepository auditoriaRepository
+            AuditoriaRepository auditoriaRepository,
+            ControlCatalogo control
     ) {
+        this.control = control;
         this.sucursalRepository =
                 sucursalRepository;
 
@@ -77,21 +80,14 @@ public class SucursalServiceImpl
 
     @Override
     @Transactional
-    @CacheEvict(
-            value = {
-                    "sucursalesActivas",
-                    "citaSucursalesActivas",
-                    "citaEspecialidadesPorSucursal",
-                    "citaMedicosPorSucursalEspecialidad"
-            },
-            allEntries = true
-    )
     public Sucursal guardar(
             Sucursal sucursal,
             String nombreUsuario
     ) {
+        control.iniciar(nombreUsuario, sucursal != null && sucursal.getId() != null ? "CATALOG_UPDATE" : "CATALOG_CREATE");
 
         validar(sucursal);
+        control.nombreUnico(Sucursal.class, sucursal.getId(), sucursal.getNombre());
 
         String nombre =
                 sucursal
@@ -99,10 +95,7 @@ public class SucursalServiceImpl
                         .trim();
 
         Optional<Sucursal> existente =
-                sucursalRepository
-                        .findByNombreIgnoreCase(
-                                nombre
-                        );
+                control.porNombre(Sucursal.class, nombre);
 
         /*
          * CREACIÓN
@@ -273,19 +266,11 @@ public class SucursalServiceImpl
 
     @Override
     @Transactional
-    @CacheEvict(
-            value = {
-                    "sucursalesActivas",
-                    "citaSucursalesActivas",
-                    "citaEspecialidadesPorSucursal",
-                    "citaMedicosPorSucursalEspecialidad"
-            },
-            allEntries = true
-    )
     public void desactivar(
             Long id,
             String nombreUsuario
     ) {
+        control.iniciar(nombreUsuario, "CATALOG_DISABLE");
 
         Sucursal sucursal =
                 buscarPorId(id);
@@ -315,19 +300,13 @@ public class SucursalServiceImpl
 
     @Override
     @Transactional
-    @CacheEvict(
-            value = {
-                    "sucursalesActivas",
-                    "citaSucursalesActivas",
-                    "citaEspecialidadesPorSucursal",
-                    "citaMedicosPorSucursalEspecialidad"
-            },
-            allEntries = true
-    )
     public void reactivar(
             Long id,
             String nombreUsuario
     ) {
+        control.iniciar(nombreUsuario, "CATALOG_UPDATE");
+        var registro = buscarPorId(id);
+        control.nombreUnico(Sucursal.class, id, registro.getNombre());
 
         Sucursal sucursal =
                 buscarPorId(id);
@@ -342,10 +321,7 @@ public class SucursalServiceImpl
         }
 
         Optional<Sucursal> existente =
-                sucursalRepository
-                        .findByNombreIgnoreCase(
-                                sucursal.getNombre()
-                        );
+                control.porNombre(Sucursal.class, sucursal.getNombre());
 
         if (existente.isPresent()
                 && !existente
@@ -411,22 +387,9 @@ public class SucursalServiceImpl
          * El teléfono es opcional,
          * pero si se ingresa deben ser exactamente 8 dígitos.
          */
-        if (sucursal.getTelefono() != null
-                && !sucursal
-                .getTelefono()
-                .isBlank()) {
-
-            String telefono =
-                    sucursal
-                            .getTelefono()
-                            .trim();
-
-            if (!telefono.matches("\\d{8}")) {
-
-                throw new IllegalArgumentException(
-                        "El teléfono debe contener exactamente 8 dígitos."
-                );
-            }
+        if (sucursal.getTelefono() != null && !sucursal.getTelefono().isEmpty()
+                && !sucursal.getTelefono().matches("[0-9]{8}")) {
+            throw new IllegalArgumentException("El teléfono debe tener exactamente 8 dígitos.");
         }
 
         if (sucursal.getDireccion() != null
@@ -472,18 +435,8 @@ public class SucursalServiceImpl
             String detalle
     ) {
 
-        Usuario usuario = null;
-
-        if (nombreUsuario != null
-                && !nombreUsuario.isBlank()) {
-
-            usuario =
-                    usuarioRepository
-                            .findByNombreUsuarioIgnoreCase(
-                                    nombreUsuario
-                            )
-                            .orElse(null);
-        }
+        Usuario usuario = control.usuario(nombreUsuario);
+        control.invalidarTrasCommit("sucursalesActivas", "citaSucursalesActivas", "citaEspecialidadesPorSucursal", "citaMedicosPorSucursalEspecialidad");
 
         Auditoria auditoria =
                 new Auditoria();

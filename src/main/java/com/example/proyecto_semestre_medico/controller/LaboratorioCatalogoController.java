@@ -15,6 +15,11 @@ import java.security.Principal;
 
 public class LaboratorioCatalogoController {
 
+    @InitBinder("laboratorio")
+    public void camposEditables(org.springframework.web.bind.WebDataBinder binder) {
+        binder.setAllowedFields("id", "nombre", "descripcion");
+    }
+
     private final LaboratorioCatalogoService
             laboratorioCatalogoService;
 
@@ -27,22 +32,21 @@ public class LaboratorioCatalogoController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('CATALOG_VIEW')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_VIEW')")
     public String listar(
+            @RequestParam(defaultValue = "") String q,
+            @RequestParam(defaultValue = "0") int pagina,
             Model model
     ) {
 
-        model.addAttribute(
-                "laboratorios",
-                laboratorioCatalogoService
-                        .listarTodos()
-        );
+        CatalogoListado.cargar(model, "laboratorios", laboratorioCatalogoService.listarTodos(), q, pagina,
+                r -> r.getId() + " " + r.getNombre());
 
         return "admin/laboratorios/lista";
     }
 
     @GetMapping("/nuevo")
-    @PreAuthorize("hasAuthority('CATALOG_CREATE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_CREATE')")
     public String nuevo(
             Model model
     ) {
@@ -56,7 +60,7 @@ public class LaboratorioCatalogoController {
     }
 
     @GetMapping("/editar/{id}")
-    @PreAuthorize("hasAuthority('CATALOG_UPDATE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_UPDATE')")
     public String editar(
             @PathVariable Long id,
             Model model
@@ -73,11 +77,12 @@ public class LaboratorioCatalogoController {
 
     @PostMapping("/guardar")
     @PreAuthorize(
-            "hasAuthority('CATALOG_CREATE') or hasAuthority('CATALOG_UPDATE')"
+            "hasRole('ADMINISTRADOR') and ((#laboratorio.id == null and hasAuthority('CATALOG_CREATE')) or (#laboratorio.id != null and hasAuthority('CATALOG_UPDATE')))"
     )
     public String guardar(
             @ModelAttribute("laboratorio")
             Laboratorio laboratorio,
+            org.springframework.validation.BindingResult errores,
 
             Principal principal,
 
@@ -88,6 +93,7 @@ public class LaboratorioCatalogoController {
     ) {
 
         try {
+            if (errores.hasErrors()) throw new IllegalArgumentException("Revise el formato de los campos ingresados.");
 
             String nombreUsuario =
                     principal != null
@@ -97,7 +103,7 @@ public class LaboratorioCatalogoController {
             boolean nuevo =
                     laboratorio.getId() == null;
 
-            laboratorioCatalogoService
+            laboratorio = laboratorioCatalogoService
                     .guardar(
                             laboratorio,
                             nombreUsuario
@@ -107,8 +113,8 @@ public class LaboratorioCatalogoController {
                     .addFlashAttribute(
                             "mensaje",
                             nuevo
-                                    ? "Laboratorio creado correctamente."
-                                    : "Laboratorio actualizado correctamente."
+                                    ? "El registro " + laboratorio.getNombre() + " ha sido creado exitosamente."
+                                    : "El registro " + laboratorio.getNombre() + " ha sido actualizado correctamente."
                     );
 
             return "redirect:/admin/laboratorios";
@@ -125,7 +131,7 @@ public class LaboratorioCatalogoController {
     }
 
     @PostMapping("/desactivar/{id}")
-    @PreAuthorize("hasAuthority('CATALOG_DISABLE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_DISABLE')")
     public String desactivar(
             @PathVariable Long id,
             Principal principal,
@@ -149,7 +155,7 @@ public class LaboratorioCatalogoController {
             redirectAttributes
                     .addFlashAttribute(
                             "mensaje",
-                            "Laboratorio desactivado correctamente."
+                            "El registro " + laboratorioCatalogoService.buscarPorId(id).getNombre() + " ha sido eliminado correctamente."
                     );
 
         } catch (IllegalArgumentException e) {
@@ -165,7 +171,7 @@ public class LaboratorioCatalogoController {
     }
 
     @PostMapping("/reactivar/{id}")
-    @PreAuthorize("hasAuthority('CATALOG_UPDATE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') and hasAuthority('CATALOG_UPDATE')")
     public String reactivar(
             @PathVariable Long id,
             Principal principal,
@@ -189,7 +195,7 @@ public class LaboratorioCatalogoController {
             redirectAttributes
                     .addFlashAttribute(
                             "mensaje",
-                            "Laboratorio reactivado correctamente."
+                            "El registro " + laboratorioCatalogoService.buscarPorId(id).getNombre() + " ha sido actualizado correctamente."
                     );
 
         } catch (IllegalArgumentException e) {

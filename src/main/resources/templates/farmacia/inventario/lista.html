@@ -169,6 +169,14 @@
 
 <main class="container">
 
+    <nav class="toolbar" aria-label="Navegación del módulo">
+        <a class="btn btn-secondary" th:href="@{/farmacia}">← Volver al panel de Farmacia</a>
+        <a class="btn btn-secondary" th:href="@{/admin/catalogos}"
+           th:if="${#authentication != null
+                and #authentication.authorities.![authority].contains('ROLE_ADMINISTRADOR')
+                and #authentication.authorities.![authority].contains('CATALOG_VIEW')}">← Volver a catálogos</a>
+    </nav>
+
     <div class="toolbar">
 
         <h2>Historial general</h2>
